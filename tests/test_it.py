@@ -12,12 +12,7 @@ import pandas as pd
 from pathlib import Path
 import inspect
 import os
-import warnings
-import matplotlib
 import mylogging
-
-matplotlib.use('agg')
-warnings.filterwarnings('ignore', message=r"[\s\S]*Matplotlib is currently using agg, which is a non-GUI backend*")
 
 sys.path.insert(0, Path(os.path.abspath(inspect.getframeinfo(inspect.currentframe()).filename)).parents[0].as_posix())
 from visual import visual_test
