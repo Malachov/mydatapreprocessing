@@ -1,13 +1,5 @@
 mylogging
 numpy
 pandas
-eel
-scipy
-scikit_learn
-sklearn_extensions
-pygments
-tabulate
-matplotlib
-plotly
-seaborn
+sklearn
 requests

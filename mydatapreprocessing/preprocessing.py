@@ -20,11 +20,11 @@ so reshape(1, -1) if necessary...
 import pandas as pd
 import numpy as np
 import warnings
-from sklearn import preprocessing
 from pathlib import Path
 import urllib
 import requests
 import itertools
+from sklearn import preprocessing
 
 from mylogging import user_warning, user_message
 
