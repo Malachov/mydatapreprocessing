@@ -1,6 +1,6 @@
 
 # Generate rst files with
-# sphinx-apidoc -f -e -o source/ ../predictit
+# sphinx-apidoc -f -e -o source/ ../mydatapreprocessing
 # Only other important file is index.rst
 
 # Configuration file for the Sphinx documentation builder.
@@ -33,7 +33,7 @@ sys.path.insert(2, lib_path2.as_posix())
 
 # -- Project information -----------------------------------------------------
 
-project = 'predictit'
+project = 'mydatapreprocessing'
 copyright = '2020, Daniel Malachov'
 author = 'Daniel Malachov'
 
@@ -47,7 +47,7 @@ source_suffix = ['.rst', '.md']
 # -- General configuration ---------------------------------------------------
 html_theme_options = {
     'github_user': 'Malachov',
-    'github_repo': 'predictit',
+    'github_repo': 'mydatapreprocessing',
     'github_banner': True,
     'logo': 'logo.png'
 }

@@ -1,13 +1,6 @@
 #!/bin/sh
-#
-# An example hook script to verify what is about to be committed.
-# Called by "git commit" with no arguments.  The hook should
-# exit with non-zero status after issuing an appropriate message if
-# it wants to stop the commit.
-#
-# To enable this hook, rename this file to "pre-commit".
 
-cd ../docs/source
+cd docs/source
 
 mv conf.py ..
 mv index.rst ..
@@ -15,7 +8,6 @@ mv _static ..
 mv _templates ..
 
 cd ..
-
 
 rm -r source
 rm -r build
@@ -27,16 +19,10 @@ mv index.rst source
 mv _static source
 mv _templates source
 
-cd source
-
-sphinx-apidoc -f -e -o ../source/ ../../predictit
-
-rm mydatapreprocessing.tempCodeRunnerFile.rst
-
-cd ..
+sphinx-apidoc -f -e -o source ../mydatapreprocessing
 
 make html
 
-cd ..
+cd ../
 
 git add docs

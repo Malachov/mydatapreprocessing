@@ -55,7 +55,7 @@ def load_data(loaded_data, header=0, csv_style={'separator': ",", 'decimal': "."
     # ############# Load SQL data #############
     # elif str(loaded_data).lower() == 'sql':
     #     try:
-    #         data = predictit.database.database_load(server=config.server, database=config.database, freq=config.freq,
+    #         data = mydatapreprocessing.database.database_load(server=config.server, database=config.database, freq=config.freq,
     #                                                 data_limit=config.max_imported_length)
 
     #     except Exception:
