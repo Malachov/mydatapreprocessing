@@ -1,11 +1,11 @@
 .. mdinclude:: ../../README.md
 
-`preprocessing <../latest/mydatapreprocessing.preprocessing>`_
+`preprocessing <../latest/mydatapreprocessing.preprocessing.html>`_
 -----------------------------
 
 .. automodule:: mydatapreprocessing.preprocessing
 
-`inputs <mydatapreprocessing.inputs>`_
+`inputs <../latest/mydatapreprocessing.inputs.html>`_
 -----------------------------
 
 .. automodule:: mydatapreprocessing.inputs
