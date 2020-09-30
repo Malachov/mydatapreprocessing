@@ -3,4 +3,5 @@
 [ ] Remove input_type_name and replace with one_column option
 [ ] Add h5, parquet and SQL input
 [ ] Feature extraction
-[ ] Finish generate test data modul - add some real data
+[ ] Finish generate test data modul - add some real data and ramp
+[ ] Add unit test for inputs (from visual) and generation

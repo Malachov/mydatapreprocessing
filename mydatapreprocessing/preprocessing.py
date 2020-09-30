@@ -161,14 +161,14 @@ def load_data(loaded_data, header=0, csv_style={'separator': ",", 'decimal': "."
     return data
 
 
-def data_consolidation(data, predicted_column=0, other_columns=1, datalength=0, data_orientation='', datetime_index='', unique_threshlold=0.1,
+def data_consolidation(data, predicted_column=None, other_columns=1, datalength=0, data_orientation='', datetime_index='', unique_threshlold=0.1,
                        embedding='label', freq=0, resample_function='sum', remove_nans_threshold=0.85, remove_nans_or_replace='interpolate', dtype='float32'):
     """Transform input data in various formats and shapes into data in defined shape,
     that other functions rely on.
 
     Args:
         data (np.ndarray, pd.DataFrame): Input data in well standardized format.
-        predicted_column ((int, str), optional): Predicted column name or index. Defaults to 0.
+        predicted_column ((int, str), optional): Predicted column name or index. Move on first column and test if number. If None, it's ignored. Defaults to None.
         other_columns (int, optional): Whether use other columns or only predicted one. Defaults to 1.
         datalength (int, optional): Data length after resampling. Defaults to 0.
         data_orientation (str, optional): 'columns' or 'rows'. If dictionary (or json), specify data orientation. Defaults to ''.
@@ -192,8 +192,8 @@ def data_consolidation(data, predicted_column=0, other_columns=1, datalength=0, 
 
     if isinstance(data, np.ndarray):
 
-        if not isinstance(predicted_column, int):
-            raise TypeError(user_message("'predicted_column' in config is a string and data in numpy array format. Numpy does not allow "
+        if predicted_column and not isinstance(predicted_column, int):
+            raise TypeError(user_message("'predicted_column' is a string and data in numpy array format. Numpy does not allow "
                                          "string assignment", caption="Numpy string assignment not allowed"))
 
         data = pd.DataFrame(data)
@@ -236,13 +236,13 @@ def data_consolidation(data, predicted_column=0, other_columns=1, datalength=0, 
                     f"Predicted column name - '{predicted_column}' not found in data. Change 'predicted_column' in config"
                     f". Available columns: {list(data_for_predictions_df.columns)}", caption="Column not found error"))
 
-        else:
-            if isinstance(data_for_predictions_df.columns[predicted_column], str):
-                predicted_column_name = data_for_predictions_df.columns[predicted_column]
+        elif isinstance(predicted_column, int) and isinstance(data_for_predictions_df.columns[predicted_column], str):
+            predicted_column_name = data_for_predictions_df.columns[predicted_column]
 
-            else:
-                predicted_column_name = 'Predicted column'
-                data_for_predictions_df.rename(columns={data_for_predictions_df.columns[predicted_column]: predicted_column_name}, inplace=True)
+        else:
+            predicted_column_name = 'Predicted column'
+            data_for_predictions_df.rename(columns={data_for_predictions_df.columns[predicted_column]: predicted_column_name}, inplace=True)
+
         reset_index = False
 
         if datetime_index not in [None, False, '']:
@@ -270,7 +270,8 @@ def data_consolidation(data, predicted_column=0, other_columns=1, datalength=0, 
 
 
         # Make predicted column index 0
-        data_for_predictions_df.insert(0, predicted_column_name, data_for_predictions_df.pop(predicted_column_name))
+        if predicted_column:
+            data_for_predictions_df.insert(0, predicted_column_name, data_for_predictions_df.pop(predicted_column_name))
 
         # Convert strings numbers (e.g. '6') to numbers
         data_for_predictions_df = data_for_predictions_df.apply(pd.to_numeric, errors='ignore')
@@ -283,7 +284,7 @@ def data_consolidation(data, predicted_column=0, other_columns=1, datalength=0, 
 
             try:
 
-                if data_for_predictions_df[i].nunique() > unique_threshlold:
+                if (data_for_predictions_df[i].nunique() / len(data_for_predictions_df[i])) > unique_threshlold:
                     to_drop.append(i)
                     break
 
@@ -303,6 +304,12 @@ def data_consolidation(data, predicted_column=0, other_columns=1, datalength=0, 
 
         # Keep only numeric columns
         data_for_predictions_df = data_for_predictions_df.select_dtypes(include='number')
+
+        if predicted_column_name not in data_for_predictions_df.columns:
+            raise KeyError(user_message(
+                "Predicted column is not number datatype. Setup correct 'predicted_column' in py. "
+                f"Available columns with number datatype: {list(data_for_predictions_df.columns)}",
+                caption="Prediction available only on number datatype column."))
 
         if datetime_index not in [None, False, '']:
             if freq:
@@ -328,12 +335,6 @@ def data_consolidation(data, predicted_column=0, other_columns=1, datalength=0, 
         if reset_index or not isinstance(data_for_predictions_df.index, (pd.core.indexes.datetimes.DatetimeIndex, pd._libs.tslibs.timestamps.Timestamp)):
             data_for_predictions_df.reset_index(inplace=True, drop=True)
 
-        if predicted_column_name not in data_for_predictions_df.columns:
-            raise KeyError(user_message(
-                "Predicted column is not number datatype. Setup correct 'predicted_column' in py. "
-                f"Available columns with number datatype: {list(data_for_predictions_df.columns)}",
-                caption="Prediction available only on number datatype column."))
-
         # Define concrete dtypes in number columns
         if dtype:
             data_for_predictions_df = data_for_predictions_df.astype(dtype, copy=False)
@@ -341,7 +342,9 @@ def data_consolidation(data, predicted_column=0, other_columns=1, datalength=0, 
         # Trim the data on defined length
         data_for_predictions_df = data_for_predictions_df.iloc[-datalength:, :]
 
-        if not other_columns or data_for_predictions_df.ndim <= 1:
+
+        # TODO setup other columns in define input so every model can choose and simplier config input types
+        if not other_columns:
             data_for_predictions_df = data_for_predictions_df[predicted_column_name]
 
         data_for_predictions_df = pd.DataFrame(data_for_predictions_df)
