@@ -30,12 +30,14 @@ data_preprocessed, _, _ = mdp.preprocess_data(data_consolidated, remove_outliers
 
 Allowed data formats for load_data are examples
 
-    # myarray_or_dataframe # Numpy array or Pandas.DataFrame
-    # r"/home/user/my.json" # Local file. The same with .parquet, .h5, .json or .xlsx. On windows it's necessary to use raw string - 'r' in front of string because of escape symbols \
-    # "https://yoururl/your.csv" # Web url (with suffix). Same with json.
-    # "https://blockchain.info/unconfirmed-transactions?format=json" # In this case you have to specify also 'request_datatype_suffix': "json", 'data_orientation': "index", 'predicted_table': 'txs',
-    # [{'col_1': 3, 'col_2': 'a'}, {'col_1': 0, 'col_2': 'd'}] # List of records
-    # {'col_1': [3, 2, 1, 0], 'col_2': ['a', 'b', 'c', 'd']} # Dict with colums or rows (index) - necessary to setup data_orientation!
+```python
+# myarray_or_dataframe # Numpy array or Pandas.DataFrame
+# r"/home/user/my.json" # Local file. The same with .parquet, .h5, .json or .xlsx. On windows it's necessary to use raw string - 'r' in front of string because of escape symbols \
+# "https://yoururl/your.csv" # Web url (with suffix). Same with json.
+# "https://blockchain.info/unconfirmed-transactions?format=json" # In this case you have to specify also 'request_datatype_suffix': "json", 'data_orientation': "index", 'predicted_table': 'txs',
+# [{'col_1': 3, 'col_2': 'a'}, {'col_1': 0, 'col_2': 'd'}] # List of records
+# {'col_1': [3, 2, 1, 0], 'col_2': ['a', 'b', 'c', 'd']} # Dict with colums or rows (index) - necessary to setup data_orientation!
+```
 
 Second module is `inputs`. It take tabular time series data and put it into format that can be inserted into machine learning models for example on sklearn or tensorflow. It contain functions make_sequences, create_inputs and create_tests_outputs
 
