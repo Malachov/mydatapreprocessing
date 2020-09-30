@@ -1,14 +1,14 @@
 .. mdinclude:: ../../README.md
 
-`main <mydatapreprocessing.preprocessing>`_
+`preprocessing <../latest/mydatapreprocessing.preprocessing>`_
 -----------------------------
 
 .. automodule:: mydatapreprocessing.preprocessing
 
-`main <mydatapreprocessing.inputs>`_
+`inputs <mydatapreprocessing.inputs>`_
 -----------------------------
 
-.. automodule:: mydatapreprocessing.preprocessing
+.. automodule:: mydatapreprocessing.inputs
 
 Index
 =====
