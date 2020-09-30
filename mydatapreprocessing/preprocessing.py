@@ -71,9 +71,9 @@ def load_data(loaded_data, header=0, csv_style={'separator': ",", 'decimal': "."
             loaded_data = Path(loaded_data).as_posix()
             file_path_exist = True
         else:
-            raise
+            raise FileNotFoundError
 
-    except Exception:
+    except FileNotFoundError:
 
         # Maybe file path is relative and in test_path folder
         data_path = 'test_data' / data_path
@@ -84,8 +84,8 @@ def load_data(loaded_data, header=0, csv_style={'separator': ",", 'decimal': "."
                 file_path_exist = True
 
             else:
-                raise
-        except Exception:
+                raise FileNotFoundError
+        except FileNotFoundError:
             file_path_exist = False
 
     # On url, take everything after last dot
@@ -112,7 +112,7 @@ def load_data(loaded_data, header=0, csv_style={'separator': ",", 'decimal': "."
 
         if data_type_suffix == 'csv':
 
-            if not header and header != 0:
+            if not header or header != 0:
                 header = 'infer'
 
             data = pd.read_csv(loaded_data, header=header, sep=csv_style['separator'],
@@ -132,8 +132,11 @@ def load_data(loaded_data, header=0, csv_style={'separator': ",", 'decimal': "."
             else:
                 data = json.loads(loaded_data)[predicted_table] if predicted_table else json.loads(loaded_data)
 
-        # elif data_type_suffix in ('h5'):
-        #     data = pd.read_csv(loaded_data).iloc[-max_imported_length:, :]
+        elif data_type_suffix in ('h5', 'hdf5'):
+            data = pd.read_hdf(loaded_data).iloc[-max_imported_length:, :]
+
+        elif data_type_suffix in ('parquet'):
+            data = pd.read_parquet(loaded_data).iloc[-max_imported_length:, :]
 
         else:
             raise TypeError
@@ -161,7 +164,7 @@ def load_data(loaded_data, header=0, csv_style={'separator': ",", 'decimal': "."
     return data
 
 
-def data_consolidation(data, predicted_column=None, other_columns=1, datalength=0, data_orientation='', datetime_index='', unique_threshlold=0.1,
+def data_consolidation(data, predicted_column=None, other_columns=1, datalength=0, data_orientation='', datetime_column='', unique_threshlold=0.1,
                        embedding='label', freq=0, resample_function='sum', remove_nans_threshold=0.85, remove_nans_or_replace='interpolate', dtype='float32'):
     """Transform input data in various formats and shapes into data in defined shape,
     that other functions rely on.
@@ -172,7 +175,7 @@ def data_consolidation(data, predicted_column=None, other_columns=1, datalength=
         other_columns (int, optional): Whether use other columns or only predicted one. Defaults to 1.
         datalength (int, optional): Data length after resampling. Defaults to 0.
         data_orientation (str, optional): 'columns' or 'rows'. If dictionary (or json), specify data orientation. Defaults to ''.
-        datetime_index (str, optional): Name or index of datetime column. Defaults to ''.
+        datetime_column (str, optional): Name or index of datetime column. Defaults to ''.
         freq (int, optional): Frequency of resampled data. Defaults to 0.
         resample_function (str, optional): 'sum' or 'mean'. Whether sum resampled columns, or use average. Defaults to 'sum'.
         remove_nans_threshold (float, optional): From 0 to 1. How much not nans (not a number) can be in column to not be deleted.
@@ -202,7 +205,11 @@ def data_consolidation(data, predicted_column=None, other_columns=1, datalength=
         data = pd.DataFrame.from_records(data)
 
     elif isinstance(data, dict):
-        data = {i: [j] for (i, j) in data.items() if not isinstance(j, list)}
+
+        # If just one column, put in list to have same syntax further
+        if not isinstance(next(iter(data.values())), list):
+            data = {i: [j] for (i, j) in data.items()}
+
         orientation = 'columns' if not data_orientation else data_orientation
         data = pd.DataFrame.from_dict(data, orient=orientation)
 
@@ -226,47 +233,48 @@ def data_consolidation(data, predicted_column=None, other_columns=1, datalength=
                                caption="Data transposed warning!!!"))
             data_for_predictions_df = data_for_predictions_df.T
 
-        if isinstance(predicted_column, str):
+        if predicted_column:
+            if isinstance(predicted_column, str):
 
-            predicted_column_name = predicted_column
+                predicted_column_name = predicted_column
 
-            if predicted_column_name not in data_for_predictions_df.columns:
+                if predicted_column_name not in data_for_predictions_df.columns:
 
-                raise KeyError(user_message(
-                    f"Predicted column name - '{predicted_column}' not found in data. Change 'predicted_column' in config"
-                    f". Available columns: {list(data_for_predictions_df.columns)}", caption="Column not found error"))
+                    raise KeyError(user_message(
+                        f"Predicted column name - '{predicted_column}' not found in data. Change 'predicted_column' in config"
+                        f". Available columns: {list(data_for_predictions_df.columns)}", caption="Column not found error"))
 
-        elif isinstance(predicted_column, int) and isinstance(data_for_predictions_df.columns[predicted_column], str):
-            predicted_column_name = data_for_predictions_df.columns[predicted_column]
+            elif isinstance(predicted_column, int) and isinstance(data_for_predictions_df.columns[predicted_column], str):
+                predicted_column_name = data_for_predictions_df.columns[predicted_column]
 
-        else:
-            predicted_column_name = 'Predicted column'
-            data_for_predictions_df.rename(columns={data_for_predictions_df.columns[predicted_column]: predicted_column_name}, inplace=True)
+            else:
+                predicted_column_name = 'Predicted column'
+                data_for_predictions_df.rename(columns={data_for_predictions_df.columns[predicted_column]: predicted_column_name}, inplace=True)
 
         reset_index = False
 
-        if datetime_index not in [None, False, '']:
+        if datetime_column not in [None, False, '']:
 
             try:
-                if isinstance(datetime_index, str):
-                    data_for_predictions_df.set_index(datetime_index, drop=True, inplace=True)
+                if isinstance(datetime_column, str):
+                    data_for_predictions_df.set_index(datetime_column, drop=True, inplace=True)
 
                 else:
                     data_for_predictions_df.set_index(
-                        data_for_predictions_df.columns[datetime_index], drop=True, inplace=True)
+                        data_for_predictions_df.columns[datetime_column], drop=True, inplace=True)
 
             except Exception:
                 raise KeyError(user_message(
-                    f"Datetime name / index from config - '{datetime_index}' not found in data or not datetime format. "
-                    f"Change in config - 'datetime_index'. Available columns: {list(data_for_predictions_df.columns)}"))
+                    f"Datetime name / index from config - '{datetime_column}' not found in data or not datetime format. "
+                    f"Change in config - 'datetime_column'. Available columns: {list(data_for_predictions_df.columns)}"))
 
             try:
                 data_for_predictions_df.index = pd.to_datetime(data_for_predictions_df.index)
 
             except Exception:
                 raise TypeError(user_message(
-                    f"Datetime name / index from config - '{datetime_index}' could not been transformed to datetime format. "
-                    "Try some common datetime string or convert column manually. - 'datetime_index'."))
+                    f"Datetime name / index from config - '{datetime_column}' could not been transformed to datetime format. "
+                    "Try some common datetime string or convert column manually. - 'datetime_column'."))
 
 
         # Make predicted column index 0
@@ -305,13 +313,13 @@ def data_consolidation(data, predicted_column=None, other_columns=1, datalength=
         # Keep only numeric columns
         data_for_predictions_df = data_for_predictions_df.select_dtypes(include='number')
 
-        if predicted_column_name not in data_for_predictions_df.columns:
+        if predicted_column and predicted_column_name not in data_for_predictions_df.columns:
             raise KeyError(user_message(
                 "Predicted column is not number datatype. Setup correct 'predicted_column' in py. "
                 f"Available columns with number datatype: {list(data_for_predictions_df.columns)}",
                 caption="Prediction available only on number datatype column."))
 
-        if datetime_index not in [None, False, '']:
+        if datetime_column not in [None, False, '']:
             if freq:
                 data_for_predictions_df.sort_index(inplace=True)
                 if resample_function == 'mean':
@@ -383,40 +391,6 @@ def data_consolidation(data, predicted_column=None, other_columns=1, datalength=
     return data_for_predictions_df
 
 
-def add_frequency_columns(data, window):
-    """Use fourier transform on running window and add it's maximum and std as new data column.
-
-    Args:
-        data (pd.DataFrame): Data we want to use.
-        window (int): length of running window.
-
-    Returns:
-        pd.Dataframe: Data with new columns, that contain informations of running frequency analysis.
-    """
-    data = pd.DataFrame(data)
-
-    if window > len(data.values.T):
-        user_warning("Length of data much be much bigger than window used for generating new data columns",
-                     caption="Adding frequency columns failed")
-
-    windows = rolling_windows(data.values.T, window)
-
-    ffted = np.fft.fft(windows, axis=2) / windows.shape[0]
-
-    absolute = np.abs(ffted)[:, :, 1:]
-    angle = np.angle(ffted)[:, :, 1:]
-
-    data = data[-ffted.shape[1]:]
-
-    for i, j in enumerate(data):
-        data[f"{j} - FFT windowed abs max"] = np.nanmax(absolute, axis=2)[i]
-        data[f"{j} - FFT windowed abs std"] = np.nanstd(absolute, axis=2)[i]
-        data[f"{j} - FFT windowed angle1 max"] = np.nanmax(angle, axis=2)[i]
-        data[f"{j} - FFT windowed angle1 std"] = np.nanstd(angle, axis=2)[i]
-
-    return data
-
-
 def rolling_windows(data, window):
     """Generate matrix of rolling windows. E.g for matrix [1, 2, 3, 4, 5] and window 2
     it will create [[1 2], [2 3], [3 4], [4 5]]. From matrix [[1, 2, 3], [4, 5, 6]] it will create
@@ -432,6 +406,42 @@ def rolling_windows(data, window):
     shape = data.shape[:-1] + (data.shape[-1] - window + 1, window)
     strides = data.strides + (data.strides[-1],)
     return np.lib.stride_tricks.as_strided(data, shape=shape, strides=strides)
+
+
+def add_frequency_columns(data, window):
+    """Use fourier transform on running window and add it's maximum and std as new data column.
+
+    Args:
+        data (pd.DataFrame): Data we want to use.
+        window (int): length of running window.
+
+    Returns:
+        pd.Dataframe: Data with new columns, that contain informations of running frequency analysis.
+    """
+    data = pd.DataFrame(data)
+
+    if window > len(data.values):
+        user_warning("Length of data much be much bigger than window used for generating new data columns",
+                     caption="Adding frequency columns failed")
+
+    windows = rolling_windows(data.values.T, window)
+
+    ffted = np.fft.fft(windows, axis=2) / window
+
+    absolute = np.abs(ffted)[:, :, 1:]
+    angle = np.angle(ffted)[:, :, 1:]
+
+    data = data[-ffted.shape[1]:]
+
+    for i, j in enumerate(data):
+        data[f"{j} - FFT windowed abs max index"] = np.nanargmax(absolute, axis=2)[i]
+        data[f"{j} - FFT windowed angle1 max index"] = np.nanargmax(angle, axis=2)[i]
+        data[f"{j} - FFT windowed abs max"] = np.nanmax(absolute, axis=2)[i]
+        data[f"{j} - FFT windowed abs std"] = np.nanstd(absolute, axis=2)[i]
+        data[f"{j} - FFT windowed angle1 max"] = np.nanmax(angle, axis=2)[i]
+        data[f"{j} - FFT windowed angle1 std"] = np.nanstd(angle, axis=2)[i]
+
+    return data
 
 
 def add_derived_columns(data, differences=True, second_differences=True, multiplications=True, rolling_means=True, rolling_stds=True, mean_distances=True, window=10):
@@ -745,8 +755,8 @@ def smooth(data, window=101, polynom_order=2):
     import scipy.signal
 
     for i in range(data.shape[1]):
-        data[:, i] = scipy.signal.savgol_filter(
-            data[:, i], window, polynom_order)
+        data.iloc[:, i] = scipy.signal.savgol_filter(
+            data.values[:, i], window, polynom_order)
 
     return data
 
