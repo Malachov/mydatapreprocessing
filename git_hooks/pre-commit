@@ -23,6 +23,4 @@ sphinx-apidoc -f -e -o source ../mydatapreprocessing
 
 make html
 
-cd ../
 
-git add docs
