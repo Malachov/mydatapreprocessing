@@ -1,5 +1,5 @@
 """Module for data preprocessing. It consolidate data from various resources, cleane the data, generate
-new derived columns, do feature exxtraction and do data preprocessing like. If you want to see how functions work -
+new derived columns, do feature extraction and do data preprocessing like. If you want to see how functions work -
 working examples with printed results are in tests - visual.py.
 
 Default output data shape is (n_samples, n_features)!
