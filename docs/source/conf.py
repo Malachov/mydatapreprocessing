@@ -19,7 +19,7 @@
 import sys
 import pathlib
 import datetime
-
+from recommonmark.parser import CommonMarkParser
 
 script_dir = pathlib.Path(__file__).resolve()
 lib_path = script_dir.parents[2].as_posix()
@@ -42,6 +42,7 @@ release = datetime.datetime.now().strftime('%d-%m-%Y')
 
 master_doc = 'index'
 
+source_parsers = {".md": CommonMarkParser}
 source_suffix = ['.rst', '.md']
 
 # -- General configuration ---------------------------------------------------
@@ -62,12 +63,12 @@ extensions = [
                 'sphinx.ext.viewcode',
                 'sphinx.ext.githubpages',
                 'sphinx.ext.imgmath',
-                'm2r',
-                'sphinx.ext.autosectionlabel'
+                'sphinx.ext.autosectionlabel',
+                'recommonmark',
 ]
 
-# 'about.html', 
-html_sidebars = { '**': ['navi.html', 'searchbox.html']}
+# 'about.html'
+html_sidebars = {'**': ['navi.html', 'searchbox.html']}
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
