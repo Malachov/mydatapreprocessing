@@ -41,10 +41,7 @@ release = datetime.datetime.now().strftime('%d-%m-%Y')
 
 master_doc = 'index'
 
-source_suffix = {
-    '.rst': 'restructuredtext',
-    '.md': 'markdown',
-}
+source_suffix = ['.rst', '.md']
 
 # -- General configuration ---------------------------------------------------
 html_theme_options = {
@@ -65,7 +62,7 @@ extensions = [
     'sphinx.ext.githubpages',
     'sphinx.ext.imgmath',
     'sphinx.ext.autosectionlabel',
-    'recommonmark',
+    'm2r2',
 ]
 
 # 'about.html'
