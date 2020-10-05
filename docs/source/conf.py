@@ -19,7 +19,6 @@
 import sys
 import pathlib
 import datetime
-from recommonmark.parser import CommonMarkParser
 
 script_dir = pathlib.Path(__file__).resolve()
 lib_path = script_dir.parents[2].as_posix()
@@ -42,8 +41,10 @@ release = datetime.datetime.now().strftime('%d-%m-%Y')
 
 master_doc = 'index'
 
-source_parsers = {".md": CommonMarkParser}
-source_suffix = ['.rst', '.md']
+source_suffix = {
+    '.rst': 'restructuredtext',
+    '.md': 'markdown',
+}
 
 # -- General configuration ---------------------------------------------------
 html_theme_options = {
@@ -57,14 +58,14 @@ html_theme_options = {
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-                'sphinx.ext.autodoc',
-                'sphinx.ext.napoleon',
-                'sphinx.ext.intersphinx',
-                'sphinx.ext.viewcode',
-                'sphinx.ext.githubpages',
-                'sphinx.ext.imgmath',
-                'sphinx.ext.autosectionlabel',
-                'recommonmark',
+    'sphinx.ext.autodoc',
+    'sphinx.ext.napoleon',
+    'sphinx.ext.intersphinx',
+    'sphinx.ext.viewcode',
+    'sphinx.ext.githubpages',
+    'sphinx.ext.imgmath',
+    'sphinx.ext.autosectionlabel',
+    'recommonmark',
 ]
 
 # 'about.html'
