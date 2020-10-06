@@ -1,5 +1,5 @@
 # List of what have been done in new versions
 
-v1.0
+v1.x
 
-- Realease version
+- Realease version, CI and docs deployment developing

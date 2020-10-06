@@ -449,9 +449,6 @@ def add_derived_columns(data, differences=True, second_differences=True, multipl
     rolling mean or distance from average. Computed columns will be appened to original data. It will process all the columns,
     so a lot of redundant data will be created. It is necessary do some feature extraction afterwards to remove noncorrelated columns.
 
-    Examples:
-        TODO
-
     Args:
         data (pd.DataFrame): Data that we want to extract more information from.
         difference (bool): Compute difference between n and n-1 sample
@@ -754,9 +751,13 @@ def smooth(data, window=101, polynom_order=2):
     """
     import scipy.signal
 
-    for i in range(data.shape[1]):
-        data.iloc[:, i] = scipy.signal.savgol_filter(
-            data.values[:, i], window, polynom_order)
+    if isinstance(data, pd.DataFrame):
+        for i in range(data.shape[1]):
+            data.iloc[:, i] = scipy.signal.savgol_filter(data.values[:, i], window, polynom_order)
+
+    elif isinstance(data, np.ndarray):
+        for i in range(data.shape[1]):
+            data[:, i] = scipy.signal.savgol_filter(data[:, i], window, polynom_order)
 
     return data
 

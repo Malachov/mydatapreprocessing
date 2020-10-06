@@ -46,10 +46,13 @@ def test_integration():
 
     # Preprocess data. It return preprocessed data, but also last undifferenced value and scaler for inverse
     # transformation, so unpack it with _
-    data_preprocessed, _, _ = mdp.preprocess_data(data_consolidated, remove_outliers=True, smoothit=(11, 2),
-                                                  correlation_threshold=False, data_transform=False, standardizeit='standardize')
+    data_preprocessed_df, _, _ = mdp.preprocess_data(data_consolidated, remove_outliers=True, smoothit=(11, 2),
+                                                     correlation_threshold=True, data_transform=True, standardizeit='standardize')
 
-    assert not np.isnan(np.min(data_preprocessed.values))
+    data_preprocessed, _, _ = mdp.preprocess_data(data_consolidated.values, remove_outliers=True, smoothit=(11, 2),
+                                                  correlation_threshold=0.9, data_transform='difference', standardizeit='01')
+
+    assert not np.isnan(np.min(data_preprocessed_df.values)) and not np.isnan(np.min(data_preprocessed))
 
 
 def test_preprocessing():
