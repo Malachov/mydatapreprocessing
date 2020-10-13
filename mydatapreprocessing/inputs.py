@@ -1,3 +1,12 @@
+"""This is module that from time series data create inputs to models like scikit learn or tensorflow.
+Usual data inputs types are (X, y, x_input). X stands for vector of inputs, y for vector of outputs and
+x_input is input for new predictions we want to create.
+
+There are three functions. `make_sequences` that create seqences from time samples, `create_inputs`
+that tell the first function what sequences create for what models and `create_tests_outputs`
+that for defined inputs create outputs that we can compute error criterion like rmse with.
+"""
+
 import numpy as np
 
 from mydatapreprocessing.preprocessing import rolling_windows

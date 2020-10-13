@@ -1,14 +1,14 @@
 .. mdinclude:: ../../README.md
 
-`main <predictit.preprocessing>`_
+`preprocessing <../latest/mydatapreprocessing.preprocessing.html>`_
 -----------------------------
 
-.. automodule:: predictit.preprocessing
+.. automodule:: mydatapreprocessing.preprocessing
 
-`main <predictit.inputs>`_
+`inputs <../latest/mydatapreprocessing.inputs.html>`_
 -----------------------------
 
-.. automodule:: predictit.preprocessing
+.. automodule:: mydatapreprocessing.inputs
 
 Index
 =====

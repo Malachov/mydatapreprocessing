@@ -1,6 +1,6 @@
 
 # Generate rst files with
-# sphinx-apidoc -f -e -o source/ ../predictit
+# sphinx-apidoc -f -e -o source/ ../mydatapreprocessing
 # Only other important file is index.rst
 
 # Configuration file for the Sphinx documentation builder.
@@ -20,7 +20,6 @@ import sys
 import pathlib
 import datetime
 
-
 script_dir = pathlib.Path(__file__).resolve()
 lib_path = script_dir.parents[2].as_posix()
 sys.path.insert(0, lib_path)
@@ -33,7 +32,7 @@ sys.path.insert(2, lib_path2.as_posix())
 
 # -- Project information -----------------------------------------------------
 
-project = 'predictit'
+project = 'mydatapreprocessing'
 copyright = '2020, Daniel Malachov'
 author = 'Daniel Malachov'
 
@@ -47,7 +46,7 @@ source_suffix = ['.rst', '.md']
 # -- General configuration ---------------------------------------------------
 html_theme_options = {
     'github_user': 'Malachov',
-    'github_repo': 'predictit',
+    'github_repo': 'mydatapreprocessing',
     'github_banner': True,
     'logo': 'logo.png'
 }
@@ -56,18 +55,18 @@ html_theme_options = {
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-                'sphinx.ext.autodoc',
-                'sphinx.ext.napoleon',
-                'sphinx.ext.intersphinx',
-                'sphinx.ext.viewcode',
-                'sphinx.ext.githubpages',
-                'sphinx.ext.imgmath',
-                'm2r',
-                'sphinx.ext.autosectionlabel'
+    'sphinx.ext.autodoc',
+    'sphinx.ext.napoleon',
+    'sphinx.ext.intersphinx',
+    'sphinx.ext.viewcode',
+    'sphinx.ext.githubpages',
+    'sphinx.ext.imgmath',
+    'sphinx.ext.autosectionlabel',
+    'm2r2',
 ]
 
-# 'about.html', 
-html_sidebars = { '**': ['navi.html', 'searchbox.html']}
+# 'about.html'
+html_sidebars = {'**': ['navi.html', 'searchbox.html']}
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
