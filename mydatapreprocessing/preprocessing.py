@@ -73,7 +73,7 @@ def load_data(loaded_data, header=0, csv_style={'separator': ",", 'decimal': "."
         else:
             raise FileNotFoundError
 
-    except FileNotFoundError:
+    except (FileNotFoundError, OSError):
 
         # Maybe file path is relative and in test_path folder
         data_path = 'test_data' / data_path
@@ -85,7 +85,7 @@ def load_data(loaded_data, header=0, csv_style={'separator': ",", 'decimal': "."
 
             else:
                 raise FileNotFoundError
-        except FileNotFoundError:
+        except (FileNotFoundError, OSError):
             file_path_exist = False
 
     # On url, take everything after last dot
@@ -500,35 +500,55 @@ def add_derived_columns(data, differences=True, second_differences=True, multipl
     return pd.concat([i.iloc[-min_length:].reset_index(drop=True) for i in results], axis=1)
 
 
-def preprocess_data(data_for_predictions, remove_outliers=False, smoothit=False,
-                    correlation_threshold=False, data_transform=False, standardizeit=False):
+def preprocess_data(data, remove_outliers=False, smoothit=False,
+                    correlation_threshold=0, data_transform=None, standardizeit='standardize'):
+    """Main preprocessing function, that call other functions based on configuration. Mostly for preparing
+    data to be optimal as input into machine learning models.
+
+    Args:
+        data (np.ndarray, pd.DataFrame): Input data that we want to preprocess.
+        remove_outliers (bool, optional): Whether remove unusual values far from average. Defaults to False.
+        smoothit (bool, optional): Whether smooth the data. Defaults to False.
+        correlation_threshold (float, optional): Whether remove columns that are corelated less than configured value
+            Value must be between 0 and 1. But if 0, than None correlation threshold is applied. Defaults to 0.
+        data_transform (str, optional): Whether transform data. 'difference' transform data into differences between
+            neighbor values. Defaults to None.
+        standardizeit (str, optional): How to standardize data. '01' and '-11' means scope from to for normalization.
+            'robust' use RobustScaler and 'standard' use StandardScaler - mean is 0 and std is 1. Defaults to 'standardize'.
+
+    Returns:
+        np.ndarray, pd.DataFrame: Preprocessed data. If input in numpy array, then also output in array, if dataframe input, then dataframe output.
+    """
+
+    preprocessed = data
+
     if remove_outliers:
-        data_for_predictions = remove_the_outliers(
-            data_for_predictions, threshold=remove_outliers)
+        preprocessed = remove_the_outliers(
+            preprocessed, threshold=remove_outliers)
 
     if smoothit:
-        data_for_predictions = smooth(
-            data_for_predictions, smoothit[0], smoothit[1])
+        preprocessed = smooth(
+            preprocessed, smoothit[0], smoothit[1])
 
     if correlation_threshold:
-        data_for_predictions = keep_corelated_data(data_for_predictions, threshold=correlation_threshold)
+        preprocessed = keep_corelated_data(preprocessed, threshold=correlation_threshold)
 
     if data_transform == 'difference':
-        if isinstance(data_for_predictions, np.ndarray):
-            last_undiff_value = data_for_predictions[-1, 0]
+        if isinstance(preprocessed, np.ndarray):
+            last_undiff_value = preprocessed[-1, 0]
         else:
-            last_undiff_value = data_for_predictions.iloc[-1, 0]
-        data_for_predictions = do_difference(data_for_predictions)
+            last_undiff_value = preprocessed.iloc[-1, 0]
+        preprocessed = do_difference(preprocessed)
     else:
         last_undiff_value = None
 
     if standardizeit:
-        data_for_predictions, final_scaler = standardize(
-            data_for_predictions, used_scaler=standardizeit)
+        preprocessed, final_scaler = standardize(
+            preprocessed, used_scaler=standardizeit)
     else:
         final_scaler = None
 
-    return data_for_predictions, last_undiff_value, final_scaler
+    return preprocessed, last_undiff_value, final_scaler
 
 
 def preprocess_data_inverse(data, standardizeit=False, final_scaler=None, data_transform=False, last_undiff_value=None):

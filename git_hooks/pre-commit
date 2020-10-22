@@ -21,11 +21,9 @@ mv _templates source
 
 sphinx-apidoc -f -e -o source ../mydatapreprocessing
 
-cd source
-
 make html
 
-cd ../..
+cd ..
 
 git add docs
 
