@@ -37,17 +37,17 @@ def test_integration():
     data = "https://blockchain.info/unconfirmed-transactions?format=json"
 
     # Load data from file or URL
-    data_loaded = mdp.load_data(data, request_datatype_suffix=".json", predicted_table='txs')
+    data_loaded = mdp.load_data(data, request_datatype_suffix=".json", predicted_table='txs', data_orientation="index")
 
     # Transform various data into defined format - pandas dataframe - convert to numeric if possible, keep
     # only numeric data and resample ifg configured. It return array, dataframe
     data_consolidated = mdp.data_consolidation(
-        data_loaded, predicted_column="weight", data_orientation="index", remove_nans_threshold=0.9, remove_nans_or_replace='interpolate')
+        data_loaded, predicted_column="weight", remove_nans_threshold=0.9, remove_nans_or_replace='interpolate')
 
     # Preprocess data. It return preprocessed data, but also last undifferenced value and scaler for inverse
     # transformation, so unpack it with _
     data_preprocessed_df, _, _ = mdp.preprocess_data(data_consolidated, remove_outliers=True, smoothit=(11, 2),
-                                                     correlation_threshold=True, data_transform=True, standardizeit='standardize')
+                                                     correlation_threshold=False, data_transform=True, standardizeit='standardize')
 
     data_preprocessed, _, _ = mdp.preprocess_data(data_consolidated.values, remove_outliers=True, smoothit=(11, 2),
                                                   correlation_threshold=0.9, data_transform='difference', standardizeit='01')
@@ -138,18 +138,17 @@ def test_local_file():
     assert df_csv.ndim and df_json.ndim and df_parquet.ndim and df_hdf.ndim
 
 
+### Data load
 def test_test_data():
     assert mdp.load_data('test').ndim
 
 
-### Consolidation
-
 def test_numpy():
-    assert mdp.data_consolidation(np.random.randn(100, 3)).ndim
+    assert mdp.load_data(np.random.randn(100, 3)).ndim
 
 
 def test_dict():
-    assert mdp.data_consolidation({'col_1': [3, 2, 1, 0], 'col_2': [3, 2, 1, 0]}, data_orientation='index').ndim
+    assert mdp.load_data({'col_1': [3, 2, 1, 0], 'col_2': [3, 2, 1, 0]}, data_orientation='index').ndim
 
 
 def test_resample():
@@ -158,6 +157,7 @@ def test_resample():
     assert len(resampled) < len(data) and len(resampled) > 1
 
 
+### Consolidation
 def test_remove_nans():
     data = np.random.randn(50, 10)
     data[data < 0] = np.nan
@@ -187,8 +187,3 @@ def test_split():
 # if __name__ == "__main__":
 
 #     pass
-
-df = pd.DataFrame(np.random.randn(50, 2))
-df.columns = ['sd', 'vv']
-df.to_parquet("test.parquet", compression='gzip')
-dff = pd.read_parquet("test.parquet")

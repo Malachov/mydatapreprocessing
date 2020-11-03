@@ -29,7 +29,7 @@ from sklearn import preprocessing
 from mylogging import user_warning, user_message
 
 
-def load_data(loaded_data, header=0, csv_style={'separator': ",", 'decimal': "."}, predicted_table='', max_imported_length=0, request_datatype_suffix=''):
+def load_data(data, header=0, csv_style={'separator': ",", 'decimal': "."}, predicted_table='', max_imported_length=0, request_datatype_suffix='', data_orientation=''):
     """Load data from path or url. Available formats are csv, excel xlsx, parquet, json or h5.
     It can also be 'test' or 'sql' - you need to setup database name and query then.
 
@@ -44,133 +44,156 @@ def load_data(loaded_data, header=0, csv_style={'separator': ",", 'decimal': "."
         pd.DataFrame, dict, list : Loaded data. Usually in pd.DataFrame format, but sometimes as dict or list, if it needs to be processed before conversion (because of orientation).
     """
 
-    if str(loaded_data).lower() == 'test':
-        from mydatapreprocessing import generatedata
+    # If data is only path or URL or test or SQL
+    if isinstance(data, (str, Path)):
 
-        data = generatedata.gen_random()
-        print(user_message(("Test data was used. Setup config.py 'data'. Check official readme or do help(preprocessing)")))
+        if str(data).lower() == 'test':
+            from mydatapreprocessing import generatedata
 
-        return data
+            data = generatedata.gen_random()
+            print(user_message(("Test data was used. Setup config.py 'data'. Check official readme or do help(preprocessing)")))
 
-    # ############# Load SQL data #############
-    # elif str(loaded_data).lower() == 'sql':
-    #     try:
-    #         data = mydatapreprocessing.database.database_load(server=config.server, database=config.database, freq=config.freq,
-    #                                                 data_limit=config.max_imported_length)
+            return data
 
-    #     except Exception:
-    #         raise RuntimeError(user_message("ERROR - Data load from SQL server failed - "
-    #                                         "Setup server, database and predicted column name in config"))
+        # ############# Load SQL data #############
+        # elif str(data).lower() == 'sql':
+        #     try:
+        #         data = mydatapreprocessing.database.database_load(server=config.server, database=config.database, freq=config.freq,
+        #                                                 data_limit=config.max_imported_length)
 
-    #     return data
+        #     except Exception:
+        #         raise RuntimeError(user_message("ERROR - Data load from SQL server failed - "
+        #                                         "Setup server, database and predicted column name in config"))
 
-    data_path = Path(loaded_data)
+        #     return data
 
-    try:
-        if data_path.exists():
-            loaded_data = Path(loaded_data).as_posix()
-            file_path_exist = True
-        else:
-            raise FileNotFoundError
-
-    except (FileNotFoundError, OSError):
-
-        # Maybe file path is relative and in test_path folder
-        data_path = 'test_data' / data_path
+        data_path = Path(data)
 
         try:
             if data_path.exists():
-                loaded_data = Path(loaded_data).as_posix()
+                data = Path(data).as_posix()
                 file_path_exist = True
-
             else:
                 raise FileNotFoundError
+
         except (FileNotFoundError, OSError):
-            file_path_exist = False
 
-    # On url, take everything after last dot
-    data_type_suffix = data_path.suffix[1:].lower()
+            # Maybe file path is relative and in test_path folder
+            data_path = 'test_data' / data_path
 
-    # If not suffix inferred, then maybe url that return as request - than suffix have to be configured
-    if not data_type_suffix or (data_type_suffix not in ['csv', 'json', 'xlsx'] and request_datatype_suffix):
-        data_type_suffix = request_datatype_suffix.lower()
+            try:
+                if data_path.exists():
+                    data = Path(data).as_posix()
+                    file_path_exist = True
 
-    if data_type_suffix.startswith('.'):
-        data_type_suffix = data_type_suffix[1:]
+                else:
+                    raise FileNotFoundError
+            except (FileNotFoundError, OSError):
+                file_path_exist = False
 
-        # If it's URL with suffix, we usually need url, if its url link with no suffix, we need get request response
-        if not file_path_exist:
-            loaded_data = requests.get(loaded_data).content
+        # On url, take everything after last dot
+        data_type_suffix = data_path.suffix[1:].lower()
 
-    if not data_type_suffix:
-        raise TypeError(user_message("Data has no suffix (e.g. csv) and is not 'test' or 'sql'. "
-                                     "If using url with no suffix, setup 'request_datatype_suffix'"
-                                     "Or insert data with local path or insert data for example in "
-                                     "dataframe or numpy array", caption="Data load error"))
+        # If not suffix inferred, then maybe url that return as request - than suffix have to be configured
+        if not data_type_suffix or (data_type_suffix not in ['csv', 'json', 'xlsx'] and request_datatype_suffix):
+            data_type_suffix = request_datatype_suffix.lower()
 
-    try:
+        if data_type_suffix.startswith('.'):
+            data_type_suffix = data_type_suffix[1:]
 
-        if data_type_suffix == 'csv':
+            # If it's URL with suffix, we usually need url, if its url link with no suffix, we need get request response
+            if not file_path_exist:
+                data = requests.get(data).content
 
-            if not header or header != 0:
-                header = 'infer'
+        if not data_type_suffix:
+            raise TypeError(user_message("Data has no suffix (e.g. csv) and is not 'test' or 'sql'. "
+                                         "If using url with no suffix, setup 'request_datatype_suffix'"
+                                         "Or insert data with local path or insert data for example in "
+                                         "dataframe or numpy array", caption="Data load error"))
 
-            data = pd.read_csv(loaded_data, header=header, sep=csv_style['separator'],
-                               decimal=csv_style['decimal']).iloc[-max_imported_length:, :]
+        try:
 
-        elif data_type_suffix == 'xlsx':
-            data = pd.read_excel(loaded_data, sheet_name=predicted_table).iloc[-max_imported_length:, :]
+            if data_type_suffix == 'csv':
 
-        elif data_type_suffix == 'json':
+                if not header or header != 0:
+                    header = 'infer'
 
-            import json
+                data = pd.read_csv(data, header=header, sep=csv_style['separator'],
+                                   decimal=csv_style['decimal']).iloc[-max_imported_length:, :]
 
-            if file_path_exist:
-                with open(loaded_data) as json_file:
-                    data = json.load(json_file)[predicted_table] if predicted_table else json.load(json_file)
+            elif data_type_suffix == 'xlsx':
+                data = pd.read_excel(data, sheet_name=predicted_table).iloc[-max_imported_length:, :]
+
+            elif data_type_suffix == 'json':
+
+                import json
+
+                if file_path_exist:
+                    with open(data) as json_file:
+                        data = json.load(json_file)[predicted_table] if predicted_table else json.load(json_file)
+
+                else:
+                    data = json.loads(data)[predicted_table] if predicted_table else json.loads(data)
+
+            elif data_type_suffix in ('h5', 'hdf5'):
+                data = pd.read_hdf(data).iloc[-max_imported_length:, :]
+
+            elif data_type_suffix in ('parquet'):
+                data = pd.read_parquet(data).iloc[-max_imported_length:, :]
 
             else:
-                data = json.loads(loaded_data)[predicted_table] if predicted_table else json.loads(loaded_data)
+                raise TypeError
 
-        elif data_type_suffix in ('h5', 'hdf5'):
-            data = pd.read_hdf(loaded_data).iloc[-max_imported_length:, :]
+        except TypeError:
+            raise TypeError(user_message(f"Your file format {data_type_suffix} not implemented yet. You can use csv, excel, parquet or txt.", "Wrong (not implemented) format"))
 
-        elif data_type_suffix in ('parquet'):
-            data = pd.read_parquet(loaded_data).iloc[-max_imported_length:, :]
+        except urllib.error.URLError:
+            raise Exception(user_message(
+                "Configured URL not found, check if page is available.",
+                caption="URL error"))
 
-        else:
-            raise TypeError
+        except Exception as err:
+            if not file_path_exist:
+                raise FileNotFoundError(user_message(
+                    "File not found on configured path. If you are using relative path, file must have be in CWD "
+                    "(current working directory) or must be inserted in system paths (sys.path.insert(0, 'your_path')). If url, check if page is available.",
+                    caption="File not found error"))
+            else:
+                raise(RuntimeError(user_message("Data load error. File found on path, but not loaded. Check if you use "
+                                                "corrent locales - correct value and decimal separators in config (different in US and EU...). "
+                                                " If it's web link, URL has to have .csv suffix. If it's link, that will generate csv link after "
+                                                f"load, it will not work.\n\n Detailed error: \n\n {err}", caption="Data load failed")))
 
-    except TypeError:
-        raise TypeError(user_message(f"Your file format {data_type_suffix} not implemented yet. You can use csv, excel, parquet or txt.", "Wrong (not implemented) format"))
+    elif isinstance(data, np.ndarray):
+        data = pd.DataFrame(data)
 
-    except urllib.error.URLError:
-        raise Exception(user_message(
-            "Configured URL not found, check if page is available.",
-            caption="URL error"))
+    elif isinstance(data, list):
+        data = pd.DataFrame.from_records(data)
 
-    except Exception as err:
-        if not file_path_exist:
-            raise FileNotFoundError(user_message(
-                "File not found on configured path. If you are using relative path, file must have be in CWD "
-                "(current working directory) or must be inserted in system paths (sys.path.insert(0, 'your_path')). If url, check if page is available.",
-                caption="File not found error"))
-        else:
-            raise(RuntimeError(user_message("Data load error. File found on path, but not loaded. Check if you use "
-                                            "corrent locales - correct value and decimal separators in config (different in US and EU...). "
-                                            " If it's web link, URL has to have .csv suffix. If it's link, that will generate csv link after "
-                                            f"load, it will not work.\n\n Detailed error: \n\n {err}", caption="Data load failed")))
+    elif isinstance(data, dict):
+
+        # If just one column, put in list to have same syntax further
+        if not isinstance(next(iter(data.values())), list):
+            data = {i: [j] for (i, j) in data.items()}
+
+        orientation = 'columns' if not data_orientation else data_orientation
+        data = pd.DataFrame.from_dict(data, orient=orientation)
+
+    else:
+        raise TypeError(user_message(
+            "Input data must be in pd.dataframe, pd.series, numpy array or in a path (str or pathlib) with supported formats"
+            " - csv, xlsx, txt or parquet. Check config comments for more informations...", "Data format error"))
 
     return data
 
 
-def data_consolidation(data, predicted_column=None, other_columns=1, datalength=0, data_orientation='', datetime_column='', unique_threshlold=0.1,
+def data_consolidation(data, predicted_column=None, other_columns=1, datalength=0, datetime_column='', unique_threshlold=0.1,
                        embedding='label', freq=0, resample_function='sum', remove_nans_threshold=0.85, remove_nans_or_replace='interpolate', dtype='float32'):
     """Transform input data in various formats and shapes into data in defined shape,
     that other functions rely on.
 
     Args:
-        data (np.ndarray, pd.DataFrame): Input data in well standardized format.
+        data (pd.DataFrame): Input data in well standardized format.
         predicted_column ((int, str), optional): Predicted column name or index. Move on first column and test if number. If None, it's ignored. Defaults to None.
         other_columns (int, optional): Whether use other columns or only predicted one. Defaults to 1.
         datalength (int, optional): Data length after resampling. Defaults to 0.
@@ -193,200 +216,168 @@ def data_consolidation(data, predicted_column=None, other_columns=1, datalength=
 
     """
 
-    if isinstance(data, np.ndarray):
+    if not isinstance(data, pd.DataFrame):
+        try:
+            data = pd.DataFrame(data)
+        except Exception as err:
+            raise(RuntimeError(user_message("Check configuration file for supported formats. It can be path of file (csv, json, parquer...) or it "
+                                            "can be data in python format (numpy array, pandas dataframe or series, dict or list, ). It can also be other "
+                                            "format, but then it have to work with pd.DataFrame(your_data)."
+                                            f"\n\n Detailed error: \n\n {err}", caption="Data load failed")))
 
-        if predicted_column and not isinstance(predicted_column, int):
-            raise TypeError(user_message("'predicted_column' is a string and data in numpy array format. Numpy does not allow "
-                                         "string assignment", caption="Numpy string assignment not allowed"))
+    data_for_predictions_df = data.copy()
 
-        data = pd.DataFrame(data)
+    if data_for_predictions_df.shape[0] < data_for_predictions_df.shape[1]:
+        print(user_message("Input data must be in shape (n_samples, n_features) that means (rows, columns) Your shape is "
+                           f" {data.shape}. It's unusual to have more features than samples. Probably wrong shape.",
+                           caption="Data transposed warning!!!"))
+        data_for_predictions_df = data_for_predictions_df.T
 
-    elif isinstance(data, list):
-        data = pd.DataFrame.from_records(data)
+    if predicted_column:
+        if isinstance(predicted_column, str):
 
-    elif isinstance(data, dict):
+            predicted_column_name = predicted_column
 
-        # If just one column, put in list to have same syntax further
-        if not isinstance(next(iter(data.values())), list):
-            data = {i: [j] for (i, j) in data.items()}
+            if predicted_column_name not in data_for_predictions_df.columns:
 
-        orientation = 'columns' if not data_orientation else data_orientation
-        data = pd.DataFrame.from_dict(data, orient=orientation)
-
-    else:
-        if not isinstance(data, pd.DataFrame):
-            try:
-                data = pd.DataFrame(data)
-            except Exception as err:
-                raise(RuntimeError(user_message("Check configuration file for supported formats. It can be path of file (csv, json, parquer...) or it "
-                                                "can be data in python format (numpy array, pandas dataframe or series, dict or list, ). It can also be other "
-                                                "format, but then it have to work with pd.DataFrame(your_data)."
-                                                f"\n\n Detailed error: \n\n {err}", caption="Data load failed")))
-
-    if isinstance(data, pd.DataFrame):
-
-        data_for_predictions_df = data.copy()
-
-        if data_for_predictions_df.shape[0] < data_for_predictions_df.shape[1]:
-            print(user_message("Input data must be in shape (n_samples, n_features) that means (rows, columns) Your shape is "
-                               f" {data.shape}. It's unusual to have more features than samples. Probably wrong shape.",
-                               caption="Data transposed warning!!!"))
-            data_for_predictions_df = data_for_predictions_df.T
-
-        if predicted_column:
-            if isinstance(predicted_column, str):
-
-                predicted_column_name = predicted_column
-
-                if predicted_column_name not in data_for_predictions_df.columns:
-
-                    raise KeyError(user_message(
-                        f"Predicted column name - '{predicted_column}' not found in data. Change 'predicted_column' in config"
-                        f". Available columns: {list(data_for_predictions_df.columns)}", caption="Column not found error"))
-
-            elif isinstance(predicted_column, int) and isinstance(data_for_predictions_df.columns[predicted_column], str):
-                predicted_column_name = data_for_predictions_df.columns[predicted_column]
-
-            else:
-                predicted_column_name = 'Predicted column'
-                data_for_predictions_df.rename(columns={data_for_predictions_df.columns[predicted_column]: predicted_column_name}, inplace=True)
-
-        reset_index = False
-
-        if datetime_column not in [None, False, '']:
-
-            try:
-                if isinstance(datetime_column, str):
-                    data_for_predictions_df.set_index(datetime_column, drop=True, inplace=True)
-
-                else:
-                    data_for_predictions_df.set_index(
-                        data_for_predictions_df.columns[datetime_column], drop=True, inplace=True)
-
-            except Exception:
                 raise KeyError(user_message(
-                    f"Datetime name / index from config - '{datetime_column}' not found in data or not datetime format. "
-                    f"Change in config - 'datetime_column'. Available columns: {list(data_for_predictions_df.columns)}"))
+                    f"Predicted column name - '{predicted_column}' not found in data. Change 'predicted_column' in config"
+                    f". Available columns: {list(data_for_predictions_df.columns)}", caption="Column not found error"))
 
-            try:
-                data_for_predictions_df.index = pd.to_datetime(data_for_predictions_df.index)
+        elif isinstance(predicted_column, int) and isinstance(data_for_predictions_df.columns[predicted_column], str):
+            predicted_column_name = data_for_predictions_df.columns[predicted_column]
 
-            except Exception:
-                raise TypeError(user_message(
-                    f"Datetime name / index from config - '{datetime_column}' could not been transformed to datetime format. "
-                    "Try some common datetime string or convert column manually. - 'datetime_column'."))
-
+        else:
+            predicted_column_name = 'Predicted column'
+            data_for_predictions_df.rename(columns={data_for_predictions_df.columns[predicted_column]: predicted_column_name}, inplace=True)
 
         # Make predicted column index 0
-        if predicted_column:
-            data_for_predictions_df.insert(0, predicted_column_name, data_for_predictions_df.pop(predicted_column_name))
+        data_for_predictions_df.insert(0, predicted_column_name, data_for_predictions_df.pop(predicted_column_name))
 
-        # Convert strings numbers (e.g. '6') to numbers
-        data_for_predictions_df = data_for_predictions_df.apply(pd.to_numeric, errors='ignore')
+    reset_index = False
 
-        # Categorical embedding - Create numbers from strings (e.g 'US')
+    if datetime_column not in [None, False, '']:
 
-        to_drop = []
-
-        for i in data_for_predictions_df.select_dtypes(exclude=['number']):
-
-            try:
-
-                if (data_for_predictions_df[i].nunique() / len(data_for_predictions_df[i])) > unique_threshlold:
-                    to_drop.append(i)
-                    break
-
-                data_for_predictions_df[i] = data_for_predictions_df[i].astype('category', copy=False)
-
-                if embedding == 'label':
-                    data_for_predictions_df[i] = data_for_predictions_df[i].cat.codes
-
-            except Exception:
-                to_drop.append(i)
-
-        if embedding == 'one-hot':
-            data_for_predictions_df = data_for_predictions_df.join(pd.get_dummies(data_for_predictions_df.select_dtypes(exclude=['number'])))
-
-        # Drop columns with too few caterogies - drop all columns at once to better performance
-        data_for_predictions_df.drop(to_drop, axis=1, inplace=True)
-
-        # Keep only numeric columns
-        data_for_predictions_df = data_for_predictions_df.select_dtypes(include='number')
-
-        if predicted_column and predicted_column_name not in data_for_predictions_df.columns:
-            raise KeyError(user_message(
-                "Predicted column is not number datatype. Setup correct 'predicted_column' in py. "
-                f"Available columns with number datatype: {list(data_for_predictions_df.columns)}",
-                caption="Prediction available only on number datatype column."))
-
-        if datetime_column not in [None, False, '']:
-            if freq:
-                data_for_predictions_df.sort_index(inplace=True)
-                if resample_function == 'mean':
-                    data_for_predictions_df = data_for_predictions_df.resample(freq).mean()
-                elif resample_function == 'sum':
-                    data_for_predictions_df = data_for_predictions_df.resample(freq).sum()
-                data_for_predictions_df = data_for_predictions_df.asfreq(freq, fill_value=0)
+        try:
+            if isinstance(datetime_column, str):
+                data_for_predictions_df.set_index(datetime_column, drop=True, inplace=True)
 
             else:
-                data_for_predictions_df.index.freq = pd.infer_freq(data_for_predictions_df.index)
+                data_for_predictions_df.set_index(
+                    data_for_predictions_df.columns[datetime_column], drop=True, inplace=True)
 
-                if data_for_predictions_df.index.freq is None:
-                    reset_index = True
-                    user_warning("Datetime index was provided from config, but frequency guess failed. "
-                                 "Specify 'freq' in config to resample and have equal sampling if you want "
-                                 "to have date in plot or if you want to have equal sampling. Otherwise index will "
-                                 "be reset because cannot generate date indexes of predicted values.",
-                                 caption="Datetime frequency not inferred")
+            data_for_predictions_df.index = pd.to_datetime(data_for_predictions_df.index)
 
-        # If frequency is not configured nor infered or index is not datetime, it's reset to be able to generate next results
-        if reset_index or not isinstance(data_for_predictions_df.index, (pd.core.indexes.datetimes.DatetimeIndex, pd._libs.tslibs.timestamps.Timestamp)):
-            data_for_predictions_df.reset_index(inplace=True, drop=True)
+        except Exception:
+            raise KeyError(user_message(
+                f"Datetime name / index from config - '{datetime_column}' not found in data or not datetime format. "
+                f"Change in config - 'datetime_column'. Available columns: {list(data_for_predictions_df.columns)}"))
 
-        # Define concrete dtypes in number columns
-        if dtype:
-            data_for_predictions_df = data_for_predictions_df.astype(dtype, copy=False)
+        except Exception:
+            raise TypeError(user_message(
+                f"Datetime name / index from config - '{datetime_column}' could not been transformed to datetime format. "))
 
-        # Trim the data on defined length
-        data_for_predictions_df = data_for_predictions_df.iloc[-datalength:, :]
+    # Convert strings numbers (e.g. '6') to numbers
+    data_for_predictions_df = data_for_predictions_df.apply(pd.to_numeric, errors='ignore')
+
+    # Categorical embedding - Create numbers from strings (e.g 'US')
+
+    to_drop = []
+
+    for i in data_for_predictions_df.select_dtypes(exclude=['number']):
+
+        try:
+
+            if (data_for_predictions_df[i].nunique() / len(data_for_predictions_df[i])) > unique_threshlold:
+                to_drop.append(i)
+                break
+
+            data_for_predictions_df[i] = data_for_predictions_df[i].astype('category', copy=False)
+
+            if embedding == 'label':
+                data_for_predictions_df[i] = data_for_predictions_df[i].cat.codes
+
+        except Exception:
+            to_drop.append(i)
+
+    if embedding == 'one-hot':
+        data_for_predictions_df = data_for_predictions_df.join(pd.get_dummies(data_for_predictions_df.select_dtypes(exclude=['number'])))
+
+    # Drop columns with too few caterogies - drop all columns at once to better performance
+    data_for_predictions_df.drop(to_drop, axis=1, inplace=True)
+
+    # Keep only numeric columns
+    data_for_predictions_df = data_for_predictions_df.select_dtypes(include='number')
+
+    if predicted_column and predicted_column_name not in data_for_predictions_df.columns:
+        raise KeyError(user_message(
+            "Predicted column is not number datatype. Setup correct 'predicted_column' in py. "
+            f"Available columns with number datatype: {list(data_for_predictions_df.columns)}",
+            caption="Prediction available only on number datatype column."))
+
+    if datetime_column not in [None, False, '']:
+        if freq:
+            data_for_predictions_df.sort_index(inplace=True)
+            if resample_function == 'mean':
+                data_for_predictions_df = data_for_predictions_df.resample(freq).mean()
+            elif resample_function == 'sum':
+                data_for_predictions_df = data_for_predictions_df.resample(freq).sum()
+            data_for_predictions_df = data_for_predictions_df.asfreq(freq, fill_value=0)
+
+        else:
+            data_for_predictions_df.index.freq = pd.infer_freq(data_for_predictions_df.index)
+
+            if data_for_predictions_df.index.freq is None:
+                reset_index = True
+                user_warning("Datetime index was provided from config, but frequency guess failed. "
+                             "Specify 'freq' in config to resample and have equal sampling if you want "
+                             "to have date in plot or if you want to have equal sampling. Otherwise index will "
+                             "be reset because cannot generate date indexes of predicted values.",
+                             caption="Datetime frequency not inferred")
+
+    # If frequency is not configured nor infered or index is not datetime, it's reset to be able to generate next results
+    if reset_index or not isinstance(data_for_predictions_df.index, (pd.core.indexes.datetimes.DatetimeIndex, pd._libs.tslibs.timestamps.Timestamp)):
+        data_for_predictions_df.reset_index(inplace=True, drop=True)
+
+    # Define concrete dtypes in number columns
+    if dtype:
+        data_for_predictions_df = data_for_predictions_df.astype(dtype, copy=False)
+
+    # Trim the data on defined length
+    data_for_predictions_df = data_for_predictions_df.iloc[-datalength:, :]
 
 
-        # TODO setup other columns in define input so every model can choose and simplier config input types
-        if not other_columns:
-            data_for_predictions_df = data_for_predictions_df[predicted_column_name]
+    # TODO setup other columns in define input so every model can choose and simplier config input types
+    if not other_columns:
+        data_for_predictions_df = data_for_predictions_df[predicted_column_name]
 
-        data_for_predictions_df = pd.DataFrame(data_for_predictions_df)
+    data_for_predictions_df = pd.DataFrame(data_for_predictions_df)
 
-        # Remove columns that have to much nan values
-        data_for_predictions_df = data_for_predictions_df.iloc[:, 0:1].join(
-            data_for_predictions_df.iloc[:, 1:].dropna(axis=1, thresh=len(data_for_predictions_df) * (remove_nans_threshold)))
+    # Remove columns that have to much nan values
+    data_for_predictions_df = data_for_predictions_df.iloc[:, 0:1].join(
+        data_for_predictions_df.iloc[:, 1:].dropna(axis=1, thresh=len(data_for_predictions_df) * (remove_nans_threshold)))
 
-        # Replace rest of nan values
-        if remove_nans_or_replace == 'interpolate':
-            data_for_predictions_df.interpolate(inplace=True)
+    # Replace rest of nan values
+    if remove_nans_or_replace == 'interpolate':
+        data_for_predictions_df.interpolate(inplace=True)
 
-        elif remove_nans_or_replace == 'remove':
-            data_for_predictions_df.dropna(axis=0, inplace=True)
+    elif remove_nans_or_replace == 'remove':
+        data_for_predictions_df.dropna(axis=0, inplace=True)
 
-        elif remove_nans_or_replace == 'neighbor':
-            # Need to use both directions if first or last value is nan
-            data_for_predictions_df.fillna(method='ffill', inplace=True)
+    elif remove_nans_or_replace == 'neighbor':
+        # Need to use both directions if first or last value is nan
+        data_for_predictions_df.fillna(method='ffill', inplace=True)
 
-        elif remove_nans_or_replace == 'mean':
-            for col in data_for_predictions_df.columns:
-                data_for_predictions_df[col] = data_for_predictions_df[col].fillna(data_for_predictions_df[col].mean())
+    elif remove_nans_or_replace == 'mean':
+        for col in data_for_predictions_df.columns:
+            data_for_predictions_df[col] = data_for_predictions_df[col].fillna(data_for_predictions_df[col].mean())
 
-        elif isinstance(remove_nans_or_replace, (int, float)):
-            data_for_predictions_df.fillna(remove_nans_or_replace, inplace=True)
+    elif isinstance(remove_nans_or_replace, (int, float)):
+        data_for_predictions_df.fillna(remove_nans_or_replace, inplace=True)
 
-        # Forward fill and interpolate can miss som nans if on first row
-        if data_for_predictions_df.isnull().values.any():
-            data_for_predictions_df.fillna(method='bfill', inplace=True)
-
-    else:
-        raise TypeError(user_message(
-            "Input data must be in pd.dataframe, pd.series, numpy array or in a path (str or pathlib) with supported formats"
-            " - csv, xlsx, txt or parquet. Check config comments for more informations...", "Data format error"))
+    # Forward fill and interpolate can miss som nans if on first row
+    if data_for_predictions_df.isnull().values.any():
+        data_for_predictions_df.fillna(method='bfill', inplace=True)
 
     return data_for_predictions_df
 
@@ -602,15 +593,14 @@ def keep_corelated_data(data, threshold=0.5):
             corr = np.nan_to_num(corr, 0)
 
             range_array = np.array(range(corr.shape[0]))
-            columns_to_del = range_array[abs(
-                corr[0]) <= threshold]
+            columns_to_del = range_array[abs(corr[0]) <= threshold]
 
             data = np.delete(data, columns_to_del, axis=1)
 
     elif isinstance(data, pd.DataFrame):
-        corr = data.corr()
-        names_to_del = list(
-            corr[abs(corr[corr.columns[0]]) <= threshold].index)
+        corr = data.corr().iloc[0,:]
+        corr = corr[~corr.isnull()]
+        names_to_del = list(corr[abs(corr) <= threshold].index)
         data.drop(columns=names_to_del, inplace=True)
 
     return data
