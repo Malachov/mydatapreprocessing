@@ -29,6 +29,27 @@ from sklearn import preprocessing
 from mylogging import user_warning, user_message
 
 
+def get_file_paths(filetypes=[("csv", ".csv")], title='Select file'):
+    """Open dialog window where you can choose files you want to use. It will return tuple with string paths.
+
+    Args:
+        filetypes (list, optional): Accepted file types / suffixes. List of strings or list of tuples. Defaults to [("csv", ".csv")].
+        title (str, optional): Just a name of dialog window. Defaults to 'Select file'.
+
+    Returns:
+        tuple: Tuple with string paths.
+    """
+    import tkinter as tk
+    from tkinter import filedialog
+
+    # Open dialog window where user can choose which files to use
+    root = tk.Tk()
+    root.withdraw()
+    root.wm_attributes('-topmost', 1)
+
+    return filedialog.askopenfilenames(filetypes=filetypes, title=title)
+
+
 def load_data(data, header=0, csv_style={'separator': ",", 'decimal': "."}, predicted_table='', max_imported_length=0, request_datatype_suffix='', data_orientation=''):
     """Load data from path or url. Available formats are csv, excel xlsx, parquet, json or h5.
     It can also be 'test' or 'sql' - you need to setup database name and query then.
@@ -36,18 +57,34 @@ def load_data(data, header=0, csv_style={'separator': ",", 'decimal': "."}, pred
     Args:
         data (str, pathlib.Path): Path, url or 'test' or 'sql'. Check configuration file for examples.
         header (int, optional): Row index used as column names. Defaults to 0.
-        csv_style (dict, optional): Define CSV separators. En locale usually use {'sep': ",", 'decimal': "."} some Europian country use {'sep': ";", 'decimal': ","}. Defaults to {'separator': ",", 'decimal': "."}.
-        predicted_table (str, optional): If using excel (xlsx) - it means what sheet to use, if json, it means what key values, if SQL, then it mean what table. Else it have no impact. Defaults to ''.
+        csv_style (dict, optional): Define CSV separators. En locale usually use {'sep': ",", 'decimal': "."}
+            some Europian country use {'sep': ";", 'decimal': ","}. Defaults to {'separator': ",", 'decimal': "."}.
+        predicted_table (str, optional): If using excel (xlsx) - it means what sheet to use, if json,
+            it means what key values, if SQL, then it mean what table. Else it have no impact. Defaults to ''.
         max_imported_length (int, optional): Max length of imported samples (before resampling). If 0, than full length. Defaults to 0.
+        request_datatype_suffix(str, optional): 'json' for example. If using url with no extension,
+            define whichdatatype is on this url with GET request
+        data_orientation(str, optional): 'columns' or 'index'. If using json or dictionary, it describe how data are
+            oriented. Default is 'columns' if None used. If orientation is records (in pandas terminology), it's detected automatically.
 
     Returns:
-        pd.DataFrame, dict, list : Loaded data. Usually in pd.DataFrame format, but sometimes as dict or list, if it needs to be processed before conversion (because of orientation).
+        pd.DataFrame, dict, list : Loaded data. Usually in pd.DataFrame format, but sometimes as dict or list,
+            if it needs to be processed before conversion (because of orientation).
     """
 
-    # If data is only path or URL or test or SQL
-    if isinstance(data, (str, Path)):
+    list_of_dataframes = []
 
-        if str(data).lower() == 'test':
+    # It can be list of more files or it can be just one path. Put it in list to same way of processing
+    if not isinstance(data, list):
+        data = [data]
+
+    if isinstance(data[0], list):
+        return pd.DataFrame.from_records(data)
+
+    # If data is only path or URL or test or SQL
+    elif isinstance(data, (list, tuple)) and isinstance(data[0], (str, Path)):
+
+        if str(data[0]).lower() == 'test':
             from mydatapreprocessing import generatedata
 
             data = generatedata.gen_random()
@@ -67,122 +104,134 @@ def load_data(data, header=0, csv_style={'separator': ",", 'decimal': "."}, pred
 
         #     return data
 
-        data_path = Path(data)
-
-        try:
-            if data_path.exists():
-                data = Path(data).as_posix()
-                file_path_exist = True
-            else:
-                raise FileNotFoundError
-
-        except (FileNotFoundError, OSError):
-
-            # Maybe file path is relative and in test_path folder
-            data_path = 'test_data' / data_path
+        for i in data:
+            data_path = Path(i)
 
             try:
                 if data_path.exists():
-                    data = Path(data).as_posix()
+                    iterated_data = Path(i).as_posix()
                     file_path_exist = True
-
                 else:
                     raise FileNotFoundError
+
             except (FileNotFoundError, OSError):
-                file_path_exist = False
 
-        # On url, take everything after last dot
-        data_type_suffix = data_path.suffix[1:].lower()
+                # Maybe file path is relative and in test_path folder
+                data_path = 'test_data' / data_path
 
-        # If not suffix inferred, then maybe url that return as request - than suffix have to be configured
-        if not data_type_suffix or (data_type_suffix not in ['csv', 'json', 'xlsx'] and request_datatype_suffix):
-            data_type_suffix = request_datatype_suffix.lower()
+                try:
+                    if data_path.exists():
+                        iterated_data = Path(i).as_posix()
+                        file_path_exist = True
 
-        if data_type_suffix.startswith('.'):
-            data_type_suffix = data_type_suffix[1:]
+                    else:
+                        raise FileNotFoundError
+                except (FileNotFoundError, OSError):
+                    file_path_exist = False
+
+            # For example csv or json. On url, take everything after last dot
+            data_type_suffix = data_path.suffix[1:].lower()
+
+            # If not suffix inferred, then maybe url that return as request - than suffix have to be configured
+            if not data_type_suffix or (data_type_suffix not in ['csv', 'json', 'xlsx'] and request_datatype_suffix):
+                data_type_suffix = request_datatype_suffix.lower()
+
+                if data_type_suffix.startswith('.'):
+                    data_type_suffix = data_type_suffix[1:]
 
             # If it's URL with suffix, we usually need url, if its url link with no suffix, we need get request response
             if not file_path_exist:
-                data = requests.get(data).content
+                if data_type_suffix == 'json':
+                    iterated_data = requests.get(i).content
 
-        if not data_type_suffix:
-            raise TypeError(user_message("Data has no suffix (e.g. csv) and is not 'test' or 'sql'. "
-                                         "If using url with no suffix, setup 'request_datatype_suffix'"
-                                         "Or insert data with local path or insert data for example in "
-                                         "dataframe or numpy array", caption="Data load error"))
+                if data_type_suffix == 'csv':
+                    iterated_data = i
 
-        try:
+            if not data_type_suffix:
+                raise TypeError(user_message("Data has no suffix (e.g. csv) and is not 'test' or 'sql'. "
+                                             "If using url with no suffix, setup 'request_datatype_suffix'"
+                                             "Or insert data with local path or insert data for example in "
+                                             f"dataframe or numpy array. \n\nYour configured data are {data}", caption="Data load error"))
 
-            if data_type_suffix == 'csv':
+            try:
 
-                if not header or header != 0:
-                    header = 'infer'
+                if data_type_suffix == 'csv':
 
-                data = pd.read_csv(data, header=header, sep=csv_style['separator'],
-                                   decimal=csv_style['decimal']).iloc[-max_imported_length:, :]
+                    if not header or header != 0:
+                        header = 'infer'
 
-            elif data_type_suffix == 'xlsx':
-                data = pd.read_excel(data, sheet_name=predicted_table).iloc[-max_imported_length:, :]
+                    list_of_dataframes.append(pd.read_csv(iterated_data, header=header, sep=csv_style['separator'],
+                                              decimal=csv_style['decimal']).iloc[-max_imported_length:, :])
 
-            elif data_type_suffix == 'json':
+                elif data_type_suffix == 'xlsx':
+                    list_of_dataframes.append(pd.read_excel(iterated_data, sheet_name=predicted_table).iloc[-max_imported_length:, :])
 
-                import json
+                elif data_type_suffix == 'json':
 
-                if file_path_exist:
-                    with open(data) as json_file:
-                        data = json.load(json_file)[predicted_table] if predicted_table else json.load(json_file)
+                    import json
+
+                    if file_path_exist:
+                        with open(iterated_data) as json_file:
+                            list_of_dataframes.append(json.load(json_file)[predicted_table] if predicted_table else json.load(json_file))
+
+                    else:
+                        list_of_dataframes.append(json.loads(iterated_data)[predicted_table] if predicted_table else json.loads(iterated_data))
+
+                elif data_type_suffix in ('h5', 'hdf5'):
+                    list_of_dataframes.append(pd.read_hdf(iterated_data).iloc[-max_imported_length:, :])
+
+                elif data_type_suffix in ('parquet'):
+                    list_of_dataframes.append(pd.read_parquet(iterated_data).iloc[-max_imported_length:, :])
 
                 else:
-                    data = json.loads(data)[predicted_table] if predicted_table else json.loads(data)
+                    raise TypeError
 
-            elif data_type_suffix in ('h5', 'hdf5'):
-                data = pd.read_hdf(data).iloc[-max_imported_length:, :]
+            except TypeError:
+                raise TypeError(user_message(f"Your file format {data_type_suffix} not implemented yet. You can use csv, excel, parquet or txt.", "Wrong (not implemented) format"))
 
-            elif data_type_suffix in ('parquet'):
-                data = pd.read_parquet(data).iloc[-max_imported_length:, :]
+            except urllib.error.URLError:
+                raise Exception(user_message(
+                    "Configured URL not found, check if page is available.",
+                    caption="URL error"))
 
-            else:
-                raise TypeError
-
-        except TypeError:
-            raise TypeError(user_message(f"Your file format {data_type_suffix} not implemented yet. You can use csv, excel, parquet or txt.", "Wrong (not implemented) format"))
-
-        except urllib.error.URLError:
-            raise Exception(user_message(
-                "Configured URL not found, check if page is available.",
-                caption="URL error"))
-
-        except Exception as err:
-            if not file_path_exist:
-                raise FileNotFoundError(user_message(
-                    "File not found on configured path. If you are using relative path, file must have be in CWD "
-                    "(current working directory) or must be inserted in system paths (sys.path.insert(0, 'your_path')). If url, check if page is available.",
-                    caption="File not found error"))
-            else:
-                raise(RuntimeError(user_message("Data load error. File found on path, but not loaded. Check if you use "
-                                                "corrent locales - correct value and decimal separators in config (different in US and EU...). "
-                                                " If it's web link, URL has to have .csv suffix. If it's link, that will generate csv link after "
-                                                f"load, it will not work.\n\n Detailed error: \n\n {err}", caption="Data load failed")))
-
-    elif isinstance(data, np.ndarray):
-        data = pd.DataFrame(data)
-
-    elif isinstance(data, list):
-        data = pd.DataFrame.from_records(data)
-
-    elif isinstance(data, dict):
-
-        # If just one column, put in list to have same syntax further
-        if not isinstance(next(iter(data.values())), list):
-            data = {i: [j] for (i, j) in data.items()}
-
-        orientation = 'columns' if not data_orientation else data_orientation
-        data = pd.DataFrame.from_dict(data, orient=orientation)
-
+            except Exception as err:
+                if not file_path_exist:
+                    raise FileNotFoundError(user_message(
+                        "File not found on configured path. If you are using relative path, file must have be in CWD "
+                        "(current working directory) or must be inserted in system paths (sys.path.insert(0, 'your_path')). If url, check if page is available.",
+                        caption="File not found error"))
+                else:
+                    raise(RuntimeError(user_message("Data load error. File found on path, but not loaded. Check if you use "
+                                                    "corrent locales - correct value and decimal separators in config (different in US and EU...). "
+                                                    " If it's web link, URL has to have .csv suffix. If it's link, that will generate csv link after "
+                                                    f"load, it will not work.\n\n Detailed error: \n\n {err}", caption="Data load failed")))
     else:
+        list_of_dataframes = data
+
+    orientation = 'columns' if not data_orientation else data_orientation
+
+    for i, j in enumerate(list_of_dataframes):
+        if isinstance(j, dict):
+            # If just one column, put in list to have same syntax further
+            if not isinstance(next(iter(j.values())), list):
+                list_of_dataframes[i] = {k: [l] for (k, l) in j.items()}
+
+            list_of_dataframes[i] = pd.DataFrame.from_dict(j, orient=orientation)
+
+        elif isinstance(j, list):
+            list_of_dataframes[i] = pd.DataFrame.from_records(j)
+
+        elif not isinstance(j, pd.DataFrame):
+            list_of_dataframes[i] = pd.DataFrame(j)
+
+    data = pd.concat(list_of_dataframes, ignore_index=True)
+
+    if data.empty:
         raise TypeError(user_message(
             "Input data must be in pd.dataframe, pd.series, numpy array or in a path (str or pathlib) with supported formats"
-            " - csv, xlsx, txt or parquet. Check config comments for more informations...", "Data format error"))
+            " - csv, xlsx, txt or parquet. It also can be a list of paths, files etc. If you want to generate list of file paths, "
+            "you can use get_file_paths(). Check config comments for more informations...",
+            "Data format error"))
 
     return data
 
@@ -197,8 +246,11 @@ def data_consolidation(data, predicted_column=None, other_columns=1, datalength=
         predicted_column ((int, str), optional): Predicted column name or index. Move on first column and test if number. If None, it's ignored. Defaults to None.
         other_columns (int, optional): Whether use other columns or only predicted one. Defaults to 1.
         datalength (int, optional): Data length after resampling. Defaults to 0.
-        data_orientation (str, optional): 'columns' or 'rows'. If dictionary (or json), specify data orientation. Defaults to ''.
         datetime_column (str, optional): Name or index of datetime column. Defaults to ''.
+        unique_threshlold(float, optional): Remove string columns, that have to many categories. E.g 0.1 define, that has to be less that 10% of unique values.
+            Min is 0, max is 1. It will remove ids, hashes etc.
+        embedding(str, optional): 'label' or 'one-hot'. Categorical encoding. Create numbers from strings. 'label' give each category (unique string) concrete number.
+            Result will have same number of columns. 'one-hot' create for every category new column.
         freq (int, optional): Frequency of resampled data. Defaults to 0.
         resample_function (str, optional): 'sum' or 'mean'. Whether sum resampled columns, or use average. Defaults to 'sum'.
         remove_nans_threshold (float, optional): From 0 to 1. How much not nans (not a number) can be in column to not be deleted.
@@ -598,7 +650,7 @@ def keep_corelated_data(data, threshold=0.5):
             data = np.delete(data, columns_to_del, axis=1)
 
     elif isinstance(data, pd.DataFrame):
-        corr = data.corr().iloc[0,:]
+        corr = data.corr().iloc[0, :]
         corr = corr[~corr.isnull()]
         names_to_del = list(corr[abs(corr) <= threshold].index)
         data.drop(columns=names_to_del, inplace=True)
