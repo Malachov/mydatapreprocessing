@@ -51,9 +51,10 @@ Second module is `inputs`. It take tabular time series data and put it into form
 into machine learning models for example on sklearn or tensorflow. It contain functions make_sequences,
 create_inputs and create_tests_outputs
 
-import mydatapreprocessing.inputs as mdpi
 
 Examples:
+
+    >>> import mydatapreprocessing.inputs as mdpi
 
     >>> data = np.array([[1, 3, 5, 2, 3, 4, 5, 66, 3]]).T
     >>> seqs, Y, x_input, test_inputs = mdpi.inputs.make_sequences(data, predicts=7, repeatit=3, n_steps_in=6, n_steps_out=1, constant=1)
@@ -69,7 +70,7 @@ from . import preprocessing
 from . import inputs
 from . import generatedata
 
-__version__ = "1.1.2"
+__version__ = "1.1.3"
 __author__ = "Daniel Malachov"
 __license__ = "MIT"
 __email__ = "malachovd@seznam.cz"
