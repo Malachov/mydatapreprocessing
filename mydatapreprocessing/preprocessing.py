@@ -75,10 +75,10 @@ def load_data(data, header=0, csv_style={'separator': ",", 'decimal': "."}, pred
     list_of_dataframes = []
 
     # It can be list of more files or it can be just one path. Put it in list to same way of processing
-    if not isinstance(data, list):
+    if not isinstance(data, (list, tuple)):
         data = [data]
 
-    if isinstance(data[0], list):
+    if isinstance(data[0], (list, tuple)):
         return pd.DataFrame.from_records(data)
 
     # If data is only path or URL or test or SQL
@@ -324,10 +324,6 @@ def data_consolidation(data, predicted_column=None, other_columns=1, datalength=
             raise KeyError(user_message(
                 f"Datetime name / index from config - '{datetime_column}' not found in data or not datetime format. "
                 f"Change in config - 'datetime_column'. Available columns: {list(data_for_predictions_df.columns)}"))
-
-        except Exception:
-            raise TypeError(user_message(
-                f"Datetime name / index from config - '{datetime_column}' could not been transformed to datetime format. "))
 
     # Convert strings numbers (e.g. '6') to numbers
     data_for_predictions_df = data_for_predictions_df.apply(pd.to_numeric, errors='ignore')

@@ -69,7 +69,7 @@ from . import preprocessing
 from . import inputs
 from . import generatedata
 
-__version__ = "1.1.1"
+__version__ = "1.1.2"
 __author__ = "Daniel Malachov"
 __license__ = "MIT"
 __email__ = "malachovd@seznam.cz"

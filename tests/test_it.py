@@ -115,8 +115,8 @@ def test_numpy_and_dataframe():
     assert mdpp.load_data(np.random.randn(100, 3)).ndim and mdpp.load_data(pd.DataFrame(np.random.randn(100, 3))).ndim
 
 
-def test_numpys_and_pandas_in_list():
-    assert mdpp.load_data([np.random.randn(20, 3), np.random.randn(25, 3)]).ndim and mdpp.load_data([pd.DataFrame(np.random.randn(20, 3)), pd.DataFrame(np.random.randn(25, 3))]).ndim
+def test_numpys_and_pandas():
+    assert mdpp.load_data([np.random.randn(20, 3), np.random.randn(25, 3)]).ndim and mdpp.load_data((pd.DataFrame(np.random.randn(20, 3)), pd.DataFrame(np.random.randn(25, 3)))).ndim
 
 
 def test_dict():
