@@ -46,10 +46,10 @@ def test_integration():
     # Preprocess data. It return preprocessed data, but also last undifferenced value and scaler for inverse
     # transformation, so unpack it with _
     data_preprocessed_df, _, _ = mdpp.preprocess_data(data_consolidated, remove_outliers=True, smoothit=(11, 2),
-                                                     correlation_threshold=False, data_transform=True, standardizeit='standardize')
+                                                      correlation_threshold=False, data_transform=True, standardizeit='standardize')
 
     data_preprocessed, _, _ = mdpp.preprocess_data(data_consolidated.values, remove_outliers=True, smoothit=(11, 2),
-                                                  correlation_threshold=0.9, data_transform='difference', standardizeit='01')
+                                                   correlation_threshold=0.9, data_transform='difference', standardizeit='01')
 
     assert not np.isnan(np.min(data_preprocessed_df.values)) and not np.isnan(np.min(data_preprocessed))
 
@@ -214,7 +214,16 @@ def test_split():
     mdpp.split(data)
 
 
-### Inputs
+def test_embedding():
+    data = pd.DataFrame([[1, 'e', 'e'], [2, 'e', 'l'], [3, 'r', 'v'], [4, 'e', 'r'], [5, 'r', 'o']])
+    embedded_one_hot = mdpp.categorical_embedding(data, embedding='one-hot', unique_threshlold=0.6)
+    embedded_label = mdpp.categorical_embedding(data, embedding='label', unique_threshlold=0.6)
+
+    label_supposed_result = np.array([[1, 0], [2, 0], [3, 1], [4, 0], [5, 1]])
+    one_hot_supposed_result = np.array([[1, 1, 0], [2, 1, 0], [3, 0, 1], [4, 1, 0], [5, 0, 1]])
+
+    assert(np.array_equal(embedded_label.values, label_supposed_result) and np.array_equal(embedded_one_hot.values, one_hot_supposed_result))
+
 
 def test_make_sequences():
     data = np.array([[1, 3, 5, 2, 3, 4, 5, 66, 3]]).T

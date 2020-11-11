@@ -236,8 +236,8 @@ def load_data(data, header=0, csv_style={'separator': ",", 'decimal': "."}, pred
     return data
 
 
-def data_consolidation(data, predicted_column=None, other_columns=1, datalength=0, datetime_column='', unique_threshlold=0.1,
-                       embedding='label', freq=0, resample_function='sum', remove_nans_threshold=0.85, remove_nans_or_replace='interpolate', dtype='float32'):
+def data_consolidation(data, predicted_column=None, other_columns=1, datalength=0, datetime_column='', freq=0, resample_function='sum',
+                       embedding='label', unique_threshlold=0.1, remove_nans_threshold=0.85, remove_nans_or_replace='interpolate', dtype='float32'):
     """Transform input data in various formats and shapes into data in defined shape,
     that other functions rely on.
 
@@ -247,12 +247,12 @@ def data_consolidation(data, predicted_column=None, other_columns=1, datalength=
         other_columns (int, optional): Whether use other columns or only predicted one. Defaults to 1.
         datalength (int, optional): Data length after resampling. Defaults to 0.
         datetime_column (str, optional): Name or index of datetime column. Defaults to ''.
-        unique_threshlold(float, optional): Remove string columns, that have to many categories. E.g 0.1 define, that has to be less that 10% of unique values.
-            Min is 0, max is 1. It will remove ids, hashes etc.
-        embedding(str, optional): 'label' or 'one-hot'. Categorical encoding. Create numbers from strings. 'label' give each category (unique string) concrete number.
-            Result will have same number of columns. 'one-hot' create for every category new column.
         freq (int, optional): Frequency of resampled data. Defaults to 0.
         resample_function (str, optional): 'sum' or 'mean'. Whether sum resampled columns, or use average. Defaults to 'sum'.
+        embedding(str, optional): 'label' or 'one-hot'. Categorical encoding. Create numbers from strings. 'label' give each category (unique string) concrete number.
+            Result will have same number of columns. 'one-hot' create for every category new column. Only columns, where are strings repeating (unique_threshlold) will be used.
+        unique_threshlold(float, optional): Remove string columns, that have to many categories. E.g 0.1 define, that has to be less that 10% of unique values.
+            Min is 0, max is 1. It will remove ids, hashes etc.
         remove_nans_threshold (float, optional): From 0 to 1. How much not nans (not a number) can be in column to not be deleted.
         remove_nans_or_replace (str, float, optional): 'interpolate', 'remove', 'neighbor', 'mean' or value. Remove or replace rest nan values.
         dtype (str, optional): Output dtype. E.g. 'float32'.
@@ -328,31 +328,7 @@ def data_consolidation(data, predicted_column=None, other_columns=1, datalength=
     # Convert strings numbers (e.g. '6') to numbers
     data_for_predictions_df = data_for_predictions_df.apply(pd.to_numeric, errors='ignore')
 
-    # Categorical embedding - Create numbers from strings (e.g 'US')
-
-    to_drop = []
-
-    for i in data_for_predictions_df.select_dtypes(exclude=['number']):
-
-        try:
-
-            if (data_for_predictions_df[i].nunique() / len(data_for_predictions_df[i])) > unique_threshlold:
-                to_drop.append(i)
-                break
-
-            data_for_predictions_df[i] = data_for_predictions_df[i].astype('category', copy=False)
-
-            if embedding == 'label':
-                data_for_predictions_df[i] = data_for_predictions_df[i].cat.codes
-
-        except Exception:
-            to_drop.append(i)
-
-    if embedding == 'one-hot':
-        data_for_predictions_df = data_for_predictions_df.join(pd.get_dummies(data_for_predictions_df.select_dtypes(exclude=['number'])))
-
-    # Drop columns with too few caterogies - drop all columns at once to better performance
-    data_for_predictions_df.drop(to_drop, axis=1, inplace=True)
+    data_for_predictions_df = categorical_embedding(data_for_predictions_df, embedding=embedding, unique_threshlold=unique_threshlold)
 
     # Keep only numeric columns
     data_for_predictions_df = data_for_predictions_df.select_dtypes(include='number')
@@ -615,6 +591,51 @@ def preprocess_data_inverse(data, standardizeit=False, final_scaler=None, data_t
         data = inverse_difference(data, last_undiff_value)
 
     return data
+
+
+### Data consolidation functions...
+
+def categorical_embedding(data, embedding='label', unique_threshlold=0.1):
+    """Transform string categories such as 'US', 'FR' into numeric values, that can be used in machile learning model.
+
+    Args:
+        data (pd.DataFrame): Data with string (Object) columns.
+        embedding(str, optional): 'label' or 'one-hot'. Categorical encoding. Create numbers from strings. 'label' give each category (unique string) concrete number.
+            Result will have same number of columns. 'one-hot' create for every category new column. Only columns, where are strings repeating (unique_threshlold) will be used.
+        unique_threshlold(float, optional): Remove string columns, that have to many categories. E.g 0.1 define, that has to be less that 10% of unique values - if 100 rows => max 10 categories.
+            Min is 0, max is 1. It will remove ids, hashes etc.
+
+    Returns:
+        pd.DataFrame: Dataframe where string columns transformed to numeric.
+    """
+    data_for_embedding = data.copy()
+    to_drop = []
+
+    for i in data_for_embedding.select_dtypes(exclude=['number']):
+
+        try:
+
+            if (data_for_embedding[i].nunique() / len(data_for_embedding[i])) > unique_threshlold:
+                to_drop.append(i)
+                continue
+
+            data_for_embedding[i] = data_for_embedding[i].astype('category', copy=False)
+
+            if embedding == 'label':
+                data_for_embedding[i] = data_for_embedding[i].cat.codes
+
+            if embedding == 'one-hot':
+                data_for_embedding = data_for_embedding.join(pd.get_dummies(data_for_embedding[i]))
+                to_drop.append(i)
+
+        except Exception:
+            to_drop.append(i)
+
+    # Drop columns with too few caterogies - drop all columns at once to better performance
+    data_for_embedding.drop(to_drop, axis=1, inplace=True)
+
+
+    return data_for_embedding
 
 
 ### Data preprocessing functions...
