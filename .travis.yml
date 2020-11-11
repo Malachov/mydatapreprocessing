@@ -33,6 +33,9 @@ deploy:
     on:
       tags: true
       python: "3.7"
+    edge:
+      source: "native-api/dpl"
+      branch: "pip_fix_upgrade_deps"
   - provider: releases
     api_key: $GITHUB_TOKEN
     skip_cleanup: true
