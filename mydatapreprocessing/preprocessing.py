@@ -29,7 +29,7 @@ from sklearn import preprocessing
 from mylogging import user_warning, user_message
 
 
-def get_file_paths(filetypes=[("csv", ".csv")], title='Select file'):
+def get_file_paths(filetypes=[("csv", ".csv"), ("xlsx", ".xlsx"), ("h5", ".h5"), ("parquet", ".parquet"), ("json", ".json")], title='Select file'):
     """Open dialog window where you can choose files you want to use. It will return tuple with string paths.
 
     Args:
