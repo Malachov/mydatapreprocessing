@@ -157,7 +157,7 @@ def load_data(data, header=0, csv_style={'separator': ",", 'decimal': "."}, pred
 
                 if data_type_suffix == 'csv':
 
-                    if not header or header != 0:
+                    if not header:
                         header = 'infer'
 
                     list_of_dataframes.append(pd.read_csv(iterated_data, header=header, sep=csv_style['separator'],
