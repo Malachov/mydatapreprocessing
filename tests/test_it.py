@@ -233,18 +233,3 @@ def test_make_sequences():
 # if __name__ == "__main__":
 
 #     pass
-
-
-
-import tkinter as tk
-from tkinter import filedialog
-
-# Open dialog window where user can choose which files to use
-root = tk.Tk()
-root.withdraw()
-root.wm_attributes('-topmost', 1)
-
-aaa = filedialog.askopenfilenames(filetypes=[("csv", ".csv"), ("xlsx", ".xlsx"), ("h5", ".h5"), ("parquet", ".parquet"), ("json", ".json")])
-
-
-f= 8
