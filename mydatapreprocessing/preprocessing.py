@@ -160,8 +160,12 @@ def load_data(data, header=0, csv_style={'separator': ",", 'decimal': "."}, pred
                     if not header:
                         header = 'infer'
 
-                    list_of_dataframes.append(pd.read_csv(iterated_data, header=header, sep=csv_style['separator'],
-                                              decimal=csv_style['decimal']).iloc[-max_imported_length:, :])
+                    try:
+                        list_of_dataframes.append(pd.read_csv(iterated_data, header=header, sep=csv_style['separator'],
+                                                  decimal=csv_style['decimal']).iloc[-max_imported_length:, :])
+                    except UnicodeDecodeError:
+                        list_of_dataframes.append(pd.read_csv(iterated_data, header=header, sep=csv_style['separator'],
+                                                  decimal=csv_style['decimal'], encoding="cp1252").iloc[-max_imported_length:, :])
 
                 elif data_type_suffix == 'xlsx':
                     list_of_dataframes.append(pd.read_excel(iterated_data, sheet_name=predicted_table).iloc[-max_imported_length:, :])
