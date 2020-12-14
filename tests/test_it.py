@@ -161,6 +161,10 @@ def test_remove_nans():
 ### Preprocessing ###
 def test_local_files():
 
+    test_files = Path(__file__).parent / 'test_files'
+    xls = mdpp.load_data(test_files / 'file_example_xls.xls')
+    xlsx = mdpp.load_data(test_files / 'file_example_xlsx.xlsx')
+
     df_imported = pd.read_csv('https://raw.githubusercontent.com/jbrownlee/Datasets/master/daily-min-temperatures.csv')
     df_part = df_imported.iloc[:10, :]
 
@@ -190,7 +194,7 @@ def test_local_files():
         os.remove('tested.parquet')
         os.remove('tested.h5')
 
-    assert df_csv.ndim and df_json.ndim and df_parquet.ndim and df_hdf.ndim and len(df_csv_joined) == len(df_csv) + 10
+    assert xls.ndim and xlsx.ndim and df_csv.ndim and df_json.ndim and df_parquet.ndim and df_hdf.ndim and len(df_csv_joined) == len(df_csv) + 10
 
 
 def test_resample():

@@ -29,7 +29,7 @@ from sklearn import preprocessing
 from mylogging import user_warning, user_message
 
 
-def get_file_paths(filetypes=[("csv", ".csv"), ("xlsx", ".xlsx"), ("h5", ".h5"), ("parquet", ".parquet"), ("json", ".json")], title='Select file'):
+def get_file_paths(filetypes=[("csv", ".csv"), ("Excel (xlsx, xls)", ".xlsx .xls"), ("h5", ".h5"), ("parquet", ".parquet"), ("json", ".json")], title='Select file'):
     """Open dialog window where you can choose files you want to use. It will return tuple with string paths.
 
     Args:
@@ -133,7 +133,7 @@ def load_data(data, header=0, csv_style={'separator': ",", 'decimal': "."}, pred
             data_type_suffix = data_path.suffix[1:].lower()
 
             # If not suffix inferred, then maybe url that return as request - than suffix have to be configured
-            if not data_type_suffix or (data_type_suffix not in ['csv', 'json', 'xlsx'] and request_datatype_suffix):
+            if not data_type_suffix or (data_type_suffix not in ['csv', 'json', 'xlsx', 'xls'] and request_datatype_suffix):
                 data_type_suffix = request_datatype_suffix.lower()
 
                 if data_type_suffix.startswith('.'):
@@ -167,8 +167,25 @@ def load_data(data, header=0, csv_style={'separator': ",", 'decimal': "."}, pred
                         list_of_dataframes.append(pd.read_csv(iterated_data, header=header, sep=csv_style['separator'],
                                                   decimal=csv_style['decimal'], encoding="cp1252").iloc[-max_imported_length:, :])
 
+                elif data_type_suffix == 'xls':
+                    try:
+                        import xlrd
+                    except ModuleNotFoundError:
+                        raise ModuleNotFoundError(user_message("If using excel 'xlsx' file, library xlrd is necessary. Use \n\n\tpip install xlrd"))
+
+                    if not predicted_table:
+                        predicted_table = 0
+                        list_of_dataframes.append(pd.read_excel(iterated_data, sheet_name=predicted_table).iloc[-max_imported_length:, :])
+
                 elif data_type_suffix == 'xlsx':
-                    list_of_dataframes.append(pd.read_excel(iterated_data, sheet_name=predicted_table).iloc[-max_imported_length:, :])
+                    try:
+                        import openpyxl
+                    except ModuleNotFoundError:
+                        raise ModuleNotFoundError(user_message("If using excel 'openpyxl' file, library xlrd is necessary. Use \n\n\tpip install openpyxl"))
+
+                    if not predicted_table:
+                        predicted_table = 0
+                    list_of_dataframes.append(pd.read_excel(iterated_data, sheet_name=predicted_table, engine='openpyxl').iloc[-max_imported_length:, :])
 
                 elif data_type_suffix == 'json':
 
@@ -765,7 +782,7 @@ def standardize(data, used_scaler='standardize'):
     Args:
         data (np.ndarray): Time series data.
         used_scaler (str, optional): '01' and '-11' means scope from to for normalization.
-            'robust' use RobustScaler and 'standard' use StandardScaler - mean is 0 and std is 1. Defaults to 'standardize'.
+            'robust' use RobustScaler and 'standardize' use StandardScaler - mean is 0 and std is 1. Defaults to 'standardize'.
 
     Returns:
         ndarray: Standardized data.
@@ -779,6 +796,9 @@ def standardize(data, used_scaler='standardize'):
         scaler = preprocessing.RobustScaler()
     elif used_scaler == 'standardize':
         scaler = preprocessing.StandardScaler()
+
+    else:
+        raise TypeError(user_message(f"Your scaler {used_scaler} not in options. Use one of ['01', '-11', 'robust', 'standardize']"))
 
     # First normalized values are calculated, then scler just for predicted value is computed again so no full matrix is necessary for inverse
     if isinstance(data, pd.DataFrame):
