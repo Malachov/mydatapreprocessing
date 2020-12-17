@@ -152,11 +152,14 @@ def test_remove_nans():
     data = np.random.randn(50, 10)
     data[data < 0] = np.nan
 
-    mdpp.data_consolidation(data, remove_nans_or_replace='mean', remove_nans_threshold=0.5)
-    mdpp.data_consolidation(data, remove_nans_or_replace='neighbor', remove_nans_threshold=0.5)
-    mdpp.data_consolidation(data, remove_nans_or_replace='remove', remove_nans_threshold=0.5)
-    mdpp.data_consolidation(data, remove_nans_or_replace=0, remove_nans_threshold=0.5)
+    for i in ['mean', 'neighbor', 'remove', 0]:
+        removed = mdpp.data_consolidation(data, remove_nans_or_replace=i, remove_nans_threshold=0.5)
+        if np.isnan(removed.values).any():
+            raise ValueError("Nan in results")
 
+    not_removed = mdpp.data_consolidation(data, remove_nans_or_replace=np.nan, remove_nans_threshold=0.5)
+
+    assert np.isnan(not_removed.values).any()
 
 ### Preprocessing ###
 def test_local_files():

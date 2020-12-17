@@ -276,6 +276,7 @@ def data_consolidation(data, predicted_column=None, other_columns=1, datalength=
             Min is 0, max is 1. It will remove ids, hashes etc.
         remove_nans_threshold (float, optional): From 0 to 1. How much not nans (not a number) can be in column to not be deleted.
         remove_nans_or_replace (str, float, optional): 'interpolate', 'remove', 'neighbor', 'mean' or value. Remove or replace rest nan values.
+            If you want to keep nan, setup value to np.nan. If you want to use concrete value, use float or int type. Defaults to 'interpolate'.
         dtype (str, optional): Output dtype. E.g. 'float32'.
 
     Raises:
@@ -349,7 +350,8 @@ def data_consolidation(data, predicted_column=None, other_columns=1, datalength=
     # Convert strings numbers (e.g. '6') to numbers
     data_for_predictions_df = data_for_predictions_df.apply(pd.to_numeric, errors='ignore')
 
-    data_for_predictions_df = categorical_embedding(data_for_predictions_df, embedding=embedding, unique_threshlold=unique_threshlold)
+    if embedding:
+        data_for_predictions_df = categorical_embedding(data_for_predictions_df, embedding=embedding, unique_threshlold=unique_threshlold)
 
     # Keep only numeric columns
     data_for_predictions_df = data_for_predictions_df.select_dtypes(include='number')
@@ -398,6 +400,7 @@ def data_consolidation(data, predicted_column=None, other_columns=1, datalength=
 
     data_for_predictions_df = pd.DataFrame(data_for_predictions_df)
 
+    # TODO fix error after option - no predicted value - iter from 0...
     # Remove columns that have to much nan values
     data_for_predictions_df = data_for_predictions_df.iloc[:, 0:1].join(
         data_for_predictions_df.iloc[:, 1:].dropna(axis=1, thresh=len(data_for_predictions_df) * (remove_nans_threshold)))
@@ -413,16 +416,17 @@ def data_consolidation(data, predicted_column=None, other_columns=1, datalength=
         # Need to use both directions if first or last value is nan
         data_for_predictions_df.fillna(method='ffill', inplace=True)
 
+        # Forward fill and interpolate can miss som nans if on first row
+        if data_for_predictions_df.isnull().values.any():
+            data_for_predictions_df.fillna(method='bfill', inplace=True)
+
     elif remove_nans_or_replace == 'mean':
         for col in data_for_predictions_df.columns:
             data_for_predictions_df[col] = data_for_predictions_df[col].fillna(data_for_predictions_df[col].mean())
 
-    elif isinstance(remove_nans_or_replace, (int, float)):
+    elif isinstance(remove_nans_or_replace, (int, float) or np.isnan(remove_nans_or_replace)):
         data_for_predictions_df.fillna(remove_nans_or_replace, inplace=True)
 
-    # Forward fill and interpolate can miss som nans if on first row
-    if data_for_predictions_df.isnull().values.any():
-        data_for_predictions_df.fillna(method='bfill', inplace=True)
 
     return data_for_predictions_df
 
@@ -654,7 +658,6 @@ def categorical_embedding(data, embedding='label', unique_threshlold=0.1):
 
     # Drop columns with too few caterogies - drop all columns at once to better performance
     data_for_embedding.drop(to_drop, axis=1, inplace=True)
-
 
     return data_for_embedding
 
