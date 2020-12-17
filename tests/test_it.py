@@ -150,16 +150,20 @@ def test_more_files():
 ### Consolidation ###
 def test_remove_nans():
     data = np.random.randn(50, 10)
+    data[0, :] = np.nan
     data[data < 0] = np.nan
 
     for i in ['mean', 'neighbor', 'remove', 0]:
-        removed = mdpp.data_consolidation(data, remove_nans_or_replace=i, remove_nans_threshold=0.5)
+        removed = mdpp.data_consolidation(data, remove_nans_or_replace=i)
         if np.isnan(removed.values).any():
             raise ValueError("Nan in results")
 
-    not_removed = mdpp.data_consolidation(data, remove_nans_or_replace=np.nan, remove_nans_threshold=0.5)
+    not_removed = mdpp.data_consolidation(data, remove_nans_or_replace=np.nan)
 
-    assert np.isnan(not_removed.values).any()
+    mdpp.data_consolidation(data, remove_nans_threshold=0.5).shape[1] > mdpp.data_consolidation(data, remove_nans_threshold=0.8).shape[1]
+
+    assert np.isnan(not_removed.values).any() and mdpp.data_consolidation(data, remove_nans_threshold=0.5).shape[1] > mdpp.data_consolidation(data, remove_nans_threshold=0.8).shape[1]
+
 
 ### Preprocessing ###
 def test_local_files():
@@ -222,14 +226,17 @@ def test_split():
 
 
 def test_embedding():
-    data = pd.DataFrame([[1, 'e', 'e'], [2, 'e', 'l'], [3, 'r', 'v'], [4, 'e', 'r'], [5, 'r', 'o']])
-    embedded_one_hot = mdpp.categorical_embedding(data, embedding='one-hot', unique_threshlold=0.6)
-    embedded_label = mdpp.categorical_embedding(data, embedding='label', unique_threshlold=0.6)
+    data = pd.DataFrame([[1, 'e', 'e'], [2, 'e', 'l'], [3, 'r', 'v'], [4, 'e', 'r'], [5, 'r', 'r']])
+
+    embedded_one_hot = mdpp.categorical_embedding(data, embedding='one-hot', unique_threshlold=0.5)
+    embedded_label = mdpp.categorical_embedding(data, embedding='label', unique_threshlold=0.5)
 
     label_supposed_result = np.array([[1, 0], [2, 0], [3, 1], [4, 0], [5, 1]])
     one_hot_supposed_result = np.array([[1, 1, 0], [2, 1, 0], [3, 0, 1], [4, 1, 0], [5, 0, 1]])
 
-    assert(np.array_equal(embedded_label.values, label_supposed_result) and np.array_equal(embedded_one_hot.values, one_hot_supposed_result))
+    embedded_label_shorter = mdpp.categorical_embedding(data, embedding='label', unique_threshlold=0.99)
+
+    assert(np.array_equal(embedded_label.values, label_supposed_result) and np.array_equal(embedded_one_hot.values, one_hot_supposed_result) and embedded_label_shorter.shape[1] == 1)
 
 
 def test_make_sequences():

@@ -258,7 +258,7 @@ def load_data(data, header=0, csv_style={'separator': ",", 'decimal': "."}, pred
 
 
 def data_consolidation(data, predicted_column=None, other_columns=1, datalength=0, datetime_column='', freq=0, resample_function='sum',
-                       embedding='label', unique_threshlold=0.1, remove_nans_threshold=0.85, remove_nans_or_replace='interpolate', dtype='float32'):
+                       embedding='label', unique_threshlold=0.6, remove_nans_threshold=0.85, remove_nans_or_replace='interpolate', dtype='float32'):
     """Transform input data in various formats and shapes into data in defined shape,
     that other functions rely on.
 
@@ -270,11 +270,12 @@ def data_consolidation(data, predicted_column=None, other_columns=1, datalength=
         datetime_column (str, optional): Name or index of datetime column. Defaults to ''.
         freq (int, optional): Frequency of resampled data. Defaults to 0.
         resample_function (str, optional): 'sum' or 'mean'. Whether sum resampled columns, or use average. Defaults to 'sum'.
-        embedding(str, optional): 'label' or 'one-hot'. Categorical encoding. Create numbers from strings. 'label' give each category (unique string) concrete number.
+        embedding(str, optional): 'label' or 'one-hot'. Categorical encoding. Create numbers from strings. 'label' give each category (unique string) concrete number. Defaults to 'interpolate'.
             Result will have same number of columns. 'one-hot' create for every category new column. Only columns, where are strings repeating (unique_threshlold) will be used.
-        unique_threshlold(float, optional): Remove string columns, that have to many categories. E.g 0.1 define, that has to be less that 10% of unique values.
+        unique_threshlold(float, optional): Remove string columns, that have to many categories. E.g 0.9 define, that if column contain more that 90% of NOT unique values it's deleted. Defaults to 0.6.
             Min is 0, max is 1. It will remove ids, hashes etc.
-        remove_nans_threshold (float, optional): From 0 to 1. How much not nans (not a number) can be in column to not be deleted.
+        remove_nans_threshold (float, optional): From 0 to 1. Require that many non-nan numeric values to not be deleted. E.G if value is 0.9 with column
+            with 10 values, 90% must be numeric that implies max 1 np.nan can be presented, otherwise column will be deleted. 
         remove_nans_or_replace (str, float, optional): 'interpolate', 'remove', 'neighbor', 'mean' or value. Remove or replace rest nan values.
             If you want to keep nan, setup value to np.nan. If you want to use concrete value, use float or int type. Defaults to 'interpolate'.
         dtype (str, optional): Output dtype. E.g. 'float32'.
@@ -402,8 +403,9 @@ def data_consolidation(data, predicted_column=None, other_columns=1, datalength=
 
     # TODO fix error after option - no predicted value - iter from 0...
     # Remove columns that have to much nan values
-    data_for_predictions_df = data_for_predictions_df.iloc[:, 0:1].join(
-        data_for_predictions_df.iloc[:, 1:].dropna(axis=1, thresh=len(data_for_predictions_df) * (remove_nans_threshold)))
+    if remove_nans_threshold:
+        data_for_predictions_df = data_for_predictions_df.iloc[:, 0:1].join(
+            data_for_predictions_df.iloc[:, 1:].dropna(axis=1, thresh=len(data_for_predictions_df) * (remove_nans_threshold)))
 
     # Replace rest of nan values
     if remove_nans_or_replace == 'interpolate':
@@ -416,17 +418,16 @@ def data_consolidation(data, predicted_column=None, other_columns=1, datalength=
         # Need to use both directions if first or last value is nan
         data_for_predictions_df.fillna(method='ffill', inplace=True)
 
-        # Forward fill and interpolate can miss som nans if on first row
-        if data_for_predictions_df.isnull().values.any():
-            data_for_predictions_df.fillna(method='bfill', inplace=True)
-
     elif remove_nans_or_replace == 'mean':
         for col in data_for_predictions_df.columns:
             data_for_predictions_df[col] = data_for_predictions_df[col].fillna(data_for_predictions_df[col].mean())
 
-    elif isinstance(remove_nans_or_replace, (int, float) or np.isnan(remove_nans_or_replace)):
+    if isinstance(remove_nans_or_replace, (int, float) or np.isnan(remove_nans_or_replace)):
         data_for_predictions_df.fillna(remove_nans_or_replace, inplace=True)
 
+    # Forward fill and interpolate can miss som nans if on first row
+    else:
+        data_for_predictions_df.fillna(method='bfill', inplace=True)
 
     return data_for_predictions_df
 
@@ -620,16 +621,16 @@ def preprocess_data_inverse(data, standardizeit=False, final_scaler=None, data_t
 
 ### Data consolidation functions...
 
-def categorical_embedding(data, embedding='label', unique_threshlold=0.1):
+def categorical_embedding(data, embedding='label', unique_threshlold=0.6):
     """Transform string categories such as 'US', 'FR' into numeric values, that can be used in machile learning model.
 
     Args:
         data (pd.DataFrame): Data with string (Object) columns.
         embedding(str, optional): 'label' or 'one-hot'. Categorical encoding. Create numbers from strings. 'label' give each category (unique string) concrete number.
             Result will have same number of columns. 'one-hot' create for every category new column. Only columns, where are strings repeating (unique_threshlold) will be used.
-        unique_threshlold(float, optional): Remove string columns, that have to many categories. E.g 0.1 define, that has to be less that 10% of unique values - if 100 rows => max 10 categories.
-            Min is 0, max is 1. It will remove ids, hashes etc.
-
+        unique_threshlold(float, optional): Remove string columns, that have to many categories (ids, hashes etc.). E.g 0.9 defines that in column of length 100, max number of
+            categories to not to be deleted is 10 (90% non unique repeating values). Defaults to 0.6. Min is 0, max is 1.
+ 
     Returns:
         pd.DataFrame: Dataframe where string columns transformed to numeric.
     """
@@ -640,7 +641,7 @@ def categorical_embedding(data, embedding='label', unique_threshlold=0.1):
 
         try:
 
-            if (data_for_embedding[i].nunique() / len(data_for_embedding[i])) > unique_threshlold:
+            if (data_for_embedding[i].nunique() / len(data_for_embedding[i])) > (1 - unique_threshlold):
                 to_drop.append(i)
                 continue
 
