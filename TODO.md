@@ -1,5 +1,6 @@
 # List of what could be done
 
+[ ] Add option force to number in consolidation
 [ ] In docstrings, check and fill defaults...
 [ ] Add examples for inputs and generatedata in readme and init
 [ ] Defince inplace argumrnt in consolidation and data_preprocessing, and do inplace operations where possible

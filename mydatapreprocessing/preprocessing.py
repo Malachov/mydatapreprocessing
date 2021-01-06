@@ -106,6 +106,7 @@ def load_data(data, header=0, csv_style={'separator': ",", 'decimal': "."}, pred
 
         for i in data:
             data_path = Path(i)
+            iterated_data = None
 
             try:
                 if data_path.exists():
@@ -308,7 +309,7 @@ def data_consolidation(data, predicted_column=None, other_columns=1, datalength=
                            caption="Data transposed warning!!!"))
         data_for_predictions_df = data_for_predictions_df.T
 
-    if predicted_column:
+    if predicted_column or predicted_column == 0:
         if isinstance(predicted_column, str):
 
             predicted_column_name = predicted_column
@@ -328,6 +329,9 @@ def data_consolidation(data, predicted_column=None, other_columns=1, datalength=
 
         # Make predicted column index 0
         data_for_predictions_df.insert(0, predicted_column_name, data_for_predictions_df.pop(predicted_column_name))
+
+    else:
+        predicted_column_name = None
 
     reset_index = False
 
@@ -357,11 +361,16 @@ def data_consolidation(data, predicted_column=None, other_columns=1, datalength=
     # Keep only numeric columns
     data_for_predictions_df = data_for_predictions_df.select_dtypes(include='number')
 
-    if predicted_column and predicted_column_name not in data_for_predictions_df.columns:
-        raise KeyError(user_message(
-            "Predicted column is not number datatype. Setup correct 'predicted_column' in py. "
-            f"Available columns with number datatype: {list(data_for_predictions_df.columns)}",
-            caption="Prediction available only on number datatype column."))
+    if predicted_column_name:
+        # TODO setup other columns in define input so every model can choose and simplier config input types
+        if not other_columns:
+            data_for_predictions_df = data_for_predictions_df[predicted_column_name]
+
+        if predicted_column_name not in data_for_predictions_df.columns:
+            raise KeyError(user_message(
+                "Predicted column is not number datatype. Setup correct 'predicted_column' in py. "
+                f"Available columns with number datatype: {list(data_for_predictions_df.columns)}",
+                caption="Prediction available only on number datatype column."))
 
     if datetime_column not in [None, False, '']:
         if freq:
@@ -393,11 +402,6 @@ def data_consolidation(data, predicted_column=None, other_columns=1, datalength=
 
     # Trim the data on defined length
     data_for_predictions_df = data_for_predictions_df.iloc[-datalength:, :]
-
-
-    # TODO setup other columns in define input so every model can choose and simplier config input types
-    if not other_columns:
-        data_for_predictions_df = data_for_predictions_df[predicted_column_name]
 
     data_for_predictions_df = pd.DataFrame(data_for_predictions_df)
 
