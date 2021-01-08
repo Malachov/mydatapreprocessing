@@ -480,11 +480,11 @@ def add_frequency_columns(data, window):
 
     for i, j in enumerate(data):
         data[f"{j} - FFT windowed abs max index"] = np.nanargmax(absolute, axis=2)[i]
-        data[f"{j} - FFT windowed angle1 max index"] = np.nanargmax(angle, axis=2)[i]
+        data[f"{j} - FFT windowed angle max index"] = np.nanargmax(angle, axis=2)[i]
         data[f"{j} - FFT windowed abs max"] = np.nanmax(absolute, axis=2)[i]
         data[f"{j} - FFT windowed abs std"] = np.nanstd(absolute, axis=2)[i]
-        data[f"{j} - FFT windowed angle1 max"] = np.nanmax(angle, axis=2)[i]
-        data[f"{j} - FFT windowed angle1 std"] = np.nanstd(angle, axis=2)[i]
+        data[f"{j} - FFT windowed angle max"] = np.nanmax(angle, axis=2)[i]
+        data[f"{j} - FFT windowed angle std"] = np.nanstd(angle, axis=2)[i]
 
     return data
 
