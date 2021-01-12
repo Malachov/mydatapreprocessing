@@ -1,10 +1,12 @@
-"""This is module that from time series data create inputs to models like scikit learn or tensorflow.
+"""This is module that from time series data create inputs for machine learning models like scikit learn or tensorflow.
 Usual data inputs types are (X, y, x_input). X stands for vector of inputs, y for vector of outputs and
 x_input is input for new predictions we want to create.
 
 There are three functions. `make_sequences` that create seqences from time samples, `create_inputs`
 that tell the first function what sequences create for what models and `create_tests_outputs`
 that for defined inputs create outputs that we can compute error criterion like rmse with.
+
+Input data are in shape (x_samples, x_features)
 """
 
 import numpy as np
@@ -24,7 +26,7 @@ def make_sequences(data, n_steps_in, n_steps_out=1, constant=None, predicts=7, r
                 [5, 6, 7]  [8]
 
     Args:
-        data (np.array): Time series data.
+        data (np.ndarray): Time series data. Shape is (n_samples, n_feature)
         n_steps_in (int): Number of input members.
         n_steps_out (int, optional): Number of output members. For one-step models use 1. Defaults to 1.
         constant (bool, optional): If use bias (add 1 to first place to every member). Defaults to None.
@@ -37,6 +39,41 @@ def make_sequences(data, n_steps_in, n_steps_out=1, constant=None, predicts=7, r
     Returns:
         np.array, np.array: X and y. Inputs and outputs (that can be used for example in sklearn models).
 
+    Examples:
+        Also multivariate data can be used.
+
+        >>> data = np.array([[1, 2, 3, 4, 5, 6, 7, 8], [9, 10, 11, 12 ,13, 14 ,15, 16], [17 ,18 ,19, 20, 21, 22, 23, 24]]).T
+        >>> X, y, x_input, _ = mdp.inputs.make_sequences(data, n_steps_in= 2, n_steps_out=3)
+
+        This example create from such a array:
+
+            data = array([[ 1, 9, 17],
+                          [ 2, 10, 18],
+                          [ 3, 11, 19],
+                          [ 4, 12, 20],
+                          [ 5, 13, 21],
+                          [ 6, 14, 22],
+                          [ 7, 15, 23],
+                          [ 8, 16, 24]])
+
+        Such a results (data are serialized).
+
+            X = array([[ 1, 2, 3, 9, 10, 11, 17, 18, 19],
+                       [ 2, 3, 4, 10, 11, 12, 18, 19, 20],
+                       [ 3, 4, 5, 11, 12, 13, 19, 20, 21],
+                       [ 4, 5, 6, 12, 13, 14, 20, 21, 22]])
+
+            y = array([[4, 5],
+                       [5, 6],
+                       [6, 7],
+                       [7, 8]]
+
+            x_input = array([[ 6,  7,  8, 14, 15, 16, 22, 23, 24]])
+
+        If parameter constant is one (mean bias for neural nets), result can be something like
+            X = array([[ 1, 1, 2, 3],
+                       [ 1, 4, 5, 6],
+                       [ 1, 7, 8, 9])
     """
 
     if n_steps_out > n_steps_in:
@@ -82,12 +119,17 @@ def make_sequences(data, n_steps_in, n_steps_out=1, constant=None, predicts=7, r
 
 
 def create_inputs(data, input_type_name, input_type_params, mode='validate', predicts=7, repeatit=10, predicted_column_index=0):
-    """Define configured inputs for various models.
+    """Define configured inputs for various models. For some models use `make_sequences` function => check it's
+    documentation how it works. For `data` input type name, just return data, if data_one_column, other columns
+    are deleted, if something else, it create inputs called X and y - same convention as in sklearn plus x_input
+    - input for predicted values. If constant in used name, it will insert bias 1 to every sample input.
 
     Args:
         data (np.ndarray): Time series data.
-        input_type_name (str): Name of input. Choices are ['data', 'data_one_column', 'one_in_one_out_constant', 'one_in_one_out', 'one_in_batch_out', 'something_else'].
-        input_type_params (dict): Dict of params used in make_sequences. E.g. {'n_steps_in': cls.default_n_steps_in, 'n_steps_out': cls.predicts, 'default_other_columns_length': cls.default_other_columns_length, 'constant': 0}
+        input_type_name (str): Name of input. Choices are ['data', 'data_one_column', 'one_in_one_out_constant','one_in_one_out',
+            'one_in_batch_out', 'something_else']. If something else, than input type params define produces inputs.
+        input_type_params (dict): Dict of params used in make_sequences. E.g. {'n_steps_in': cls.default_n_steps_in,
+            'n_steps_out': cls.predicts, 'default_other_columns_length': cls.default_other_columns_length, 'constant': 0}
         mode (str, optional): 'validate' or 'predictNumber of predicted valuesvalidate'.
         predicts (int, optional): Number of predicted values. Defaults to 7.
         repeatit (int, optional): Number of tested sequentions. Defaults to 10.
@@ -95,6 +137,16 @@ def create_inputs(data, input_type_name, input_type_params, mode='validate', pre
 
     Returns:
         tuple: (model_train_input, model_predict_input, model_test_inputs)
+
+        `model_train_input` means data inserting model - it can be timeseries like [1, 2, 3, 4, 5...] or it can be
+        the tuple of X = [[1, 2, 3], [2, 3, 4]...] and y = [[4], [5]...]
+
+        `model_predict_input` means x_input - data inserting model to create prediction.
+
+        `model_test_inputs` if mode is not validate, it will choose some inputs and it's results for model error evaluation.
+        Thing is, that these inputs was in training set, so it's not accurate (but as much as possible used for train).
+        If mode is validate, than only one testing input wit result is generated (real error, but small sample - need to validate
+        in more datapoints - retrain everytime).
     """
 
     # Take one input type, make all derivated inputs (save memory, because only slices) and create dictionary of inputs for one iteration

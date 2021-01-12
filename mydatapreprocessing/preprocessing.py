@@ -364,7 +364,7 @@ def data_consolidation(data, predicted_column=None, other_columns=1, datalength=
     if predicted_column_name:
         # TODO setup other columns in define input so every model can choose and simplier config input types
         if not other_columns:
-            data_for_predictions_df = data_for_predictions_df[predicted_column_name]
+            data_for_predictions_df = pd.DataFrame(data_for_predictions_df[predicted_column_name])
 
         if predicted_column_name not in data_for_predictions_df.columns:
             raise KeyError(user_message(
