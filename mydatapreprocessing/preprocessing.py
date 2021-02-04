@@ -932,3 +932,24 @@ def fitted_power_transform(data, fitted_stdev, mean=None, fragments=10, iteratio
         transformed_results = transformed_results - mean_difference
 
     return transformed_results
+
+
+def add_none_to_gaps(df, sampling_threshold):
+    """If empty windows in sampled signal, it will add None values (one row) to the empty window start.
+    Reason is to correct plotting. Points are connected, but not between two gaps.
+
+    Args:
+        df (pd.DataFrame): Dataframe with time index.
+        sampling_threshold (float): Size of window necessary for inserting None.
+    Returns:
+        df: Df with None row inserted in time gaps.
+    """
+    nons = []
+    memory = None
+
+    for i in df.index:
+        if memory and i - memory > sampling_threshold:
+            nons.append(pd.DataFrame([[np.nan] * df.shape[1]], index=[memory + sampling_threshold]))
+        memory = i
+
+    return pd.concat([df, *nons]).sort_index()

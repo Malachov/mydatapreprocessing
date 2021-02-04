@@ -167,6 +167,14 @@ def test_remove_nans():
     assert np.isnan(not_removed.values).any() and mdpp.data_consolidation(data, remove_nans_threshold=0.5).shape[1] > mdpp.data_consolidation(data, remove_nans_threshold=0.8).shape[1]
 
 
+def test_add_none_to_gaps():
+
+    data = pd.DataFrame([[0, 1]] * 7, index=[0.1, 0.2, 0.3, 1.0, 1.1, 1.2, 2.0])
+    df_gaps = mdpp.add_none_to_gaps(data, 0.2)
+
+    assert df_gaps.iloc[:, 0].isnull().sum() == 2
+
+
 def test_local_files():
 
     test_files = Path(__file__).parent / 'test_files'
@@ -266,8 +274,7 @@ def test_make_sequences():
             and np.allclose(test_inputs2, test_inputs2_res))
 
 
-# ANCHOR Generate data
-
 if __name__ == "__main__":
 
+    test_local_files()
     pass
