@@ -8,12 +8,11 @@ Library contain 3 modules.
 
 ## Preprocessing
 
-First - `preprocessing` load data, consolidate it and do the preprocessing. It contains functions like load_data, data_consolidation, preprocess_data, preprocess_data_inverse, add_frequency_columns, rolling_windows, add_derived_columns etc.
+First - `preprocessing` load data, consolidate it and do the preprocessing. It contains functions like `load_data`, `data_consolidation`, `preprocess_data`, `preprocess_data_inverse`, `add_frequency_columns`, `rolling_windows`, `add_derived_columns` etc.
 
 ### Example
 
 ```python
-### Preprocessing module
 
 import mydatapreprocessing.preprocessing as mdpp
 
@@ -66,14 +65,56 @@ data_preprocessed, _, _ = mdpp.preprocess_data(data_consolidated, remove_outlier
 
 Second module is `inputs`. It take tabular time series data and put it into format (input vector X, output vector y and input for predicted value x_input) that can be inserted into machine learning models for example on sklearn or tensorflow. It contain functions make_sequences, create_inputs and create_tests_outputs
 
-### Example
+Example for n_steps_in = 3 and n_steps_out = 1
+
+From [[1], [2], [3], [4], [5], [6]]
+
+Inputs: [[1, 2, 3], [2, 3, 4], [3, 4, 5]]
+Outputs [[4], [5], [6]]
+
+Also multivariate data can be used.
 
 ```python
-import mydatapreprocessing.inputs as mdpi
 
-data = np.array([[1, 3, 5, 2, 3, 4, 5, 66, 3]]).T
-seqs, Y, x_input, test_inputs = mdpi.inputs.make_sequences(data, predicts=7, repeatit=3, n_steps_in=6, n_steps_out=1, constant=1)
+import mydatapreprocessing as mdp
 
+data = np.array([[1, 2, 3, 4, 5, 6, 7, 8], [9, 10, 11, 12 ,13, 14 ,15, 16], [17 ,18 ,19, 20, 21, 22, 23, 24]]).T
+X, y, x_input, _ = mdp.inputs.make_sequences(data, n_steps_in= 2, n_steps_out=3)
+
+# This example create from such a array:
+
+# data = array([[1, 9, 17],
+#               [2, 10, 18],
+#               [3, 11, 19],
+#               [4, 12, 20],
+#               [5, 13, 21],
+#               [6, 14, 22],
+#               [7, 15, 23],
+#               [8, 16, 24]])
+
+# Such a results (data are serialized).
+
+# X = array([[1, 2, 3, 9, 10, 11, 17, 18, 19],
+#            [2, 3, 4, 10, 11, 12, 18, 19, 20],
+#            [3, 4, 5, 11, 12, 13, 19, 20, 21],
+#            [4, 5, 6, 12, 13, 14, 20, 21, 22]])
+
+# y = array([[4, 5],
+#            [5, 6],
+#            [6, 7],
+#            [7, 8]]
+
+# x_input = array([[ 6,  7,  8, 14, 15, 16, 22, 23, 24]])
 ```
 
 Third module is `generatedata`. It generate some basic data like sin, ramp random. In the future, it will also import some real datasets for models KPI.
+
+### Example
+
+```python
+
+import mydatapreprocessing as mdp
+
+data = mdp.generatedata.gen_sin(1000)
+
+```

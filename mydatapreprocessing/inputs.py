@@ -6,13 +6,15 @@ There are three functions. `make_sequences` that create seqences from time sampl
 that tell the first function what sequences create for what models and `create_tests_outputs`
 that for defined inputs create outputs that we can compute error criterion like rmse with.
 
-Input data are in shape (x_samples, x_features)
+Functions are documented in it's docstrings.
+
+Input data are in shape (x_samples, x_features).
 """
 
 import numpy as np
 
 from mydatapreprocessing.preprocessing import rolling_windows
-from mylogging import user_warning
+import mylogging
 
 
 def make_sequences(data, n_steps_in, n_steps_out=1, constant=None, predicts=7, repeatit=10, predicted_column_index=0, serialize_columns=1, default_other_columns_length=None):
@@ -20,10 +22,11 @@ def make_sequences(data, n_steps_in, n_steps_out=1, constant=None, predicts=7, r
 
     Example for n_steps_in = 3 and n_steps_out = 1
 
-    From [[1, 2, 3, 4, 5, 6, 7, 8]]
+    From [[1], [2], [3], [4], [5], [6]]
 
-        Creates [1, 2, 3]  [4]
-                [5, 6, 7]  [8]
+    Creates [1, 2, 3]  [4]
+            [2, 3, 4]  [5]
+            [3, 4, 5]  [6]
 
     Args:
         data (np.ndarray): Time series data. Shape is (n_samples, n_feature)
@@ -78,7 +81,7 @@ def make_sequences(data, n_steps_in, n_steps_out=1, constant=None, predicts=7, r
 
     if n_steps_out > n_steps_in:
         n_steps_in = n_steps_out + 1
-        user_warning('n_steps_out was bigger than n_steps_in - n_steps_in changed during prediction!')
+        mylogging.warn('n_steps_out was bigger than n_steps_in - n_steps_in changed during prediction!')
 
     if default_other_columns_length == 0:
         data = data[:, 0].reshape(1, -1)
@@ -138,15 +141,15 @@ def create_inputs(data, input_type_name, input_type_params, mode='validate', pre
     Returns:
         tuple: (model_train_input, model_predict_input, model_test_inputs)
 
-        `model_train_input` means data inserting model - it can be timeseries like [1, 2, 3, 4, 5...] or it can be
-        the tuple of X = [[1, 2, 3], [2, 3, 4]...] and y = [[4], [5]...]
+            `model_train_input` means data inserting model - it can be timeseries like [1, 2, 3, 4, 5...] or it can be
+            the tuple of X = [[1, 2, 3], [2, 3, 4]...] and y = [[4], [5]...]
 
-        `model_predict_input` means x_input - data inserting model to create prediction.
+            `model_predict_input` means x_input - data inserting model to create prediction.
 
-        `model_test_inputs` if mode is not validate, it will choose some inputs and it's results for model error evaluation.
-        Thing is, that these inputs was in training set, so it's not accurate (but as much as possible used for train).
-        If mode is validate, than only one testing input wit result is generated (real error, but small sample - need to validate
-        in more datapoints - retrain everytime).
+            `model_test_inputs` if mode is not validate, it will choose some inputs and it's results for model error evaluation.
+            Thing is, that these inputs was in training set, so it's not accurate (but as much as possible used for train).
+            If mode is validate, than only one testing input wit result is generated (real error, but small sample - need to validate
+            in more datapoints - retrain everytime).
     """
 
     # Take one input type, make all derivated inputs (save memory, because only slices) and create dictionary of inputs for one iteration

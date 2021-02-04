@@ -24,13 +24,13 @@ sys.path.insert(0, Path(os.path.abspath(inspect.getframeinfo(inspect.currentfram
 import mydatapreprocessing.preprocessing as mdpp
 import mydatapreprocessing as mdp
 
-mylogging._COLORIZE = 0
+mylogging.config.COLOR = 0
 
 np.random.seed(2)
 
 
 #########################
-### Integration tests ###
+### SECTION Integration tests
 #########################
 
 def test_integration():
@@ -100,12 +100,14 @@ def test_preprocessing():
 def test_visual():
     visual_test(print_preprocessing=1, print_postprocessing=1)
 
-
+# !SECTION
 ##################
-### Unit tests ###
+### SECTION Unit tests
 ##################
 
-### Data load ###
+### ANCHOR preprocessing module
+
+# NOTE Data load
 
 def test_test_data():
     assert mdpp.load_data('test').ndim
@@ -147,7 +149,7 @@ def test_more_files():
     assert len(data_loaded2) == 2 * len(data_loaded)
 
 
-### Consolidation ###
+# NOTE Consolidation
 def test_remove_nans():
     data = np.random.randn(50, 10)
     data[0, :] = np.nan
@@ -165,7 +167,6 @@ def test_remove_nans():
     assert np.isnan(not_removed.values).any() and mdpp.data_consolidation(data, remove_nans_threshold=0.5).shape[1] > mdpp.data_consolidation(data, remove_nans_threshold=0.8).shape[1]
 
 
-### Preprocessing ###
 def test_local_files():
 
     test_files = Path(__file__).parent / 'test_files'
@@ -204,6 +205,8 @@ def test_local_files():
     assert xls.ndim and xlsx.ndim and df_csv.ndim and df_json.ndim and df_parquet.ndim and df_hdf.ndim and len(df_csv_joined) == len(df_csv) + 10
 
 
+# NOTE Preprocessing
+
 def test_resample():
     data = mdpp.load_data('https://raw.githubusercontent.com/jbrownlee/Datasets/master/daily-min-temperatures.csv')
     resampled = mdpp.data_consolidation(data, datetime_column='Date', freq='M')
@@ -239,6 +242,9 @@ def test_embedding():
     assert(np.array_equal(embedded_label.values, label_supposed_result) and np.array_equal(embedded_one_hot.values, one_hot_supposed_result) and embedded_label_shorter.shape[1] == 1)
 
 
+### ANCHOR inputs module
+
+
 def test_make_sequences():
     data = np.array([[1, 2, 3, 4, 5, 6, 7, 8], [9, 10, 11, 12, 13, 14, 15, 16], [17, 18, 19, 20, 21, 22, 23, 24]]).T
     X, y, x_input, _ = mdp.inputs.make_sequences(data, n_steps_in=2, n_steps_out=3, constant=1)
@@ -259,6 +265,8 @@ def test_make_sequences():
             and np.allclose(X2, X2_res) and np.allclose(y2, y2_res) and np.allclose(x_input2, x_input2_res)
             and np.allclose(test_inputs2, test_inputs2_res))
 
+
+# ANCHOR Generate data
 
 if __name__ == "__main__":
 

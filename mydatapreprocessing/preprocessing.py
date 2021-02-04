@@ -15,6 +15,18 @@ In data consolidation, predicted column is moved on index 0!
 All processing funtions after data_consolidation use numpy.ndarray with ndim == 2,
 so reshape(1, -1) if necessary...
 
+    Examples:
+
+        >>> from mydatapreprocessing import load_data, data_consolidation, preprocess_data
+
+        >>> data = "https://blockchain.info/unconfirmed-transactions?format=json"
+        >>> data_loaded = load_data(data, request_datatype_suffix=".json", predicted_table='txs', data_orientation="index")
+        >>> data_consolidated = data_consolidation(
+                data_loaded, predicted_column="weight", remove_nans_threshold=0.9, remove_nans_or_replace='interpolate')
+
+        >>> data_preprocessed, _, _ = preprocess_data(data_consolidated, remove_outliers=True, smoothit=False,
+                                                      correlation_threshold=False, data_transform=False, standardizeit='standardize')
+
 """
 
 import pandas as pd
@@ -25,8 +37,9 @@ import urllib
 import requests
 import itertools
 from sklearn import preprocessing
+import importlib
 
-from mylogging import user_warning, user_message
+import mylogging
 
 
 def get_file_paths(filetypes=[("csv", ".csv"), ("Excel (xlsx, xls)", ".xlsx .xls"), ("h5", ".h5"), ("parquet", ".parquet"), ("json", ".json")], title='Select file'):
@@ -51,8 +64,11 @@ def get_file_paths(filetypes=[("csv", ".csv"), ("Excel (xlsx, xls)", ".xlsx .xls
 
 
 def load_data(data, header=0, csv_style={'separator': ",", 'decimal': "."}, predicted_table='', max_imported_length=0, request_datatype_suffix='', data_orientation=''):
-    """Load data from path or url. Available formats are csv, excel xlsx, parquet, json or h5.
-    It can also be 'test' or 'sql' - you need to setup database name and query then.
+    """Load data from path or url or other python format (numpy array, list, dict) into dataframe. Available formats are csv, excel xlsx, parquet, json or h5.
+    Allow multiple files loading at once - just put it in list e.g. [df1, df2, df3] or ['myfile1.csv', 'myfile2.csv']. Structure of files does not have to be the same.
+    If you have files in folder and not in list, you can use `get_file_paths` function to open system dialog window, select files and get the list of paths.
+
+    Data param can also be 'test' or 'sql' - you need to setup database name and query then.
 
     Args:
         data (str, pathlib.Path): Path, url or 'test' or 'sql'. Check configuration file for examples.
@@ -88,7 +104,7 @@ def load_data(data, header=0, csv_style={'separator': ",", 'decimal': "."}, pred
             from mydatapreprocessing import generatedata
 
             data = generatedata.gen_random()
-            print(user_message(("Test data was used. Setup config.py 'data'. Check official readme or do help(preprocessing)")))
+            mylogging.info("Test data was used. Setup config.py 'data'. Check official readme for help how to configure data.")
 
             return data
 
@@ -149,10 +165,11 @@ def load_data(data, header=0, csv_style={'separator': ",", 'decimal': "."}, pred
                     iterated_data = i
 
             if not data_type_suffix:
-                raise TypeError(user_message("Data has no suffix (e.g. csv) and is not 'test' or 'sql'. "
-                                             "If using url with no suffix, setup 'request_datatype_suffix'"
-                                             "Or insert data with local path or insert data for example in "
-                                             f"dataframe or numpy array. \n\nYour configured data are {data}", caption="Data load error"))
+                raise TypeError(mylogging.return_str(
+                    "Data has no suffix (e.g. csv) and is not 'test' or 'sql'. "
+                    "If using url with no suffix, setup 'request_datatype_suffix'"
+                    "Or insert data with local path or insert data for example in "
+                    f"dataframe or numpy array. \n\nYour configured data are {data}", caption="Data load error"))
 
             try:
 
@@ -169,20 +186,16 @@ def load_data(data, header=0, csv_style={'separator': ",", 'decimal': "."}, pred
                                                   decimal=csv_style['decimal'], encoding="cp1252").iloc[-max_imported_length:, :])
 
                 elif data_type_suffix == 'xls':
-                    try:
-                        import xlrd
-                    except ModuleNotFoundError:
-                        raise ModuleNotFoundError(user_message("If using excel 'xlsx' file, library xlrd is necessary. Use \n\n\tpip install xlrd"))
+                    if not importlib.find_loader('xlrd'):
+                        raise ModuleNotFoundError(mylogging.return_str("If using excel 'xlsx' file, library xlrd is necessary. Use \n\n\t`pip install xlrd`"))
 
                     if not predicted_table:
                         predicted_table = 0
                         list_of_dataframes.append(pd.read_excel(iterated_data, sheet_name=predicted_table).iloc[-max_imported_length:, :])
 
                 elif data_type_suffix == 'xlsx':
-                    try:
-                        import openpyxl
-                    except ModuleNotFoundError:
-                        raise ModuleNotFoundError(user_message("If using excel 'openpyxl' file, library xlrd is necessary. Use \n\n\tpip install openpyxl"))
+                    if not importlib.find_loader('openpyxl'):
+                        raise ModuleNotFoundError(mylogging.return_str("If using excel 'xls' file, library openpyxl is necessary. Use \n\n\t`pip install openpyxl`"))
 
                     if not predicted_table:
                         predicted_table = 0
@@ -209,24 +222,25 @@ def load_data(data, header=0, csv_style={'separator': ",", 'decimal': "."}, pred
                     raise TypeError
 
             except TypeError:
-                raise TypeError(user_message(f"Your file format {data_type_suffix} not implemented yet. You can use csv, excel, parquet or txt.", "Wrong (not implemented) format"))
+                raise TypeError(mylogging.return_str(f"Your file format {data_type_suffix} not implemented yet. You can use csv, excel, parquet or txt.", "Wrong (not implemented) format"))
 
             except urllib.error.URLError:
-                raise Exception(user_message(
+                raise Exception(mylogging.return_str(
                     "Configured URL not found, check if page is available.",
                     caption="URL error"))
 
             except Exception as err:
                 if not file_path_exist:
-                    raise FileNotFoundError(user_message(
+                    raise FileNotFoundError(mylogging.return_str(
                         "File not found on configured path. If you are using relative path, file must have be in CWD "
                         "(current working directory) or must be inserted in system paths (sys.path.insert(0, 'your_path')). If url, check if page is available.",
                         caption="File not found error"))
                 else:
-                    raise(RuntimeError(user_message("Data load error. File found on path, but not loaded. Check if you use "
-                                                    "corrent locales - correct value and decimal separators in config (different in US and EU...). "
-                                                    " If it's web link, URL has to have .csv suffix. If it's link, that will generate csv link after "
-                                                    f"load, it will not work.\n\n Detailed error: \n\n {err}", caption="Data load failed")))
+                    raise(RuntimeError(mylogging.return_str(
+                        "Data load error. File found on path, but not loaded. Check if you use "
+                        "corrent locales - correct value and decimal separators in config (different in US and EU...). "
+                        " If it's web link, URL has to have .csv suffix. If it's link, that will generate csv link after "
+                        f"load, it will not work.\n\n Detailed error: \n\n {err}", caption="Data load failed")))
     else:
         list_of_dataframes = data
 
@@ -249,7 +263,7 @@ def load_data(data, header=0, csv_style={'separator': ",", 'decimal': "."}, pred
     data = pd.concat(list_of_dataframes, ignore_index=True)
 
     if data.empty:
-        raise TypeError(user_message(
+        raise TypeError(mylogging.return_str(
             "Input data must be in pd.dataframe, pd.series, numpy array or in a path (str or pathlib) with supported formats"
             " - csv, xlsx, txt or parquet. It also can be a list of paths, files etc. If you want to generate list of file paths, "
             "you can use get_file_paths(). Check config comments for more informations...",
@@ -260,8 +274,8 @@ def load_data(data, header=0, csv_style={'separator': ",", 'decimal': "."}, pred
 
 def data_consolidation(data, predicted_column=None, other_columns=1, datalength=0, datetime_column='', freq=0, resample_function='sum',
                        embedding='label', unique_threshlold=0.6, remove_nans_threshold=0.85, remove_nans_or_replace='interpolate', dtype='float32'):
-    """Transform input data in various formats and shapes into data in defined shape,
-    that other functions rely on.
+    """Transform input data in various formats and shapes into data in defined shape, that other functions rely on.
+    If you have data in other format than dataframe, use `load_data` first.
 
     Args:
         data (pd.DataFrame): Input data in well standardized format.
@@ -276,7 +290,7 @@ def data_consolidation(data, predicted_column=None, other_columns=1, datalength=
         unique_threshlold(float, optional): Remove string columns, that have to many categories. E.g 0.9 define, that if column contain more that 90% of NOT unique values it's deleted. Defaults to 0.6.
             Min is 0, max is 1. It will remove ids, hashes etc.
         remove_nans_threshold (float, optional): From 0 to 1. Require that many non-nan numeric values to not be deleted. E.G if value is 0.9 with column
-            with 10 values, 90% must be numeric that implies max 1 np.nan can be presented, otherwise column will be deleted. 
+            with 10 values, 90% must be numeric that implies max 1 np.nan can be presented, otherwise column will be deleted.
         remove_nans_or_replace (str, float, optional): 'interpolate', 'remove', 'neighbor', 'mean' or value. Remove or replace rest nan values.
             If you want to keep nan, setup value to np.nan. If you want to use concrete value, use float or int type. Defaults to 'interpolate'.
         dtype (str, optional): Output dtype. E.g. 'float32'.
@@ -296,17 +310,18 @@ def data_consolidation(data, predicted_column=None, other_columns=1, datalength=
         try:
             data = pd.DataFrame(data)
         except Exception as err:
-            raise(RuntimeError(user_message("Check configuration file for supported formats. It can be path of file (csv, json, parquer...) or it "
-                                            "can be data in python format (numpy array, pandas dataframe or series, dict or list, ). It can also be other "
-                                            "format, but then it have to work with pd.DataFrame(your_data)."
-                                            f"\n\n Detailed error: \n\n {err}", caption="Data load failed")))
+            raise(RuntimeError(mylogging.return_str(
+                "Check configuration file for supported formats. It can be path of file (csv, json, parquer...) or it "
+                "can be data in python format (numpy array, pandas dataframe or series, dict or list, ). It can also be other "
+                "format, but then it have to work with pd.DataFrame(your_data)."
+                f"\n\n Detailed error: \n\n {err}", caption="Data load failed")))
 
     data_for_predictions_df = data.copy()
 
     if data_for_predictions_df.shape[0] < data_for_predictions_df.shape[1]:
-        print(user_message("Input data must be in shape (n_samples, n_features) that means (rows, columns) Your shape is "
-                           f" {data.shape}. It's unusual to have more features than samples. Probably wrong shape.",
-                           caption="Data transposed warning!!!"))
+        mylogging.info("Input data must be in shape (n_samples, n_features) that means (rows, columns) Your shape is "
+                       f" {data.shape}. It's unusual to have more features than samples. Probably wrong shape.",
+                       caption="Data transposed warning!!!")
         data_for_predictions_df = data_for_predictions_df.T
 
     if predicted_column or predicted_column == 0:
@@ -316,7 +331,7 @@ def data_consolidation(data, predicted_column=None, other_columns=1, datalength=
 
             if predicted_column_name not in data_for_predictions_df.columns:
 
-                raise KeyError(user_message(
+                raise KeyError(mylogging.return_str(
                     f"Predicted column name - '{predicted_column}' not found in data. Change 'predicted_column' in config"
                     f". Available columns: {list(data_for_predictions_df.columns)}", caption="Column not found error"))
 
@@ -348,7 +363,7 @@ def data_consolidation(data, predicted_column=None, other_columns=1, datalength=
             data_for_predictions_df.index = pd.to_datetime(data_for_predictions_df.index)
 
         except Exception:
-            raise KeyError(user_message(
+            raise KeyError(mylogging.return_str(
                 f"Datetime name / index from config - '{datetime_column}' not found in data or not datetime format. "
                 f"Change in config - 'datetime_column'. Available columns: {list(data_for_predictions_df.columns)}"))
 
@@ -367,7 +382,7 @@ def data_consolidation(data, predicted_column=None, other_columns=1, datalength=
             data_for_predictions_df = pd.DataFrame(data_for_predictions_df[predicted_column_name])
 
         if predicted_column_name not in data_for_predictions_df.columns:
-            raise KeyError(user_message(
+            raise KeyError(mylogging.return_str(
                 "Predicted column is not number datatype. Setup correct 'predicted_column' in py. "
                 f"Available columns with number datatype: {list(data_for_predictions_df.columns)}",
                 caption="Prediction available only on number datatype column."))
@@ -386,11 +401,11 @@ def data_consolidation(data, predicted_column=None, other_columns=1, datalength=
 
             if data_for_predictions_df.index.freq is None:
                 reset_index = True
-                user_warning("Datetime index was provided from config, but frequency guess failed. "
-                             "Specify 'freq' in config to resample and have equal sampling if you want "
-                             "to have date in plot or if you want to have equal sampling. Otherwise index will "
-                             "be reset because cannot generate date indexes of predicted values.",
-                             caption="Datetime frequency not inferred")
+                mylogging.warn("Datetime index was provided from config, but frequency guess failed. "
+                               "Specify 'freq' in config to resample and have equal sampling if you want "
+                               "to have date in plot or if you want to have equal sampling. Otherwise index will "
+                               "be reset because cannot generate date indexes of predicted values.",
+                               caption="Datetime frequency not inferred")
 
     # If frequency is not configured nor infered or index is not datetime, it's reset to be able to generate next results
     if reset_index or not isinstance(data_for_predictions_df.index, (pd.core.indexes.datetimes.DatetimeIndex, pd._libs.tslibs.timestamps.Timestamp)):
@@ -466,8 +481,8 @@ def add_frequency_columns(data, window):
     data = pd.DataFrame(data)
 
     if window > len(data.values):
-        user_warning("Length of data much be much bigger than window used for generating new data columns",
-                     caption="Adding frequency columns failed")
+        mylogging.warn("Length of data much be much bigger than window used for generating new data columns",
+                       caption="Adding frequency columns failed")
 
     windows = rolling_windows(data.values.T, window)
 
@@ -634,7 +649,7 @@ def categorical_embedding(data, embedding='label', unique_threshlold=0.6):
             Result will have same number of columns. 'one-hot' create for every category new column. Only columns, where are strings repeating (unique_threshlold) will be used.
         unique_threshlold(float, optional): Remove string columns, that have to many categories (ids, hashes etc.). E.g 0.9 defines that in column of length 100, max number of
             categories to not to be deleted is 10 (90% non unique repeating values). Defaults to 0.6. Min is 0, max is 1.
- 
+
     Returns:
         pd.DataFrame: Dataframe where string columns transformed to numeric.
     """
@@ -806,7 +821,7 @@ def standardize(data, used_scaler='standardize'):
         scaler = preprocessing.StandardScaler()
 
     else:
-        raise TypeError(user_message(f"Your scaler {used_scaler} not in options. Use one of ['01', '-11', 'robust', 'standardize']"))
+        raise TypeError(mylogging.return_str(f"Your scaler {used_scaler} not in options. Use one of ['01', '-11', 'robust', 'standardize']"))
 
     # First normalized values are calculated, then scler just for predicted value is computed again so no full matrix is necessary for inverse
     if isinstance(data, pd.DataFrame):

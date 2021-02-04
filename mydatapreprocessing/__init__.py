@@ -7,9 +7,9 @@ feature extraction etc. based on configuration.
 
 Library contain 3 modules.
 
-First - `preprocessing` load data and preprocess it. It contains functions like load_data,
-data_consolidation, preprocess_data, preprocess_data_inverse, add_frequency_columns, rolling_windows,
-add_derived_columns etc.
+First - `preprocessing` load data and preprocess it. It contains functions like `load_data`,
+`data_consolidation`, `preprocess_data`, `preprocess_data_inverse`, `add_frequency_columns`, `rolling_windows`,
+`add_derived_columns` etc.
 
 Examples:
 
@@ -28,7 +28,7 @@ Examples:
     >>> # Preprocess data. It return preprocessed data, but also last undifferenced value and scaler for inverse
     >>> # transformation, so unpack it with _
     >>> data_preprocessed, _, _ = mdpp.preprocess_data(data_consolidated, remove_outliers=True, smoothit=False,
-    >>>                                               correlation_threshold=False, data_transform=False, standardizeit='standardize')
+    >>>                                                correlation_threshold=False, data_transform=False, standardizeit='standardize')
 
 
     >>> # Allowed data formats for load_data are examples
@@ -47,32 +47,65 @@ Examples:
     >>> # ["https://raw.githubusercontent.com/jbrownlee/Datasets/master/daily-min-temperatures.csv", "https://raw.githubusercontent.com/jbrownlee/Datasets/master/daily-min-temperatures.csv"]  # List of URLs
     >>> # ["path/to/my1.csv", "path/to/my1.csv"]
 
-Second module is `inputs`. It take tabular time series data and put it into format that can be inserted
-into machine learning models for example on sklearn or tensorflow. It contain functions make_sequences,
-create_inputs and create_tests_outputs
-
+Second module is `inputs`. It take tabular time series data (usually processed by module preprocessing)
+and put it into format that can be inserted into machine learning models for example on sklearn or tensorflow.
+It contain functions `make_sequences`, `create_inputs` and `create_tests_outputs`
 
 Examples:
 
-    >>> import mydatapreprocessing.inputs as mdpi
+    >>> import mydatapreprocessing as mdp
 
-    >>> data = np.array([[1, 3, 5, 2, 3, 4, 5, 66, 3]]).T
-    >>> seqs, Y, x_input, test_inputs = mdpi.inputs.make_sequences(data, predicts=7, repeatit=3, n_steps_in=6, n_steps_out=1, constant=1)
+    >>> data = np.array([[1, 2, 3, 4, 5, 6, 7, 8], [9, 10, 11, 12 ,13, 14 ,15, 16], [17 ,18 ,19, 20, 21, 22, 23, 24]]).T
+    >>> X, y, x_input, _ = mdp.inputs.make_sequences(data, n_steps_in= 2, n_steps_out=3)
 
-    >>> # Now you can insert X, Y, and x_input into scikit model.
+    >>> # This example create from such a array:
+
+    >>> # data = array([[1, 9, 17],
+    >>> #               [2, 10, 18],
+    >>> #               [3, 11, 19],
+    >>> #               [4, 12, 20],
+    >>> #               [5, 13, 21],
+    >>> #               [6, 14, 22],
+    >>> #               [7, 15, 23],
+    >>> #               [8, 16, 24]])
+
+    >>> # Such a results (data are serialized).
+
+    >>> # X = array([[1, 2, 3, 9, 10, 11, 17, 18, 19],
+    >>> #            [2, 3, 4, 10, 11, 12, 18, 19, 20],
+    >>> #            [3, 4, 5, 11, 12, 13, 19, 20, 21],
+    >>> #            [4, 5, 6, 12, 13, 14, 20, 21, 22]])
+
+    >>> # y = array([[4, 5],
+    >>> #            [5, 6],
+    >>> #            [6, 7],
+    >>> #            [7, 8]]
+
+    >>> # x_input = array([[ 6,  7,  8, 14, 15, 16, 22, 23, 24]])
 
 Third module is `generatedata`. It generate some basic data like sin, ramp random. In the future,
 it will also import some real datasets for models KPI.
 
+Examples:
+
+    >>> import mydatapreprocessing as mdp
+
+    >>> data = mdp.generatedata.gen_sin(1000)
+
 """
-
-from . import preprocessing
-from . import inputs
-from . import generatedata
-
-__version__ = "1.1.16"
+__version__ = "1.1.17"
 __author__ = "Daniel Malachov"
 __license__ = "MIT"
 __email__ = "malachovd@seznam.cz"
 
 __all__ = ['preprocessing', 'inputs', 'generatedata']
+
+import warnings
+
+with warnings.catch_warnings():
+    warnings.filterwarnings('once')
+
+    from . import preprocessing
+    from . import inputs
+    from . import generatedata
+

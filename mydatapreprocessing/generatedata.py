@@ -1,6 +1,7 @@
-""" Test data definition. Data can be pickled and saved on disk. User can create own test data and use compare_models to find best models."""
+""" Test data definition. Data are to be used for validating machine learning time series prediction results."""
 
 import numpy as np
+import mylogging
 
 
 def gen_sin(n=1000):
@@ -61,3 +62,21 @@ def gen_slope(n=1000):
     """
 
     return np.array(range(n))
+
+
+def get_eeg(n=1000):
+    """Download eeg data.
+
+    Args:
+        n (int): Length of data.
+
+    Returns:
+        np.ndarray: Slope test data.
+    """
+
+    try:
+        import wfdb
+    except ModuleNotFoundError:
+        raise ModuleNotFoundError(mylogging.return_str("For parsing eeg signal, wfdb library is necessary. Install with `pip install wfdb`"))
+
+    return wfdb.rdrecord('a103l', pn_dir='challenge-2015/training/', channels=[1], sampto=n).p_signal
