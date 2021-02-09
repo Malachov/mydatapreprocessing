@@ -170,7 +170,7 @@ def test_remove_nans():
 def test_add_none_to_gaps():
 
     data = pd.DataFrame([[0, 1]] * 7, index=[0.1, 0.2, 0.3, 1.0, 1.1, 1.2, 2.0])
-    df_gaps = mdpp.add_none_to_gaps(data, 0.2)
+    df_gaps = mdpp.add_none_to_gaps(data)
 
     assert df_gaps.iloc[:, 0].isnull().sum() == 2
 
