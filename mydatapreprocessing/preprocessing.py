@@ -733,7 +733,7 @@ def remove_the_outliers(data, threshold=3):
     Examples:
 
         >>> data = np.array([[1, 3, 5, 2, 3, 4, 5, 66, 3]])
-        >>> print(remove_the_outliers(data))
+        >>> print(sampling_threshold (data))
         [1, 3, 5, 2, 3, 4, 5, 3]
     """
 
@@ -934,16 +934,17 @@ def fitted_power_transform(data, fitted_stdev, mean=None, fragments=10, iteratio
     return transformed_results
 
 
-def add_none_to_gaps(df, sampling_threshold):
+def add_none_to_gaps(df):
     """If empty windows in sampled signal, it will add None values (one row) to the empty window start.
     Reason is to correct plotting. Points are connected, but not between two gaps.
 
     Args:
         df (pd.DataFrame): Dataframe with time index.
-        sampling_threshold (float): Size of window necessary for inserting None.
     Returns:
         df: Df with None row inserted in time gaps.
     """
+
+    sampling_threshold = remove_the_outliers(np.diff(df.index[:50]).reshape(-1, 1), threshold=1).mean() * 3
     nons = []
     memory = None
 
