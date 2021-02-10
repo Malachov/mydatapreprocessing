@@ -1,29 +1,11 @@
-#!/bin/sh
+#!/usr/bin/env python
+# -*- coding: UTF-8 -*-
 
-cd docs/source
+import mypythontools
 
-mv conf.py ..
-mv index.rst ..
-mv _static ..
-mv _templates ..
+# mypythontools.githooks.run_tests()
 
-cd ..
+mypythontools.githooks.sphinx_docs_regenerate('mypythontools')
+mypythontools.githooks.generate_readme_from_init('mypythontools')
 
-rm -r source
-rm -r build
-
-mkdir source
-
-mv conf.py source
-mv index.rst source
-mv _static source
-mv _templates source
-
-sphinx-apidoc -f -e -o source ../mydatapreprocessing
-
-make html
-
-cd ..
-
-git add docs
-
+# mypythontools.deploy.deploy_to_pypi()

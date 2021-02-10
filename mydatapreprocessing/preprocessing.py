@@ -36,7 +36,6 @@ from pathlib import Path
 import urllib
 import requests
 import itertools
-from sklearn import preprocessing
 import importlib
 
 import mylogging
@@ -810,6 +809,10 @@ def standardize(data, used_scaler='standardize'):
     Returns:
         ndarray: Standardized data.
     """
+    if not importlib.util.find_spec('sklearn'):
+        raise ImportError("sklearn library is necessary for standardize function. Install via `pip install sklearn`")
+
+    from sklearn import preprocessing
 
     if used_scaler == '01':
         scaler = preprocessing.MinMaxScaler(feature_range=(0, 1))
@@ -834,6 +837,34 @@ def standardize(data, used_scaler='standardize'):
         final_scaler = scaler.fit(data[:, 0].reshape(-1, 1))
 
     return normalized, final_scaler
+
+
+    def standardize_one_way(data, min, max, axis=0, inplace=False):
+        """Own implementation of standardization. No inverse transformation available.
+        Reason is for builded applications to do not carry sklearn with build.
+
+        Args:
+            data ((np.array, pd.DataFrame)): Data.
+            min (float): Minimum in transformed axis.
+            max (float): Max in transformed axis.
+            axis (int, optional): 0 to columns, 1 to rows. Defaults to 0.
+            inplace (bool, optional): If true, no copy will be returned, but original object. Defaults to False.
+
+        Returns:
+            (np.array, pd.DataFrame): Standardized data. If numpy inserted, numpy returned, same for dataframe.
+        """
+        if not inplace:
+            data = data.copy()
+
+        values = data.values if isinstance(data, pd.DataFrame) else data
+
+        if axis == 0:
+            values[:, :] = (values - values.min(axis=0)) / (values.max(axis=0) - values.min(axis=0)) * (max - min) + min
+
+        elif axis == 1:
+            values[:, :] = ((values.T - values.T.min(axis=0)) / (values.T.max(axis=0) - values.T.min(axis=0)) * (max - min) + min).T
+
+        return data
 
 
 def split(data, predicts=7):
@@ -875,6 +906,9 @@ def smooth(data, window=101, polynom_order=2):
     Returns:
         ndarray: Cleaned data with less noise.
     """
+    if not importlib.util.find_spec('scipy'):
+        raise ImportError("scipy library is necessary for smooth function. Install via `pip install scipy`")
+
     import scipy.signal
 
     if isinstance(data, pd.DataFrame):

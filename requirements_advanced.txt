@@ -1,3 +1,5 @@
+scipy
+sklearn
 tables
 fastparquet
 pyarrow
