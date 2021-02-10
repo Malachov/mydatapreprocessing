@@ -93,7 +93,7 @@ Examples:
     >>> data = mdp.generatedata.gen_sin(1000)
 
 """
-__version__ = "1.1.19"
+__version__ = "1.1.20"
 __author__ = "Daniel Malachov"
 __license__ = "MIT"
 __email__ = "malachovd@seznam.cz"
@@ -108,4 +108,3 @@ with warnings.catch_warnings():
     from . import preprocessing
     from . import inputs
     from . import generatedata
-
