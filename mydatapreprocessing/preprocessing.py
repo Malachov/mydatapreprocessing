@@ -859,10 +859,10 @@ def standardize_one_way(data, min, max, axis=0, inplace=False):
     values = data.values if isinstance(data, pd.DataFrame) else data
 
     if axis == 0:
-        values[:, :] = (values - values.min(axis=0)) / (values.max(axis=0) - values.min(axis=0)) * (max - min) + min
+        values[:, :] = (values - np.nanmin(values, axis=0)) / (np.nanmax(values, axis=0) - np.nanmin(values, axis=0)) * (max - min) + min
 
     elif axis == 1:
-        values[:, :] = ((values.T - values.T.min(axis=0)) / (values.T.max(axis=0) - values.T.min(axis=0)) * (max - min) + min).T
+        values[:, :] = ((values.T - np.nanmin(values.T, axis=0)) / (np.nanmax(values.T, axis=0) - np.nanmin(values.T, axis=0)) * (max - min) + min).T
 
     return data
 

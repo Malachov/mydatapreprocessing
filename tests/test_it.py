@@ -269,12 +269,13 @@ def test_make_sequences():
     x_input2_res = np.array(([[9, 10, 19, 20]]))
     test_inputs2_res = np.array([[[5, 6, 15, 16]], [[6, 7, 16, 17]]])
 
-    assert (np.allclose(X, X_res) and np.allclose(y, y_res) and np.allclose(x_input, x_inpu_res)
-            and np.allclose(X2, X2_res) and np.allclose(y2, y2_res) and np.allclose(x_input2, x_input2_res)
-            and np.allclose(test_inputs2, test_inputs2_res))
+    assert (
+        np.allclose(X, X_res) and np.allclose(y, y_res) and np.allclose(x_input, x_inpu_res)
+        and np.allclose(X2, X2_res) and np.allclose(y2, y2_res) and np.allclose(x_input2, x_input2_res)
+        and np.allclose(test_inputs2, test_inputs2_res)
+    )
 
 
 if __name__ == "__main__":
 
-    test_local_files()
     pass
