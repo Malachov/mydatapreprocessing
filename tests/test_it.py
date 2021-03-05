@@ -250,6 +250,10 @@ def test_embedding():
     assert(np.array_equal(embedded_label.values, label_supposed_result) and np.array_equal(embedded_one_hot.values, one_hot_supposed_result) and embedded_label_shorter.shape[1] == 1)
 
 
+def test_fit_power_transform():
+    mdpp.fitted_power_transform(np.array(range(100)), fitted_stdev=2, mean=9)
+
+
 ### ANCHOR inputs module
 
 

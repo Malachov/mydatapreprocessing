@@ -41,7 +41,7 @@ import importlib
 import mylogging
 
 
-def get_file_paths(filetypes=[("csv", ".csv"), ("Excel (xlsx, xls)", ".xlsx .xls"), ("h5", ".h5"), ("parquet", ".parquet"), ("json", ".json")], title='Select file'):
+def get_file_paths(filetypes=[("csv", ".csv"), ("Excel (xlsx, xls)", ".xlsx .xls"), ("h5", ".h5"), ("parquet", ".parquet"), ("json", ".json")], title='Select files'):
     """Open dialog window where you can choose files you want to use. It will return tuple with string paths.
 
     Args:
@@ -62,7 +62,7 @@ def get_file_paths(filetypes=[("csv", ".csv"), ("Excel (xlsx, xls)", ".xlsx .xls
     return filedialog.askopenfilenames(filetypes=filetypes, title=title)
 
 
-def load_data(data, header=0, csv_style={'separator': ",", 'decimal': "."}, predicted_table='', max_imported_length=0, request_datatype_suffix='', data_orientation=''):
+def load_data(data, header=None, csv_style={'separator': ",", 'decimal': "."}, predicted_table='', max_imported_length=0, request_datatype_suffix='', data_orientation=''):
     """Load data from path or url or other python format (numpy array, list, dict) into dataframe. Available formats are csv, excel xlsx, parquet, json or h5.
     Allow multiple files loading at once - just put it in list e.g. [df1, df2, df3] or ['myfile1.csv', 'myfile2.csv']. Structure of files does not have to be the same.
     If you have files in folder and not in list, you can use `get_file_paths` function to open system dialog window, select files and get the list of paths.
@@ -185,7 +185,7 @@ def load_data(data, header=0, csv_style={'separator': ",", 'decimal': "."}, pred
                                                   decimal=csv_style['decimal'], encoding="cp1252").iloc[-max_imported_length:, :])
 
                 elif data_type_suffix == 'xls':
-                    if not importlib.find_loader('xlrd'):
+                    if not importlib.util.find_spec('xlrd'):
                         raise ModuleNotFoundError(mylogging.return_str("If using excel 'xlsx' file, library xlrd is necessary. Use \n\n\t`pip install xlrd`"))
 
                     if not predicted_table:
@@ -193,7 +193,7 @@ def load_data(data, header=0, csv_style={'separator': ",", 'decimal': "."}, pred
                         list_of_dataframes.append(pd.read_excel(iterated_data, sheet_name=predicted_table).iloc[-max_imported_length:, :])
 
                 elif data_type_suffix == 'xlsx':
-                    if not importlib.find_loader('openpyxl'):
+                    if not importlib.util.find_spec('openpyxl'):
                         raise ModuleNotFoundError(mylogging.return_str("If using excel 'xls' file, library openpyxl is necessary. Use \n\n\t`pip install openpyxl`"))
 
                     if not predicted_table:
@@ -235,11 +235,12 @@ def load_data(data, header=0, csv_style={'separator': ",", 'decimal': "."}, pred
                         "(current working directory) or must be inserted in system paths (sys.path.insert(0, 'your_path')). If url, check if page is available.",
                         caption="File not found error"))
                 else:
-                    raise(RuntimeError(mylogging.return_str(
+                    raise RuntimeError(mylogging.return_str(
                         "Data load error. File found on path, but not loaded. Check if you use "
                         "corrent locales - correct value and decimal separators in config (different in US and EU...). "
                         " If it's web link, URL has to have .csv suffix. If it's link, that will generate csv link after "
-                        f"load, it will not work.\n\n Detailed error: \n\n {err}", caption="Data load failed")))
+                        f"load, setup request_datatype_suffix param.\n\n Detailed error: \n\n {err}", caption="Data load failed"))
+
     else:
         list_of_dataframes = data
 
@@ -718,38 +719,41 @@ def keep_corelated_data(data, threshold=0.5):
     return data
 
 
-def remove_the_outliers(data, threshold=3):
+def remove_the_outliers(data, threshold=3, main_column=0):
     """Remove values far from mean - probably errors. If more columns, then only rows that have outlier on
     predicted column will be deleted. Predicted column is supposed to be 0.
 
     Args:
         data (np.array, pd.DataFrame): Time series data. Must have ndim = 2, if univariate, reshape...
         threshold (int, optional): How many times must be standard deviation from mean to be ignored. Defaults to 3.
-
+        main_column ((int, index)): 
     Returns:
         np.array: Cleaned data.
 
     Examples:
 
         >>> data = np.array([[1, 3, 5, 2, 3, 4, 5, 66, 3]])
-        >>> print(sampling_threshold (data))
+        >>> print(remove_the_outliers(data))
         [1, 3, 5, 2, 3, 4, 5, 3]
     """
 
     if isinstance(data, np.ndarray):
-        data_mean = data[:, 0].mean()
-        data_std = data[:, 0].std()
+        data_mean = data[:, main_column].mean()
+        data_std = data[:, main_column].std()
 
         range_array = np.array(range(data.shape[0]))
         names_to_del = range_array[abs(
-            data[:, 0] - data_mean) > threshold * data_std]
+            data[:, main_column] - data_mean) > threshold * data_std]
         data = np.delete(data, names_to_del, axis=0)
 
     elif isinstance(data, pd.DataFrame):
-        data_mean = data.iloc[:, 0].mean()
-        data_std = data.iloc[:, 0].std()
+        if isinstance(main_column, int):
+            main_column = data.columns[main_column]
 
-        data = data[abs(data[data.columns[0]] - data_mean) < threshold * data_std]
+        data_mean = data[main_column].mean()
+        data_std = data[main_column].std()
+
+        data = data[abs(data[main_column] - data_mean) < threshold * data_std]
 
     return data
 
@@ -927,7 +931,7 @@ def fitted_power_transform(data, fitted_stdev, mean=None, fragments=10, iteratio
     similiar standar deviation, similiar mean if specified. It use Box-Cox power transform in SciPy lib.
 
     Args:
-        data (np.array): Array of data that should be transformed.
+        data (np.array): Array of data that should be transformed (one column => ndim = 1).
         fitted_stdev (float): Standard deviation that we want to have.
         mean (float, optional): Mean of transformed data. Defaults to None.
         fragments (int, optional): How many lambdas will be used in one iteration. Defaults to 9.
@@ -936,6 +940,9 @@ def fitted_power_transform(data, fitted_stdev, mean=None, fragments=10, iteratio
     Returns:
         np.array: Transformed data with demanded standard deviation and mean.
     """
+
+    if data.ndim == 2 and 1 not in data.shape:
+        raise ValueError(mylogging.return_str("Only one column can be power transformed. Use ravel if have shape (n, 1)"))
 
     import scipy.stats
 
