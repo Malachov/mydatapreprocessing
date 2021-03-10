@@ -62,7 +62,7 @@ def get_file_paths(filetypes=[("csv", ".csv"), ("Excel (xlsx, xls)", ".xlsx .xls
     return filedialog.askopenfilenames(filetypes=filetypes, title=title)
 
 
-def load_data(data, header=None, csv_style={'separator': ",", 'decimal': "."}, predicted_table='', max_imported_length=0, request_datatype_suffix='', data_orientation=''):
+def load_data(data, header=None, csv_style=None, predicted_table='', max_imported_length=0, request_datatype_suffix='', data_orientation=''):
     """Load data from path or url or other python format (numpy array, list, dict) into dataframe. Available formats are csv, excel xlsx, parquet, json or h5.
     Allow multiple files loading at once - just put it in list e.g. [df1, df2, df3] or ['myfile1.csv', 'myfile2.csv']. Structure of files does not have to be the same.
     If you have files in folder and not in list, you can use `get_file_paths` function to open system dialog window, select files and get the list of paths.
@@ -72,8 +72,8 @@ def load_data(data, header=None, csv_style={'separator': ",", 'decimal': "."}, p
     Args:
         data (str, pathlib.Path): Path, url or 'test' or 'sql'. Check configuration file for examples.
         header (int, optional): Row index used as column names. Defaults to 0.
-        csv_style (dict, optional): Define CSV separators. En locale usually use {'sep': ",", 'decimal': "."}
-            some Europian country use {'sep': ";", 'decimal': ","}. Defaults to {'separator': ",", 'decimal': "."}.
+        csv_style ((dict, None), optional): Define CSV separator and decimal. En locale usually use {'sep': ",", 'decimal': "."}
+            some Europian country use {'sep': ";", 'decimal': ","}. If None - values are infered. Defaults to None.
         predicted_table (str, optional): If using excel (xlsx) - it means what sheet to use, if json,
             it means what key values, if SQL, then it mean what table. Else it have no impact. Defaults to ''.
         max_imported_length (int, optional): Max length of imported samples (before resampling). If 0, than full length. Defaults to 0.
@@ -177,11 +177,18 @@ def load_data(data, header=None, csv_style={'separator': ",", 'decimal': "."}, p
                     if not header:
                         header = 'infer'
 
+                    if not csv_style:
+                        sep = pd.read_csv(iterated_data, sep=None, iterator=True)._engine.data.dialect.delimiter
+                        decimal = ',' if sep == ';' else '.'
+                    else:
+                        sep = csv_style['sep']
+                        decimal = csv_style['decimal']
+
                     try:
-                        list_of_dataframes.append(pd.read_csv(iterated_data, header=header, sep=csv_style['separator'],
-                                                  decimal=csv_style['decimal']).iloc[-max_imported_length:, :])
+                        list_of_dataframes.append(pd.read_csv(iterated_data, header=header, sep=sep,
+                                                  decimal=decimal).iloc[-max_imported_length:, :])
                     except UnicodeDecodeError:
-                        list_of_dataframes.append(pd.read_csv(iterated_data, header=header, sep=csv_style['separator'],
+                        list_of_dataframes.append(pd.read_csv(iterated_data, header=header, sep=csv_style['sep'],
                                                   decimal=csv_style['decimal'], encoding="cp1252").iloc[-max_imported_length:, :])
 
                 elif data_type_suffix == 'xls':

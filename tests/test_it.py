@@ -216,7 +216,7 @@ def test_local_files():
 # NOTE Preprocessing
 
 def test_resample():
-    data = mdpp.load_data('https://raw.githubusercontent.com/jbrownlee/Datasets/master/daily-min-temperatures.csv')
+    data = mdpp.load_data('https://raw.githubusercontent.com/jbrownlee/Datasets/master/daily-min-temperatures.csv', csv_style={'sep': ",", 'decimal': "."})
     resampled = mdpp.data_consolidation(data, datetime_column='Date', freq='M')
     assert len(resampled) < len(data) and len(resampled) > 1
 
