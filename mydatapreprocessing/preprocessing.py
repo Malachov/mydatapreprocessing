@@ -179,7 +179,14 @@ def load_data(data, header=None, csv_style=None, predicted_table='', max_importe
 
                     if not csv_style:
                         sep = pd.read_csv(iterated_data, sep=None, iterator=True)._engine.data.dialect.delimiter
+
+                        if sep not in [',', ';', '\t']:
+                            raise ValueError(mylogging.return_str(
+                                "CSV separator not infered. Infering not possible if description with symbols on "
+                                "first few lines. Define parameter csv_style - separator and decimal manually."))
+
                         decimal = ',' if sep == ';' else '.'
+
                     else:
                         sep = csv_style['sep']
                         decimal = csv_style['decimal']
@@ -193,7 +200,8 @@ def load_data(data, header=None, csv_style=None, predicted_table='', max_importe
 
                 elif data_type_suffix == 'xls':
                     if not importlib.util.find_spec('xlrd'):
-                        raise ModuleNotFoundError(mylogging.return_str("If using excel 'xlsx' file, library xlrd is necessary. Use \n\n\t`pip install xlrd`"))
+                        raise ModuleNotFoundError(mylogging.return_str(
+                            "If using excel 'xlsx' file, library xlrd is necessary. Use \n\n\t`pip install xlrd`"))
 
                     if not predicted_table:
                         predicted_table = 0
@@ -201,7 +209,8 @@ def load_data(data, header=None, csv_style=None, predicted_table='', max_importe
 
                 elif data_type_suffix == 'xlsx':
                     if not importlib.util.find_spec('openpyxl'):
-                        raise ModuleNotFoundError(mylogging.return_str("If using excel 'xls' file, library openpyxl is necessary. Use \n\n\t`pip install openpyxl`"))
+                        raise ModuleNotFoundError(mylogging.return_str(
+                            "If using excel 'xls' file, library openpyxl is necessary. Use \n\n\t`pip install openpyxl`"))
 
                     if not predicted_table:
                         predicted_table = 0
@@ -225,15 +234,26 @@ def load_data(data, header=None, csv_style=None, predicted_table='', max_importe
                     list_of_dataframes.append(pd.read_parquet(iterated_data).iloc[-max_imported_length:, :])
 
                 else:
-                    raise TypeError
+                    raise TypeError(mylogging.return_str(
+                        f"Your file format {data_type_suffix} not implemented yet. You can use csv, excel, parquet, h5 or txt.",
+                        "Wrong (not implemented) format"))
+
+            except TypeError as e:
+                raise e
+
+            except ValueError as e:
+                raise e
+
+            except ModuleNotFoundError as e:
+                raise e
+
+            except urllib.error.URLError:
+                raise urllib.error.URLError(mylogging.return_str(
+                    "Configured URL not found, check if page is available.",
+                    caption="URL error"))
 
             except TypeError:
                 raise TypeError(mylogging.return_str(f"Your file format {data_type_suffix} not implemented yet. You can use csv, excel, parquet or txt.", "Wrong (not implemented) format"))
-
-            except urllib.error.URLError:
-                raise Exception(mylogging.return_str(
-                    "Configured URL not found, check if page is available.",
-                    caption="URL error"))
 
             except Exception as err:
                 if not file_path_exist:
@@ -511,7 +531,9 @@ def add_frequency_columns(data, window):
     return data
 
 
-def add_derived_columns(data, differences=True, second_differences=True, multiplications=True, rolling_means=True, rolling_stds=True, mean_distances=True, window=10):
+def add_derived_columns(
+        data, differences=True, second_differences=True, multiplications=True, rolling_means=True,
+        rolling_stds=True, mean_distances=True, window=10):
     """This will create many columns that can be valuable for making predictions like difference, or
     rolling mean or distance from average. Computed columns will be appened to original data. It will process all the columns,
     so a lot of redundant data will be created. It is necessary do some feature extraction afterwards to remove noncorrelated columns.
@@ -733,7 +755,7 @@ def remove_the_outliers(data, threshold=3, main_column=0):
     Args:
         data (np.array, pd.DataFrame): Time series data. Must have ndim = 2, if univariate, reshape...
         threshold (int, optional): How many times must be standard deviation from mean to be ignored. Defaults to 3.
-        main_column ((int, index)): 
+        main_column ((int, index)):
     Returns:
         np.array: Cleaned data.
 

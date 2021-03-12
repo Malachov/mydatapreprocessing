@@ -14,6 +14,7 @@ import inspect
 import os
 import json
 import requests
+import urllib
 
 import mylogging
 
@@ -108,6 +109,34 @@ def test_visual():
 ### ANCHOR preprocessing module
 
 # NOTE Data load
+
+
+def test_exceptions():
+
+    exceptions = []
+
+    try:
+        mdpp.load_data('testfile')
+    except Exception as e:
+        exceptions.append(isinstance(e, TypeError))
+
+    try:
+        mdpp.load_data('testfile.csv')
+    except Exception as e:
+        exceptions.append(isinstance(e, FileNotFoundError))
+
+    try:
+        mdpp.load_data('https://www.sdfsdas.cz/')
+    except Exception as e:
+        exceptions.append(isinstance(e, TypeError))
+
+    try:
+        mdpp.load_data('https://www.sdfsdas.cz/', request_datatype_suffix='csv')
+    except Exception as e:
+        exceptions.append(isinstance(e, urllib.error.URLError))
+
+    assert all(exceptions)
+
 
 def test_test_data():
     assert mdpp.load_data('test').ndim
