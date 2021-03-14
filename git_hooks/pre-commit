@@ -3,9 +3,10 @@
 
 import mypythontools
 
-# mypythontools.githooks.run_tests()
+mypythontools.githooks.run_tests()
 
 mypythontools.githooks.sphinx_docs_regenerate('mydatapreprocessing')
+
 mypythontools.githooks.generate_readme_from_init('mydatapreprocessing')
 
 # mypythontools.deploy.deploy_to_pypi()

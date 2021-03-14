@@ -183,7 +183,8 @@ def load_data(data, header=None, csv_style=None, predicted_table='', max_importe
                         if sep not in [',', ';', '\t']:
                             raise ValueError(mylogging.return_str(
                                 "CSV separator not infered. Infering not possible if description with symbols on "
-                                "first few lines. Define parameter csv_style - separator and decimal manually."))
+                                "first few lines. Define parameter csv_style - separator and decimal manually and "
+                                "skip description with header parameter."))
 
                         decimal = ',' if sep == ';' else '.'
 
