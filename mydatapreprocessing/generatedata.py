@@ -1,7 +1,15 @@
-""" Test data definition. Data are to be used for validating machine learning time series prediction results."""
+""" Test data definition. Data are to be used for validating machine learning time series prediction results.
+
+Examples:
+
+    >>> import mydatapreprocessing as mdp
+
+    >>> data = mdp.generatedata.gen_sin(1000)
+"""
 
 import numpy as np
 import mylogging
+import importlib
 
 
 def gen_sin(n=1000):
@@ -74,9 +82,15 @@ def get_eeg(n=1000):
         np.ndarray: Slope test data.
     """
 
-    try:
-        import wfdb
-    except ModuleNotFoundError:
-        raise ModuleNotFoundError(mylogging.return_str("For parsing eeg signal, wfdb library is necessary. Install with `pip install wfdb`"))
+    if not importlib.util.find_spec("xlrd"):
+        raise ModuleNotFoundError(
+            mylogging.return_str(
+                "For parsing eeg signal, wfdb library is necessary. Install with `pip install wfdb`"
+            )
+        )
 
-    return wfdb.rdrecord('a103l', pn_dir='challenge-2015/training/', channels=[1], sampto=n).p_signal
+    import wfdb
+
+    return wfdb.rdrecord(
+        "a103l", pn_dir="challenge-2015/training/", channels=[1], sampto=n
+    ).p_signal

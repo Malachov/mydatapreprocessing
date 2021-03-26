@@ -11,6 +11,9 @@ python:
 sphinx:
   configuration: docs/source/conf.py
 
+build:
+  image: latest
+
 # Setup submodules
 submodules:
   include: all

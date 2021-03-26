@@ -9,6 +9,38 @@ that for defined inputs create outputs that we can compute error criterion like 
 Functions are documented in it's docstrings.
 
 Input data are in shape (x_samples, x_features).
+
+Example:
+    >>> import mydatapreprocessing as mdp
+
+    >>> data = np.array([[1, 2, 3, 4, 5, 6, 7, 8], [9, 10, 11, 12 ,13, 14 ,15, 16], [17 ,18 ,19, 20, 21, 22, 23, 24]]).T
+    >>> X, y, x_input, _ = mdp.inputs.make_sequences(data, n_steps_in= 2, n_steps_out=3)
+
+    >>> # This example create from such a array:
+
+    >>> # data = array([[1, 9, 17],
+    >>> #               [2, 10, 18],
+    >>> #               [3, 11, 19],
+    >>> #               [4, 12, 20],
+    >>> #               [5, 13, 21],
+    >>> #               [6, 14, 22],
+    >>> #               [7, 15, 23],
+    >>> #               [8, 16, 24]])
+
+    >>> # Such a results (data are serialized).
+
+    >>> # X = array([[1, 2, 3, 9, 10, 11, 17, 18, 19],
+    >>> #            [2, 3, 4, 10, 11, 12, 18, 19, 20],
+    >>> #            [3, 4, 5, 11, 12, 13, 19, 20, 21],
+    >>> #            [4, 5, 6, 12, 13, 14, 20, 21, 22]])
+
+    >>> # y = array([[4, 5],
+    >>> #            [5, 6],
+    >>> #            [6, 7],
+    >>> #            [7, 8]]
+
+    >>> # x_input = array([[ 6,  7,  8, 14, 15, 16, 22, 23, 24]])
+
 """
 
 import numpy as np

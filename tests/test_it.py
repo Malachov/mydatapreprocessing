@@ -95,7 +95,7 @@ def test_preprocessing():
     check_3 = np.allclose(inverse_processed_df, correct_inveerse_preprocessing)
     check_4 = np.allclose(inverse_processed_df_2, correct_inveerse_preprocessing)
 
-    assert check_1 and check_2 and check_3 and check_4
+    assert all([check_1, check_2, check_3, check_4])
 
 
 def test_visual():
@@ -239,7 +239,7 @@ def test_local_files():
         os.remove('tested.parquet')
         os.remove('tested.h5')
 
-    assert xls.ndim and xlsx.ndim and df_csv.ndim and df_json.ndim and df_parquet.ndim and df_hdf.ndim and len(df_csv_joined) == len(df_csv) + 10
+    assert all([xls.ndim, xlsx.ndim, df_csv.ndim, df_json.ndim, df_parquet.ndim, df_hdf.ndim, len(df_csv_joined) == len(df_csv) + 10])
 
 
 # NOTE Preprocessing
@@ -257,7 +257,9 @@ def test_add_frequency_columns():
 
 def test_add_derived_columns():
     data = pd.DataFrame([range(30), range(30, 60)]).T
-    mdpp.add_derived_columns(data, differences=True, second_differences=True, multiplications=True, rolling_means=True, rolling_stds=True, mean_distances=True, window=10)
+    mdpp.add_derived_columns(
+        data, differences=True, second_differences=True, multiplications=True, rolling_means=True,
+        rolling_stds=True, mean_distances=True, window=10)
 
 
 def test_split():
@@ -276,7 +278,7 @@ def test_embedding():
 
     embedded_label_shorter = mdpp.categorical_embedding(data, embedding='label', unique_threshlold=0.99)
 
-    assert(np.array_equal(embedded_label.values, label_supposed_result) and np.array_equal(embedded_one_hot.values, one_hot_supposed_result) and embedded_label_shorter.shape[1] == 1)
+    assert all([np.array_equal(embedded_label.values, label_supposed_result), np.array_equal(embedded_one_hot.values, one_hot_supposed_result), embedded_label_shorter.shape[1] == 1])
 
 
 def test_fit_power_transform():
@@ -302,11 +304,10 @@ def test_make_sequences():
     x_input2_res = np.array(([[9, 10, 19, 20]]))
     test_inputs2_res = np.array([[[5, 6, 15, 16]], [[6, 7, 16, 17]]])
 
-    assert (
-        np.allclose(X, X_res) and np.allclose(y, y_res) and np.allclose(x_input, x_inpu_res)
-        and np.allclose(X2, X2_res) and np.allclose(y2, y2_res) and np.allclose(x_input2, x_input2_res)
-        and np.allclose(test_inputs2, test_inputs2_res)
-    )
+    assert all([
+        np.allclose(X, X_res), np.allclose(y, y_res), np.allclose(x_input, x_inpu_res),
+        np.allclose(X2, X2_res), np.allclose(y2, y2_res), np.allclose(x_input2, x_input2_res),
+        np.allclose(test_inputs2, test_inputs2_res)])
 
 
 if __name__ == "__main__":
