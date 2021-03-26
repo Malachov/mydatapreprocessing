@@ -4,6 +4,10 @@
 mydatapreprocessing
 ===================
 
+.. image:: https://img.shields.io/pypi/pyversions/mydatapreprocessing.svg
+    :target: https://pypi.python.org/pypi/mydatapreprocessing/
+    :alt: PyPI pyversions
+
 [![PyPI pyversions](https://img.shields.io/pypi/pyversions/mydatapreprocessing.svg)](https://pypi.python.org/pypi/mydatapreprocessing/)
 [![PyPI version](https://badge.fury.io/py/mydatapreprocessing.svg)](https://badge.fury.io/py/mydatapreprocessing)
 [![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/Malachov/mydatapreprocessing.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/Malachov/mydatapreprocessing/context:python)
@@ -19,12 +23,12 @@ __author__ = "Daniel Malachov"
 __license__ = "MIT"
 __email__ = "malachovd@seznam.cz"
 
-__all__ = ['preprocessing', 'inputs', 'generatedata']
+__all__ = ["preprocessing", "inputs", "generatedata"]
 
 import warnings
 
 with warnings.catch_warnings():
-    warnings.filterwarnings('once')
+    warnings.filterwarnings("once")
 
     from . import preprocessing
     from . import inputs
