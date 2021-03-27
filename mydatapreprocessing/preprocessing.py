@@ -16,7 +16,6 @@ Note:
 Example:
 
     >>> import mydatapreprocessing.preprocessing as mdpp
-
     >>> data = "https://blockchain.info/unconfirmed-transactions?format=json"
 
     Load data from file or URL
@@ -27,29 +26,34 @@ Example:
     only numeric data and resample ifg configured. It return array, dataframe
 
     >>> data_consolidated = mdpp.data_consolidation(
-    ...     data_loaded, predicted_column="weight", data_orientation="index", remove_nans_threshold=0.9, remove_nans_or_replace='interpolate')
+    ...     data_loaded, predicted_column="weight", data_orientation="index", remove_nans_threshold=0.9,
+    ...     remove_nans_or_replace='interpolate')
 
     Preprocess data. It return preprocessed data, but also last undifferenced value and scaler for inverse
     transformation, so unpack it with _
 
-    >>> data_preprocessed, _, _ = mdpp.preprocess_data(data_consolidated, remove_outliers=True, smoothit=False,
-    ...                                                correlation_threshold=False, data_transform=False, standardizeit='standardize')
+    >>> data_preprocessed, _, _ = mdpp.preprocess_data(
+    ...     data_consolidated, remove_outliers=True, smoothit=False, correlation_threshold=False,
+    ...     data_transform=False, standardizeit='standardize')
 
 
     Allowed data formats for load_data are examples
 
     >>> # myarray_or_dataframe # Numpy array or Pandas.DataFrame
-    >>> # r"/home/user/my.json" # Local file. The same with .parquet, .h5, .json or .xlsx. On windows it's necessary to use raw string - 'r' in front of string because of escape symbols \
+    >>> # r"/home/user/my.json" # Local file. The same with .parquet, .h5, .json or .xlsx.
+    ...     On windows it's necessary to use raw string - 'r' in front of string because of escape symbols \
     >>> # "https://yoururl/your.csv" # Web url (with suffix). Same with json.
-    >>> # "https://blockchain.info/unconfirmed-transactions?format=json" # In this case you have to specify also 'request_datatype_suffix': "json", 'data_orientation': "index", 'predicted_table': 'txs',
+    >>> # "https://blockchain.info/unconfirmed-transactions?format=json" # In this case you have to specify
+    ...     also 'request_datatype_suffix': "json", 'data_orientation': "index", 'predicted_table': 'txs',
     >>> # [{'col_1': 3, 'col_2': 'a'}, {'col_1': 0, 'col_2': 'd'}] # List of records
-    >>> # {'col_1': [3, 2, 1, 0], 'col_2': ['a', 'b', 'c', 'd']} # Dict with colums or rows (index) - necessary to setup data_orientation!
-
+    >>> # {'col_1': [3, 2, 1, 0], 'col_2': ['a', 'b', 'c', 'd']} # Dict with colums or rows (index)
+    ...     - necessary to setup data_orientation!
+    ...
     >>> # You can use more files in list and data will be concatenated. It can be list of paths or list of python objects. Example:
-
     >>> # [{'col_1': 3, 'col_2': 'a'}, {'col_1': 0, 'col_2': 'd'}]  # List of records
     >>> # [np.random.randn(20, 3), np.random.randn(25, 3)]  # Dataframe same way
-    >>> # ["https://raw.githubusercontent.com/jbrownlee/Datasets/master/daily-min-temperatures.csv", "https://raw.githubusercontent.com/jbrownlee/Datasets/master/daily-min-temperatures.csv"]  # List of URLs
+    >>> # ["https://raw.githubusercontent.com/jbrownlee/Datasets/master/daily-min-temperatures.csv",
+    ...     "https://raw.githubusercontent.com/jbrownlee/Datasets/master/daily-min-temperatures.csv"]  # List of URLs
     >>> # ["path/to/my1.csv", "path/to/my1.csv"]
 """
 
@@ -65,11 +69,21 @@ import importlib
 import mylogging
 
 
-def get_file_paths(filetypes=[("csv", ".csv"), ("Excel (xlsx, xls)", ".xlsx .xls"), ("h5", ".h5"), ("parquet", ".parquet"), ("json", ".json")], title='Select files'):
+def get_file_paths(
+    filetypes=[
+        ("csv", ".csv"),
+        ("Excel (xlsx, xls)", ".xlsx .xls"),
+        ("h5", ".h5"),
+        ("parquet", ".parquet"),
+        ("json", ".json"),
+    ],
+    title="Select files",
+):
     """Open dialog window where you can choose files you want to use. It will return tuple with string paths.
 
     Args:
-        filetypes (list, optional): Accepted file types / suffixes. List of strings or list of tuples. Defaults to [("csv", ".csv")].
+        filetypes (list, optional): Accepted file types / suffixes. List of strings or list of tuples.
+            Defaults to [("csv", ".csv")].
         title (str, optional): Just a name of dialog window. Defaults to 'Select file'.
 
     Returns:
@@ -81,15 +95,25 @@ def get_file_paths(filetypes=[("csv", ".csv"), ("Excel (xlsx, xls)", ".xlsx .xls
     # Open dialog window where user can choose which files to use
     root = tk.Tk()
     root.withdraw()
-    root.wm_attributes('-topmost', 1)
+    root.wm_attributes("-topmost", 1)
 
     return filedialog.askopenfilenames(filetypes=filetypes, title=title)
 
 
-def load_data(data, header=None, csv_style=None, predicted_table='', max_imported_length=0, request_datatype_suffix='', data_orientation=''):
-    """Load data from path or url or other python format (numpy array, list, dict) into dataframe. Available formats are csv, excel xlsx, parquet, json or h5.
-    Allow multiple files loading at once - just put it in list e.g. [df1, df2, df3] or ['myfile1.csv', 'myfile2.csv']. Structure of files does not have to be the same.
-    If you have files in folder and not in list, you can use `get_file_paths` function to open system dialog window, select files and get the list of paths.
+def load_data(
+    data,
+    header=None,
+    csv_style=None,
+    predicted_table="",
+    max_imported_length=0,
+    request_datatype_suffix="",
+    data_orientation="",
+):
+    """Load data from path or url or other python format (numpy array, list, dict) into dataframe.
+    Available formats are csv, excel xlsx, parquet, json or h5. Allow multiple files loading at once - just put
+    it in list e.g. [df1, df2, df3] or ['myfile1.csv', 'myfile2.csv']. Structure of files does not have to be the same.
+    If you have files in folder and not in list, you can use `get_file_paths` function to open system dialog window,
+    select files and get the list of paths.
 
     Data param can also be 'test' or 'sql' - you need to setup database name and query then.
 
@@ -123,11 +147,13 @@ def load_data(data, header=None, csv_style=None, predicted_table='', max_importe
     # If data is only path or URL or test or SQL
     elif isinstance(data, (list, tuple)) and isinstance(data[0], (str, Path)):
 
-        if str(data[0]).lower() == 'test':
+        if str(data[0]).lower() == "test":
             from mydatapreprocessing import generatedata
 
             data = generatedata.gen_random()
-            mylogging.info("Test data was used. Setup config.py 'data'. Check official readme for help how to configure data.")
+            mylogging.info(
+                "Test data was used. Setup config.py 'data'. Check official readme for help how to configure data."
+            )
 
             return data
 
@@ -157,7 +183,7 @@ def load_data(data, header=None, csv_style=None, predicted_table='', max_importe
             except (FileNotFoundError, OSError):
 
                 # Maybe file path is relative and in test_path folder
-                data_path = 'test_data' / data_path
+                data_path = "test_data" / data_path
 
                 try:
                     if data_path.exists():
@@ -173,95 +199,146 @@ def load_data(data, header=None, csv_style=None, predicted_table='', max_importe
             data_type_suffix = data_path.suffix[1:].lower()
 
             # If not suffix inferred, then maybe url that return as request - than suffix have to be configured
-            if not data_type_suffix or (data_type_suffix not in ['csv', 'json', 'xlsx', 'xls'] and request_datatype_suffix):
+            if not data_type_suffix or (
+                data_type_suffix not in ["csv", "json", "xlsx", "xls"]
+                and request_datatype_suffix
+            ):
                 data_type_suffix = request_datatype_suffix.lower()
 
-                if data_type_suffix.startswith('.'):
+                if data_type_suffix.startswith("."):
                     data_type_suffix = data_type_suffix[1:]
 
             # If it's URL with suffix, we usually need url, if its url link with no suffix, we need get request response
             if not file_path_exist:
-                if data_type_suffix == 'json':
+                if data_type_suffix == "json":
                     iterated_data = requests.get(i).content
 
-                if data_type_suffix == 'csv':
+                if data_type_suffix == "csv":
                     iterated_data = i
 
             if not data_type_suffix:
-                raise TypeError(mylogging.return_str(
-                    "Data has no suffix (e.g. csv) and is not 'test' or 'sql'. "
-                    "If using url with no suffix, setup 'request_datatype_suffix'"
-                    "Or insert data with local path or insert data for example in "
-                    f"dataframe or numpy array. \n\nYour configured data are {data}", caption="Data load error"))
+                raise TypeError(
+                    mylogging.return_str(
+                        "Data has no suffix (e.g. csv) and is not 'test' or 'sql'. "
+                        "If using url with no suffix, setup 'request_datatype_suffix'"
+                        "Or insert data with local path or insert data for example in "
+                        f"dataframe or numpy array. \n\nYour configured data are {data}",
+                        caption="Data load error",
+                    )
+                )
 
             try:
 
-                if data_type_suffix == 'csv':
+                if data_type_suffix == "csv":
 
                     if not header:
-                        header = 'infer'
+                        header = "infer"
 
                     if not csv_style:
-                        sep = pd.read_csv(iterated_data, sep=None, iterator=True)._engine.data.dialect.delimiter
+                        sep = pd.read_csv(
+                            iterated_data, sep=None, iterator=True
+                        )._engine.data.dialect.delimiter
 
-                        if sep not in [',', ';', '\t']:
-                            raise ValueError(mylogging.return_str(
-                                "CSV separator not infered. Infering not possible if description with symbols on "
-                                "first few lines. Define parameter csv_style - separator and decimal manually and "
-                                "skip description with header parameter."))
+                        if sep not in [",", ";", "\t"]:
+                            raise ValueError(
+                                mylogging.return_str(
+                                    "CSV separator not infered. Infering not possible if description with symbols on "
+                                    "first few lines. Define parameter csv_style - separator and decimal manually and "
+                                    "skip description with header parameter."
+                                )
+                            )
 
-                        decimal = ',' if sep == ';' else '.'
+                        decimal = "," if sep == ";" else "."
 
                     else:
-                        sep = csv_style['sep']
-                        decimal = csv_style['decimal']
+                        sep = csv_style["sep"]
+                        decimal = csv_style["decimal"]
 
                     try:
-                        list_of_dataframes.append(pd.read_csv(iterated_data, header=header, sep=sep,
-                                                  decimal=decimal).iloc[-max_imported_length:, :])
+                        list_of_dataframes.append(
+                            pd.read_csv(
+                                iterated_data, header=header, sep=sep, decimal=decimal
+                            ).iloc[-max_imported_length:, :]
+                        )
                     except UnicodeDecodeError:
-                        list_of_dataframes.append(pd.read_csv(iterated_data, header=header, sep=csv_style['sep'],
-                                                  decimal=csv_style['decimal'], encoding="cp1252").iloc[-max_imported_length:, :])
+                        list_of_dataframes.append(
+                            pd.read_csv(
+                                iterated_data,
+                                header=header,
+                                sep=csv_style["sep"],
+                                decimal=csv_style["decimal"],
+                                encoding="cp1252",
+                            ).iloc[-max_imported_length:, :]
+                        )
 
-                elif data_type_suffix == 'xls':
-                    if not importlib.util.find_spec('xlrd'):
-                        raise ModuleNotFoundError(mylogging.return_str(
-                            "If using excel 'xlsx' file, library xlrd is necessary. Use \n\n\t`pip install xlrd`"))
+                elif data_type_suffix == "xls":
+                    if not importlib.util.find_spec("xlrd"):
+                        raise ModuleNotFoundError(
+                            mylogging.return_str(
+                                "If using excel 'xlsx' file, library xlrd is necessary. Use \n\n\t`pip install xlrd`"
+                            )
+                        )
 
                     if not predicted_table:
                         predicted_table = 0
-                        list_of_dataframes.append(pd.read_excel(iterated_data, sheet_name=predicted_table).iloc[-max_imported_length:, :])
+                        list_of_dataframes.append(
+                            pd.read_excel(
+                                iterated_data, sheet_name=predicted_table
+                            ).iloc[-max_imported_length:, :]
+                        )
 
-                elif data_type_suffix == 'xlsx':
-                    if not importlib.util.find_spec('openpyxl'):
-                        raise ModuleNotFoundError(mylogging.return_str(
-                            "If using excel 'xls' file, library openpyxl is necessary. Use \n\n\t`pip install openpyxl`"))
+                elif data_type_suffix == "xlsx":
+                    if not importlib.util.find_spec("openpyxl"):
+                        raise ModuleNotFoundError(
+                            mylogging.return_str(
+                                "If using excel 'xls' file, library openpyxl is necessary. Use \n\n\t`pip install openpyxl`"
+                            )
+                        )
 
                     if not predicted_table:
                         predicted_table = 0
-                    list_of_dataframes.append(pd.read_excel(iterated_data, sheet_name=predicted_table, engine='openpyxl').iloc[-max_imported_length:, :])
+                    list_of_dataframes.append(
+                        pd.read_excel(
+                            iterated_data, sheet_name=predicted_table, engine="openpyxl"
+                        ).iloc[-max_imported_length:, :]
+                    )
 
-                elif data_type_suffix == 'json':
+                elif data_type_suffix == "json":
 
                     import json
 
                     if file_path_exist:
                         with open(iterated_data) as json_file:
-                            list_of_dataframes.append(json.load(json_file)[predicted_table] if predicted_table else json.load(json_file))
+                            list_of_dataframes.append(
+                                json.load(json_file)[predicted_table]
+                                if predicted_table
+                                else json.load(json_file)
+                            )
 
                     else:
-                        list_of_dataframes.append(json.loads(iterated_data)[predicted_table] if predicted_table else json.loads(iterated_data))
+                        list_of_dataframes.append(
+                            json.loads(iterated_data)[predicted_table]
+                            if predicted_table
+                            else json.loads(iterated_data)
+                        )
 
-                elif data_type_suffix in ('h5', 'hdf5'):
-                    list_of_dataframes.append(pd.read_hdf(iterated_data).iloc[-max_imported_length:, :])
+                elif data_type_suffix in ("h5", "hdf5"):
+                    list_of_dataframes.append(
+                        pd.read_hdf(iterated_data).iloc[-max_imported_length:, :]
+                    )
 
-                elif data_type_suffix in ('parquet'):
-                    list_of_dataframes.append(pd.read_parquet(iterated_data).iloc[-max_imported_length:, :])
+                elif data_type_suffix in ("parquet"):
+                    list_of_dataframes.append(
+                        pd.read_parquet(iterated_data).iloc[-max_imported_length:, :]
+                    )
 
                 else:
-                    raise TypeError(mylogging.return_str(
-                        f"Your file format {data_type_suffix} not implemented yet. You can use csv, excel, parquet, h5 or txt.",
-                        "Wrong (not implemented) format"))
+                    raise TypeError(
+                        mylogging.return_str(
+                            f"Your file format {data_type_suffix} not implemented yet. You can use csv, excel, parquet, h5 or txt.",
+                            "Wrong (not implemented) format",
+                        )
+                    )
 
             except TypeError as e:
                 raise e
@@ -273,30 +350,45 @@ def load_data(data, header=None, csv_style=None, predicted_table='', max_importe
                 raise e
 
             except urllib.error.URLError:
-                raise urllib.error.URLError(mylogging.return_str(
-                    "Configured URL not found, check if page is available.",
-                    caption="URL error"))
+                raise urllib.error.URLError(
+                    mylogging.return_str(
+                        "Configured URL not found, check if page is available.",
+                        caption="URL error",
+                    )
+                )
 
             except TypeError:
-                raise TypeError(mylogging.return_str(f"Your file format {data_type_suffix} not implemented yet. You can use csv, excel, parquet or txt.", "Wrong (not implemented) format"))
+                raise TypeError(
+                    mylogging.return_str(
+                        f"Your file format {data_type_suffix} not implemented yet. You can use csv, excel, parquet or txt.",
+                        "Wrong (not implemented) format",
+                    )
+                )
 
             except Exception as err:
                 if not file_path_exist:
-                    raise FileNotFoundError(mylogging.return_str(
-                        "File not found on configured path. If you are using relative path, file must have be in CWD "
-                        "(current working directory) or must be inserted in system paths (sys.path.insert(0, 'your_path')). If url, check if page is available.",
-                        caption="File not found error"))
+                    raise FileNotFoundError(
+                        mylogging.return_str(
+                            "File not found on configured path. If you are using relative path, file must have be in CWD "
+                            "(current working directory) or must be inserted in system paths (sys.path.insert(0, 'your_path')). If url, check if page is available.",
+                            caption="File not found error",
+                        )
+                    )
                 else:
-                    raise RuntimeError(mylogging.return_str(
-                        "Data load error. File found on path, but not loaded. Check if you use "
-                        "corrent locales - correct value and decimal separators in config (different in US and EU...). "
-                        " If it's web link, URL has to have .csv suffix. If it's link, that will generate csv link after "
-                        f"load, setup request_datatype_suffix param.\n\n Detailed error: \n\n {err}", caption="Data load failed"))
+                    raise RuntimeError(
+                        mylogging.return_str(
+                            "Data load error. File found on path, but not loaded. Check if you use "
+                            "corrent locales - correct value and decimal separators in config (different in US and EU...). "
+                            " If it's web link, URL has to have .csv suffix. If it's link, that will generate csv link after "
+                            f"load, setup request_datatype_suffix param.\n\n Detailed error: \n\n {err}",
+                            caption="Data load failed",
+                        )
+                    )
 
     else:
         list_of_dataframes = data
 
-    orientation = 'columns' if not data_orientation else data_orientation
+    orientation = "columns" if not data_orientation else data_orientation
 
     for i, j in enumerate(list_of_dataframes):
         if isinstance(j, dict):
@@ -315,17 +407,32 @@ def load_data(data, header=None, csv_style=None, predicted_table='', max_importe
     data = pd.concat(list_of_dataframes, ignore_index=True)
 
     if data.empty:
-        raise TypeError(mylogging.return_str(
-            "Input data must be in pd.dataframe, pd.series, numpy array or in a path (str or pathlib) with supported formats"
-            " - csv, xlsx, txt or parquet. It also can be a list of paths, files etc. If you want to generate list of file paths, "
-            "you can use get_file_paths(). Check config comments for more informations...",
-            "Data format error"))
+        raise TypeError(
+            mylogging.return_str(
+                "Input data must be in pd.dataframe, pd.series, numpy array or in a path (str or pathlib) with supported formats"
+                " - csv, xlsx, txt or parquet. It also can be a list of paths, files etc. If you want to generate list of file paths, "
+                "you can use get_file_paths(). Check config comments for more informations...",
+                "Data format error",
+            )
+        )
 
     return data
 
 
-def data_consolidation(data, predicted_column=None, other_columns=1, datalength=0, datetime_column='', freq=0, resample_function='sum',
-                       embedding='label', unique_threshlold=0.6, remove_nans_threshold=0.85, remove_nans_or_replace='interpolate', dtype='float32'):
+def data_consolidation(
+    data,
+    predicted_column=None,
+    other_columns=1,
+    datalength=0,
+    datetime_column="",
+    freq=0,
+    resample_function="sum",
+    embedding="label",
+    unique_threshlold=0.6,
+    remove_nans_threshold=0.85,
+    remove_nans_or_replace="interpolate",
+    dtype="float32",
+):
     """Transform input data in various formats and shapes into data in defined shape, that other functions rely on.
     If you have data in other format than dataframe, use `load_data` first.
 
@@ -362,18 +469,26 @@ def data_consolidation(data, predicted_column=None, other_columns=1, datalength=
         try:
             data = pd.DataFrame(data)
         except Exception as err:
-            raise(RuntimeError(mylogging.return_str(
-                "Check configuration file for supported formats. It can be path of file (csv, json, parquer...) or it "
-                "can be data in python format (numpy array, pandas dataframe or series, dict or list, ). It can also be other "
-                "format, but then it have to work with pd.DataFrame(your_data)."
-                f"\n\n Detailed error: \n\n {err}", caption="Data load failed")))
+            raise (
+                RuntimeError(
+                    mylogging.return_str(
+                        "Check configuration file for supported formats. It can be path of file (csv, json, parquer...) or it "
+                        "can be data in python format (numpy array, pandas dataframe or series, dict or list, ). It can also be other "
+                        "format, but then it have to work with pd.DataFrame(your_data)."
+                        f"\n\n Detailed error: \n\n {err}",
+                        caption="Data load failed",
+                    )
+                )
+            )
 
     data_for_predictions_df = data.copy()
 
     if data_for_predictions_df.shape[0] < data_for_predictions_df.shape[1]:
-        mylogging.info("Input data must be in shape (n_samples, n_features) that means (rows, columns) Your shape is "
-                       f" {data.shape}. It's unusual to have more features than samples. Probably wrong shape.",
-                       caption="Data transposed warning!!!")
+        mylogging.info(
+            "Input data must be in shape (n_samples, n_features) that means (rows, columns) Your shape is "
+            f" {data.shape}. It's unusual to have more features than samples. Probably wrong shape.",
+            caption="Data transposed warning!!!",
+        )
         data_for_predictions_df = data_for_predictions_df.T
 
     if predicted_column or predicted_column == 0:
@@ -383,84 +498,127 @@ def data_consolidation(data, predicted_column=None, other_columns=1, datalength=
 
             if predicted_column_name not in data_for_predictions_df.columns:
 
-                raise KeyError(mylogging.return_str(
-                    f"Predicted column name - '{predicted_column}' not found in data. Change 'predicted_column' in config"
-                    f". Available columns: {list(data_for_predictions_df.columns)}", caption="Column not found error"))
+                raise KeyError(
+                    mylogging.return_str(
+                        f"Predicted column name - '{predicted_column}' not found in data. Change 'predicted_column' in config"
+                        f". Available columns: {list(data_for_predictions_df.columns)}",
+                        caption="Column not found error",
+                    )
+                )
 
-        elif isinstance(predicted_column, int) and isinstance(data_for_predictions_df.columns[predicted_column], str):
+        elif isinstance(predicted_column, int) and isinstance(
+            data_for_predictions_df.columns[predicted_column], str
+        ):
             predicted_column_name = data_for_predictions_df.columns[predicted_column]
 
         else:
-            predicted_column_name = 'Predicted column'
-            data_for_predictions_df.rename(columns={data_for_predictions_df.columns[predicted_column]: predicted_column_name}, inplace=True)
+            predicted_column_name = "Predicted column"
+            data_for_predictions_df.rename(
+                columns={
+                    data_for_predictions_df.columns[
+                        predicted_column
+                    ]: predicted_column_name
+                },
+                inplace=True,
+            )
 
         # Make predicted column index 0
-        data_for_predictions_df.insert(0, predicted_column_name, data_for_predictions_df.pop(predicted_column_name))
+        data_for_predictions_df.insert(
+            0, predicted_column_name, data_for_predictions_df.pop(predicted_column_name)
+        )
 
     else:
         predicted_column_name = None
 
     reset_index = False
 
-    if datetime_column not in [None, False, '']:
+    if datetime_column not in [None, False, ""]:
 
         try:
             if isinstance(datetime_column, str):
-                data_for_predictions_df.set_index(datetime_column, drop=True, inplace=True)
+                data_for_predictions_df.set_index(
+                    datetime_column, drop=True, inplace=True
+                )
 
             else:
                 data_for_predictions_df.set_index(
-                    data_for_predictions_df.columns[datetime_column], drop=True, inplace=True)
+                    data_for_predictions_df.columns[datetime_column],
+                    drop=True,
+                    inplace=True,
+                )
 
-            data_for_predictions_df.index = pd.to_datetime(data_for_predictions_df.index)
+            data_for_predictions_df.index = pd.to_datetime(
+                data_for_predictions_df.index
+            )
 
         except Exception:
-            raise KeyError(mylogging.return_str(
-                f"Datetime name / index from config - '{datetime_column}' not found in data or not datetime format. "
-                f"Change in config - 'datetime_column'. Available columns: {list(data_for_predictions_df.columns)}"))
+            raise KeyError(
+                mylogging.return_str(
+                    f"Datetime name / index from config - '{datetime_column}' not found in data or not datetime format. "
+                    f"Change in config - 'datetime_column'. Available columns: {list(data_for_predictions_df.columns)}"
+                )
+            )
 
     # Convert strings numbers (e.g. '6') to numbers
-    data_for_predictions_df = data_for_predictions_df.apply(pd.to_numeric, errors='ignore')
+    data_for_predictions_df = data_for_predictions_df.apply(
+        pd.to_numeric, errors="ignore"
+    )
 
     if embedding:
-        data_for_predictions_df = categorical_embedding(data_for_predictions_df, embedding=embedding, unique_threshlold=unique_threshlold)
+        data_for_predictions_df = categorical_embedding(
+            data_for_predictions_df,
+            embedding=embedding,
+            unique_threshlold=unique_threshlold,
+        )
 
     # Keep only numeric columns
-    data_for_predictions_df = data_for_predictions_df.select_dtypes(include='number')
+    data_for_predictions_df = data_for_predictions_df.select_dtypes(include="number")
 
     if predicted_column_name:
         # TODO setup other columns in define input so every model can choose and simplier config input types
         if not other_columns:
-            data_for_predictions_df = pd.DataFrame(data_for_predictions_df[predicted_column_name])
+            data_for_predictions_df = pd.DataFrame(
+                data_for_predictions_df[predicted_column_name]
+            )
 
         if predicted_column_name not in data_for_predictions_df.columns:
-            raise KeyError(mylogging.return_str(
-                "Predicted column is not number datatype. Setup correct 'predicted_column' in py. "
-                f"Available columns with number datatype: {list(data_for_predictions_df.columns)}",
-                caption="Prediction available only on number datatype column."))
+            raise KeyError(
+                mylogging.return_str(
+                    "Predicted column is not number datatype. Setup correct 'predicted_column' in py. "
+                    f"Available columns with number datatype: {list(data_for_predictions_df.columns)}",
+                    caption="Prediction available only on number datatype column.",
+                )
+            )
 
-    if datetime_column not in [None, False, '']:
+    if datetime_column not in [None, False, ""]:
         if freq:
             data_for_predictions_df.sort_index(inplace=True)
-            if resample_function == 'mean':
+            if resample_function == "mean":
                 data_for_predictions_df = data_for_predictions_df.resample(freq).mean()
-            elif resample_function == 'sum':
+            elif resample_function == "sum":
                 data_for_predictions_df = data_for_predictions_df.resample(freq).sum()
             data_for_predictions_df = data_for_predictions_df.asfreq(freq, fill_value=0)
 
         else:
-            data_for_predictions_df.index.freq = pd.infer_freq(data_for_predictions_df.index)
+            data_for_predictions_df.index.freq = pd.infer_freq(
+                data_for_predictions_df.index
+            )
 
             if data_for_predictions_df.index.freq is None:
                 reset_index = True
-                mylogging.warn("Datetime index was provided from config, but frequency guess failed. "
-                               "Specify 'freq' in config to resample and have equal sampling if you want "
-                               "to have date in plot or if you want to have equal sampling. Otherwise index will "
-                               "be reset because cannot generate date indexes of predicted values.",
-                               caption="Datetime frequency not inferred")
+                mylogging.warn(
+                    "Datetime index was provided from config, but frequency guess failed. "
+                    "Specify 'freq' in config to resample and have equal sampling if you want "
+                    "to have date in plot or if you want to have equal sampling. Otherwise index will "
+                    "be reset because cannot generate date indexes of predicted values.",
+                    caption="Datetime frequency not inferred",
+                )
 
     # If frequency is not configured nor infered or index is not datetime, it's reset to be able to generate next results
-    if reset_index or not isinstance(data_for_predictions_df.index, (pd.core.indexes.datetimes.DatetimeIndex, pd._libs.tslibs.timestamps.Timestamp)):
+    if reset_index or not isinstance(
+        data_for_predictions_df.index,
+        (pd.core.indexes.datetimes.DatetimeIndex, pd._libs.tslibs.timestamps.Timestamp),
+    ):
         data_for_predictions_df.reset_index(inplace=True, drop=True)
 
     # Define concrete dtypes in number columns
@@ -476,29 +634,36 @@ def data_consolidation(data, predicted_column=None, other_columns=1, datalength=
     # Remove columns that have to much nan values
     if remove_nans_threshold:
         data_for_predictions_df = data_for_predictions_df.iloc[:, 0:1].join(
-            data_for_predictions_df.iloc[:, 1:].dropna(axis=1, thresh=len(data_for_predictions_df) * (remove_nans_threshold)))
+            data_for_predictions_df.iloc[:, 1:].dropna(
+                axis=1, thresh=len(data_for_predictions_df) * (remove_nans_threshold)
+            )
+        )
 
     # Replace rest of nan values
-    if remove_nans_or_replace == 'interpolate':
+    if remove_nans_or_replace == "interpolate":
         data_for_predictions_df.interpolate(inplace=True)
 
-    elif remove_nans_or_replace == 'remove':
+    elif remove_nans_or_replace == "remove":
         data_for_predictions_df.dropna(axis=0, inplace=True)
 
-    elif remove_nans_or_replace == 'neighbor':
+    elif remove_nans_or_replace == "neighbor":
         # Need to use both directions if first or last value is nan
-        data_for_predictions_df.fillna(method='ffill', inplace=True)
+        data_for_predictions_df.fillna(method="ffill", inplace=True)
 
-    elif remove_nans_or_replace == 'mean':
+    elif remove_nans_or_replace == "mean":
         for col in data_for_predictions_df.columns:
-            data_for_predictions_df[col] = data_for_predictions_df[col].fillna(data_for_predictions_df[col].mean())
+            data_for_predictions_df[col] = data_for_predictions_df[col].fillna(
+                data_for_predictions_df[col].mean()
+            )
 
-    if isinstance(remove_nans_or_replace, (int, float) or np.isnan(remove_nans_or_replace)):
+    if isinstance(
+        remove_nans_or_replace, (int, float) or np.isnan(remove_nans_or_replace)
+    ):
         data_for_predictions_df.fillna(remove_nans_or_replace, inplace=True)
 
     # Forward fill and interpolate can miss som nans if on first row
     else:
-        data_for_predictions_df.fillna(method='bfill', inplace=True)
+        data_for_predictions_df.fillna(method="bfill", inplace=True)
 
     return data_for_predictions_df
 
@@ -533,8 +698,10 @@ def add_frequency_columns(data, window):
     data = pd.DataFrame(data)
 
     if window > len(data.values):
-        mylogging.warn("Length of data much be much bigger than window used for generating new data columns",
-                       caption="Adding frequency columns failed")
+        mylogging.warn(
+            "Length of data much be much bigger than window used for generating new data columns",
+            caption="Adding frequency columns failed",
+        )
 
     windows = rolling_windows(data.values.T, window)
 
@@ -543,7 +710,7 @@ def add_frequency_columns(data, window):
     absolute = np.abs(ffted)[:, :, 1:]
     angle = np.angle(ffted)[:, :, 1:]
 
-    data = data[-ffted.shape[1]:]
+    data = data[-ffted.shape[1] :]
 
     for i, j in enumerate(data):
         data[f"{j} - FFT windowed abs max index"] = np.nanargmax(absolute, axis=2)[i]
@@ -557,8 +724,15 @@ def add_frequency_columns(data, window):
 
 
 def add_derived_columns(
-        data, differences=True, second_differences=True, multiplications=True, rolling_means=True,
-        rolling_stds=True, mean_distances=True, window=10):
+    data,
+    differences=True,
+    second_differences=True,
+    multiplications=True,
+    rolling_means=True,
+    rolling_stds=True,
+    mean_distances=True,
+    window=10,
+):
     """This will create many columns that can be valuable for making predictions like difference, or
     rolling mean or distance from average. Computed columns will be appened to original data. It will process all the columns,
     so a lot of redundant data will be created. It is necessary do some feature extraction afterwards to remove noncorrelated columns.
@@ -580,10 +754,20 @@ def add_derived_columns(
     results = [data]
 
     if differences:
-        results.append(pd.DataFrame(np.diff(data.values, axis=0), columns=[f"{i} - Difference" for i in data.columns]))
+        results.append(
+            pd.DataFrame(
+                np.diff(data.values, axis=0),
+                columns=[f"{i} - Difference" for i in data.columns],
+            )
+        )
 
     if second_differences:
-        results.append(pd.DataFrame(np.diff(data.values, axis=0, n=2), columns=[f"{i} - Second difference" for i in data.columns]))
+        results.append(
+            pd.DataFrame(
+                np.diff(data.values, axis=0, n=2),
+                columns=[f"{i} - Second difference" for i in data.columns],
+            )
+        )
 
     if multiplications:
 
@@ -597,25 +781,47 @@ def add_derived_columns(
         results.append(pd.DataFrame(multiplicated, columns=combinations_names))
 
     if rolling_means:
-        results.append(pd.DataFrame(np.mean(rolling_windows(data.values.T, window), axis=2).T, columns=[f"{i} - Rolling mean" for i in data.columns]))
+        results.append(
+            pd.DataFrame(
+                np.mean(rolling_windows(data.values.T, window), axis=2).T,
+                columns=[f"{i} - Rolling mean" for i in data.columns],
+            )
+        )
 
     if rolling_stds:
-        results.append(pd.DataFrame(np.std(rolling_windows(data.values.T, window), axis=2).T, columns=[f"{i} - Rolling std" for i in data.columns]))
+        results.append(
+            pd.DataFrame(
+                np.std(rolling_windows(data.values.T, window), axis=2).T,
+                columns=[f"{i} - Rolling std" for i in data.columns],
+            )
+        )
 
     if mean_distances:
         mean_distanced = np.zeros(data.T.shape)
 
         for i in range(data.shape[1]):
             mean_distanced[i] = data.values.T[i] - data.values.T[i].mean()
-        results.append(pd.DataFrame(mean_distanced.T, columns=[f"{i} - Mean distance" for i in data.columns]))
+        results.append(
+            pd.DataFrame(
+                mean_distanced.T, columns=[f"{i} - Mean distance" for i in data.columns]
+            )
+        )
 
     min_length = min(len(i) for i in results)
 
-    return pd.concat([i.iloc[-min_length:].reset_index(drop=True) for i in results], axis=1)
+    return pd.concat(
+        [i.iloc[-min_length:].reset_index(drop=True) for i in results], axis=1
+    )
 
 
-def preprocess_data(data, remove_outliers=False, smoothit=False,
-                    correlation_threshold=0, data_transform=None, standardizeit='standardize'):
+def preprocess_data(
+    data,
+    remove_outliers=False,
+    smoothit=False,
+    correlation_threshold=0,
+    data_transform=None,
+    standardizeit="standardize",
+):
     """Main preprocessing function, that call other functions based on configuration. Mostly for preparing
     data to be optimal as input into machine learning models.
 
@@ -637,17 +843,17 @@ def preprocess_data(data, remove_outliers=False, smoothit=False,
     preprocessed = data
 
     if remove_outliers:
-        preprocessed = remove_the_outliers(
-            preprocessed, threshold=remove_outliers)
+        preprocessed = remove_the_outliers(preprocessed, threshold=remove_outliers)
 
     if smoothit:
-        preprocessed = smooth(
-            preprocessed, smoothit[0], smoothit[1])
+        preprocessed = smooth(preprocessed, smoothit[0], smoothit[1])
 
     if correlation_threshold:
-        preprocessed = keep_corelated_data(preprocessed, threshold=correlation_threshold)
+        preprocessed = keep_corelated_data(
+            preprocessed, threshold=correlation_threshold
+        )
 
-    if data_transform == 'difference':
+    if data_transform == "difference":
         if isinstance(preprocessed, np.ndarray):
             last_undiff_value = preprocessed[-1, 0]
         else:
@@ -658,14 +864,21 @@ def preprocess_data(data, remove_outliers=False, smoothit=False,
 
     if standardizeit:
         preprocessed, final_scaler = standardize(
-            preprocessed, used_scaler=standardizeit)
+            preprocessed, used_scaler=standardizeit
+        )
     else:
         final_scaler = None
 
     return preprocessed, last_undiff_value, final_scaler
 
 
-def preprocess_data_inverse(data, standardizeit=False, final_scaler=None, data_transform=False, last_undiff_value=None):
+def preprocess_data_inverse(
+    data,
+    standardizeit=False,
+    final_scaler=None,
+    data_transform=False,
+    last_undiff_value=None,
+):
     """Undo all data preprocessing to get real data. Not not inverse all the columns, but only predicted one.
     Only predicted column is also returned. Order is reverse than preprocessing. Output is in numpy array.
 
@@ -686,7 +899,7 @@ def preprocess_data_inverse(data, standardizeit=False, final_scaler=None, data_t
     if standardizeit:
         data = final_scaler.inverse_transform(data.reshape(1, -1)).ravel()
 
-    if data_transform == 'difference':
+    if data_transform == "difference":
         data = inverse_difference(data, last_undiff_value)
 
     return data
@@ -694,7 +907,8 @@ def preprocess_data_inverse(data, standardizeit=False, final_scaler=None, data_t
 
 ### Data consolidation functions...
 
-def categorical_embedding(data, embedding='label', unique_threshlold=0.6):
+
+def categorical_embedding(data, embedding="label", unique_threshlold=0.6):
     """Transform string categories such as 'US', 'FR' into numeric values, that can be used in machile learning model.
 
     Args:
@@ -710,21 +924,25 @@ def categorical_embedding(data, embedding='label', unique_threshlold=0.6):
     data_for_embedding = data.copy()
     to_drop = []
 
-    for i in data_for_embedding.select_dtypes(exclude=['number']):
+    for i in data_for_embedding.select_dtypes(exclude=["number"]):
 
         try:
 
-            if (data_for_embedding[i].nunique() / len(data_for_embedding[i])) > (1 - unique_threshlold):
+            if (data_for_embedding[i].nunique() / len(data_for_embedding[i])) > (
+                1 - unique_threshlold
+            ):
                 to_drop.append(i)
                 continue
 
-            data_for_embedding[i] = data_for_embedding[i].astype('category', copy=False)
+            data_for_embedding[i] = data_for_embedding[i].astype("category", copy=False)
 
-            if embedding == 'label':
+            if embedding == "label":
                 data_for_embedding[i] = data_for_embedding[i].cat.codes
 
-            if embedding == 'one-hot':
-                data_for_embedding = data_for_embedding.join(pd.get_dummies(data_for_embedding[i]))
+            if embedding == "one-hot":
+                data_for_embedding = data_for_embedding.join(
+                    pd.get_dummies(data_for_embedding[i])
+                )
                 to_drop.append(i)
 
         except Exception:
@@ -737,6 +955,7 @@ def categorical_embedding(data, embedding='label', unique_threshlold=0.6):
 
 
 ### Data preprocessing functions...
+
 
 def keep_corelated_data(data, threshold=0.5):
     """Remove columns that are not corelated enough to predicted columns. Predicted column is supposed to be 0.
@@ -796,8 +1015,9 @@ def remove_the_outliers(data, threshold=3, main_column=0):
         data_std = data[:, main_column].std()
 
         range_array = np.array(range(data.shape[0]))
-        names_to_del = range_array[abs(
-            data[:, main_column] - data_mean) > threshold * data_std]
+        names_to_del = range_array[
+            abs(data[:, main_column] - data_mean) > threshold * data_std
+        ]
         data = np.delete(data, names_to_del, axis=0)
 
     elif isinstance(data, pd.DataFrame):
@@ -851,12 +1071,12 @@ def inverse_difference(differenced_predictions, last_undiff_value):
         [2, 3, 4, 5]
     """
 
-    assert differenced_predictions.ndim == 1, 'Data input must be one-dimensional.'
+    assert differenced_predictions.ndim == 1, "Data input must be one-dimensional."
 
     return np.insert(differenced_predictions, 0, last_undiff_value).cumsum()[1:]
 
 
-def standardize(data, used_scaler='standardize'):
+def standardize(data, used_scaler="standardize"):
     """Standardize or normalize data. More standardize methods available. Predicted column is supposed to be 0.
 
     Args:
@@ -867,22 +1087,28 @@ def standardize(data, used_scaler='standardize'):
     Returns:
         ndarray: Standardized data.
     """
-    if not importlib.util.find_spec('sklearn'):
-        raise ImportError("sklearn library is necessary for standardize function. Install via `pip install sklearn`")
+    if not importlib.util.find_spec("sklearn"):
+        raise ImportError(
+            "sklearn library is necessary for standardize function. Install via `pip install sklearn`"
+        )
 
     from sklearn import preprocessing
 
-    if used_scaler == '01':
+    if used_scaler == "01":
         scaler = preprocessing.MinMaxScaler(feature_range=(0, 1))
-    elif used_scaler == '-11':
+    elif used_scaler == "-11":
         scaler = preprocessing.MinMaxScaler(feature_range=(-1, 1))
-    elif used_scaler == 'robust':
+    elif used_scaler == "robust":
         scaler = preprocessing.RobustScaler()
-    elif used_scaler == 'standardize':
+    elif used_scaler == "standardize":
         scaler = preprocessing.StandardScaler()
 
     else:
-        raise TypeError(mylogging.return_str(f"Your scaler {used_scaler} not in options. Use one of ['01', '-11', 'robust', 'standardize']"))
+        raise TypeError(
+            mylogging.return_str(
+                f"Your scaler {used_scaler} not in options. Use one of ['01', '-11', 'robust', 'standardize']"
+            )
+        )
 
     # First normalized values are calculated, then scler just for predicted value is computed again so no full matrix is necessary for inverse
     if isinstance(data, pd.DataFrame):
@@ -917,10 +1143,17 @@ def standardize_one_way(data, min, max, axis=0, inplace=False):
     values = data.values if isinstance(data, pd.DataFrame) else data
 
     if axis == 0:
-        values[:, :] = (values - np.nanmin(values, axis=0)) / (np.nanmax(values, axis=0) - np.nanmin(values, axis=0)) * (max - min) + min
+        values[:, :] = (values - np.nanmin(values, axis=0)) / (
+            np.nanmax(values, axis=0) - np.nanmin(values, axis=0)
+        ) * (max - min) + min
 
     elif axis == 1:
-        values[:, :] = ((values.T - np.nanmin(values.T, axis=0)) / (np.nanmax(values.T, axis=0) - np.nanmin(values.T, axis=0)) * (max - min) + min).T
+        values[:, :] = (
+            (values.T - np.nanmin(values.T, axis=0))
+            / (np.nanmax(values.T, axis=0) - np.nanmin(values.T, axis=0))
+            * (max - min)
+            + min
+        ).T
 
     return data
 
@@ -964,14 +1197,18 @@ def smooth(data, window=101, polynom_order=2):
     Returns:
         ndarray: Cleaned data with less noise.
     """
-    if not importlib.util.find_spec('scipy'):
-        raise ImportError("scipy library is necessary for smooth function. Install via `pip install scipy`")
+    if not importlib.util.find_spec("scipy"):
+        raise ImportError(
+            "scipy library is necessary for smooth function. Install via `pip install scipy`"
+        )
 
     import scipy.signal
 
     if isinstance(data, pd.DataFrame):
         for i in range(data.shape[1]):
-            data.iloc[:, i] = scipy.signal.savgol_filter(data.values[:, i], window, polynom_order)
+            data.iloc[:, i] = scipy.signal.savgol_filter(
+                data.values[:, i], window, polynom_order
+            )
 
     elif isinstance(data, np.ndarray):
         for i in range(data.shape[1]):
@@ -996,7 +1233,11 @@ def fitted_power_transform(data, fitted_stdev, mean=None, fragments=10, iteratio
     """
 
     if data.ndim == 2 and 1 not in data.shape:
-        raise ValueError(mylogging.return_str("Only one column can be power transformed. Use ravel if have shape (n, 1)"))
+        raise ValueError(
+            mylogging.return_str(
+                "Only one column can be power transformed. Use ravel if have shape (n, 1)"
+            )
+        )
 
     import scipy.stats
 
@@ -1039,13 +1280,20 @@ def add_none_to_gaps(df):
         df: Df with None row inserted in time gaps.
     """
 
-    sampling_threshold = remove_the_outliers(np.diff(df.index[:50]).reshape(-1, 1), threshold=1).mean() * 3
+    sampling_threshold = (
+        remove_the_outliers(np.diff(df.index[:50]).reshape(-1, 1), threshold=1).mean()
+        * 3
+    )
     nons = []
     memory = None
 
     for i in df.index:
         if memory and i - memory > sampling_threshold:
-            nons.append(pd.DataFrame([[np.nan] * df.shape[1]], index=[memory + sampling_threshold]))
+            nons.append(
+                pd.DataFrame(
+                    [[np.nan] * df.shape[1]], index=[memory + sampling_threshold]
+                )
+            )
         memory = i
 
     return pd.concat([df, *nons]).sort_index()
