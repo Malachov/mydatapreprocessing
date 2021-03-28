@@ -10,6 +10,11 @@
 
 .. automodule:: mydatapreprocessing.inputs
 
+`inputs <../latest/mydatapreprocessing.generatedata.html>`_
+-----------------------------------------------------
+
+.. automodule:: mydatapreprocessing.generatedata
+
 Index
 =====
 * :ref:`genindex`
