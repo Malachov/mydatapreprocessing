@@ -10,7 +10,7 @@
 
 .. automodule:: mydatapreprocessing.inputs
 
-`inputs <../latest/mydatapreprocessing.generatedata.html>`_
+`generatedata <../latest/mydatapreprocessing.generatedata.html>`_
 -----------------------------------------------------
 
 .. automodule:: mydatapreprocessing.generatedata
