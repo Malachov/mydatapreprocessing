@@ -489,17 +489,3 @@ def test_make_sequences():
 if __name__ == "__main__":
 
     pass
-
-
-# a = mdpp.load_data(
-#     "https://raw.githubusercontent.com/jbrownlee/Datasets/master/daily-min-temperatures.csv",
-#     header=0,
-#     csv_style={"decimal": ".", "separator": ","},
-#     predicted_table=None,
-#     max_imported_length=300,
-#     request_datatype_suffix=None,
-#     data_orientation=None,
-# )
-
-
-# b = 8

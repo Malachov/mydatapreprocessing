@@ -11,6 +11,8 @@ Example:
             ...
             ...
     ])
+
+Only real data are ECG heart signal returned with function get_eeg().
 """
 
 import numpy as np

@@ -61,7 +61,6 @@ import pandas as pd
 import numpy as np
 import warnings
 from pathlib import Path
-import urllib
 import requests
 import itertools
 import importlib
