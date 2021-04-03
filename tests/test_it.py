@@ -18,27 +18,26 @@ import urllib
 
 import mylogging
 
-sys.path.insert(
-    0,
-    Path(os.path.abspath(inspect.getframeinfo(inspect.currentframe()).filename))
-    .parents[0]
-    .as_posix(),
-)
-from visual import visual_test
+# Find paths and add to sys.path to be able to import local modules
+test_dir_path = Path(
+    os.path.abspath(inspect.getframeinfo(inspect.currentframe()).filename)
+).parent
+root_path = test_dir_path.parent
 
-sys.path.insert(
-    0,
-    Path(os.path.abspath(inspect.getframeinfo(inspect.currentframe()).filename))
-    .parents[1]
-    .as_posix(),
-)
+if test_dir_path.as_posix() not in sys.path:
+    sys.path.insert(0, test_dir_path.as_posix())
+
+if root_path.as_posix() not in sys.path:
+    sys.path.insert(0, root_path.as_posix())
+
 import mydatapreprocessing.preprocessing as mdpp
 import mydatapreprocessing as mdp
+
+from visual import visual_test
 
 mylogging.config.COLOR = 0
 
 np.random.seed(2)
-
 
 #########################
 ### SECTION Integration tests
@@ -179,22 +178,18 @@ def test_exceptions():
     try:
         mdpp.load_data("testfile")
     except Exception as e:
-        exceptions.append(isinstance(e, TypeError))
-
-    try:
-        mdpp.load_data("testfile.csv")
-    except Exception as e:
         exceptions.append(isinstance(e, FileNotFoundError))
 
     try:
-        mdpp.load_data("https://www.sdfsdas.cz/")
+        test_file = test_dir_path / "data_test"
+        mdpp.load_data(test_file)
     except Exception as e:
         exceptions.append(isinstance(e, TypeError))
 
     try:
-        mdpp.load_data("https://www.sdfsdas.cz/", request_datatype_suffix="csv")
+        mdpp.load_data("https://blockchain.info/unconfirmed-transactions?format=json")
     except Exception as e:
-        exceptions.append(isinstance(e, urllib.error.URLError))
+        exceptions.append(isinstance(e, TypeError))
 
     assert all(exceptions)
 
@@ -494,3 +489,17 @@ def test_make_sequences():
 if __name__ == "__main__":
 
     pass
+
+
+# a = mdpp.load_data(
+#     "https://raw.githubusercontent.com/jbrownlee/Datasets/master/daily-min-temperatures.csv",
+#     header=0,
+#     csv_style={"decimal": ".", "separator": ","},
+#     predicted_table=None,
+#     max_imported_length=300,
+#     request_datatype_suffix=None,
+#     data_orientation=None,
+# )
+
+
+# b = 8

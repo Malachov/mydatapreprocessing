@@ -3,3 +3,5 @@ sklearn
 tables
 fastparquet
 pyarrow
+xlrd
+openpyxl

@@ -175,25 +175,33 @@ def load_data(
 
             try:
                 if data_path.exists():
-                    iterated_data = Path(i).as_posix()
-                    file_path_exist = True
+                    iterated_data = data_path.as_posix()
+                    is_file = True
                 else:
-                    raise FileNotFoundError
+                    iterated_data = i
+                    is_file = False
+            except Exception:
+                iterated_data = i
+                is_file = False
 
-            except (FileNotFoundError, OSError):
-
-                # Maybe file path is relative and in test_path folder
-                data_path = "test_data" / data_path
-
+            if not is_file:
                 try:
-                    if data_path.exists():
-                        iterated_data = Path(i).as_posix()
-                        file_path_exist = True
+                    request = requests.get(iterated_data)
+                except Exception:
+                    request = None
 
-                    else:
-                        raise FileNotFoundError
-                except (FileNotFoundError, OSError):
-                    file_path_exist = False
+                if not request or not (
+                    request.status_code >= 200 and request.status_code < 300
+                ):
+
+                    raise FileNotFoundError(
+                        mylogging.return_str(
+                            "File not found on configured path. If you are using relative path, file must have be in CWD "
+                            "(current working directory) or must be inserted in system path (sys.path.insert(0, 'your_path'))."
+                            "If url, check if page is available.",
+                            caption="File not found error",
+                        )
+                    )
 
             # For example csv or json. On url, take everything after last dot
             data_type_suffix = data_path.suffix[1:].lower()
@@ -209,9 +217,9 @@ def load_data(
                     data_type_suffix = data_type_suffix[1:]
 
             # If it's URL with suffix, we usually need url, if its url link with no suffix, we need get request response
-            if not file_path_exist:
+            if not is_file:
                 if data_type_suffix == "json":
-                    iterated_data = requests.get(i).content
+                    iterated_data = request.content
 
                 if data_type_suffix == "csv":
                     iterated_data = i
@@ -227,163 +235,116 @@ def load_data(
                     )
                 )
 
-            try:
+            if data_type_suffix == "csv":
 
-                if data_type_suffix == "csv":
+                if not header:
+                    header = "infer"
 
-                    if not header:
-                        header = "infer"
+                if not csv_style:
+                    sep = pd.read_csv(
+                        iterated_data, sep=None, iterator=True
+                    )._engine.data.dialect.delimiter
 
-                    if not csv_style:
-                        sep = pd.read_csv(
-                            iterated_data, sep=None, iterator=True
-                        )._engine.data.dialect.delimiter
-
-                        if sep not in [",", ";", "\t"]:
-                            raise ValueError(
-                                mylogging.return_str(
-                                    "CSV separator not infered. Infering not possible if description with symbols on "
-                                    "first few lines. Define parameter csv_style - separator and decimal manually and "
-                                    "skip description with header parameter."
-                                )
-                            )
-
-                        decimal = "," if sep == ";" else "."
-
-                    else:
-                        sep = csv_style["sep"]
-                        decimal = csv_style["decimal"]
-
-                    try:
-                        list_of_dataframes.append(
-                            pd.read_csv(
-                                iterated_data, header=header, sep=sep, decimal=decimal
-                            ).iloc[-max_imported_length:, :]
-                        )
-                    except UnicodeDecodeError:
-                        list_of_dataframes.append(
-                            pd.read_csv(
-                                iterated_data,
-                                header=header,
-                                sep=csv_style["sep"],
-                                decimal=csv_style["decimal"],
-                                encoding="cp1252",
-                            ).iloc[-max_imported_length:, :]
-                        )
-
-                elif data_type_suffix == "xls":
-                    if not importlib.util.find_spec("xlrd"):
-                        raise ModuleNotFoundError(
+                    if sep not in [",", ";", "\t"]:
+                        raise ValueError(
                             mylogging.return_str(
-                                "If using excel 'xlsx' file, library xlrd is necessary. Use \n\n\t`pip install xlrd`"
+                                "CSV separator not infered. Infering not possible if description with symbols on "
+                                "first few lines. Define parameter csv_style - separator and decimal manually and "
+                                "skip description with header parameter."
                             )
                         )
 
-                    if not predicted_table:
-                        predicted_table = 0
-                        list_of_dataframes.append(
-                            pd.read_excel(
-                                iterated_data, sheet_name=predicted_table
-                            ).iloc[-max_imported_length:, :]
-                        )
+                    decimal = "," if sep == ";" else "."
 
-                elif data_type_suffix == "xlsx":
-                    if not importlib.util.find_spec("openpyxl"):
-                        raise ModuleNotFoundError(
-                            mylogging.return_str(
-                                "If using excel 'xls' file, library openpyxl is necessary. Use \n\n\t`pip install openpyxl`"
-                            )
-                        )
+                else:
+                    sep = csv_style["sep"]
+                    decimal = csv_style["decimal"]
 
-                    if not predicted_table:
-                        predicted_table = 0
+                try:
                     list_of_dataframes.append(
-                        pd.read_excel(
-                            iterated_data, sheet_name=predicted_table, engine="openpyxl"
+                        pd.read_csv(
+                            iterated_data, header=header, sep=sep, decimal=decimal
+                        ).iloc[-max_imported_length:, :]
+                    )
+                except UnicodeDecodeError:
+                    list_of_dataframes.append(
+                        pd.read_csv(
+                            iterated_data,
+                            header=header,
+                            sep=csv_style["sep"],
+                            decimal=csv_style["decimal"],
+                            encoding="cp1252",
                         ).iloc[-max_imported_length:, :]
                     )
 
-                elif data_type_suffix == "json":
-
-                    import json
-
-                    if file_path_exist:
-                        with open(iterated_data) as json_file:
-                            list_of_dataframes.append(
-                                json.load(json_file)[predicted_table]
-                                if predicted_table
-                                else json.load(json_file)
-                            )
-
-                    else:
-                        list_of_dataframes.append(
-                            json.loads(iterated_data)[predicted_table]
-                            if predicted_table
-                            else json.loads(iterated_data)
-                        )
-
-                elif data_type_suffix in ("h5", "hdf5"):
-                    list_of_dataframes.append(
-                        pd.read_hdf(iterated_data).iloc[-max_imported_length:, :]
-                    )
-
-                elif data_type_suffix in ("parquet"):
-                    list_of_dataframes.append(
-                        pd.read_parquet(iterated_data).iloc[-max_imported_length:, :]
-                    )
-
-                else:
-                    raise TypeError(
+            elif data_type_suffix == "xls":
+                if not importlib.util.find_spec("xlrd"):
+                    raise ModuleNotFoundError(
                         mylogging.return_str(
-                            f"Your file format {data_type_suffix} not implemented yet. You can use csv, excel, parquet, h5 or txt.",
-                            "Wrong (not implemented) format",
+                            "If using excel 'xlsx' file, library xlrd is necessary. Use \n\n\t`pip install xlrd`"
                         )
                     )
 
-            except TypeError as e:
-                raise e
-
-            except ValueError as e:
-                raise e
-
-            except ModuleNotFoundError as e:
-                raise e
-
-            except urllib.error.URLError:
-                raise urllib.error.URLError(
-                    mylogging.return_str(
-                        "Configured URL not found, check if page is available.",
-                        caption="URL error",
+                if not predicted_table:
+                    predicted_table = 0
+                    list_of_dataframes.append(
+                        pd.read_excel(iterated_data, sheet_name=predicted_table).iloc[
+                            -max_imported_length:, :
+                        ]
                     )
+
+            elif data_type_suffix == "xlsx":
+                if not importlib.util.find_spec("openpyxl"):
+                    raise ModuleNotFoundError(
+                        mylogging.return_str(
+                            "If using excel 'xls' file, library openpyxl is necessary. Use \n\n\t`pip install openpyxl`"
+                        )
+                    )
+
+                if not predicted_table:
+                    predicted_table = 0
+                list_of_dataframes.append(
+                    pd.read_excel(
+                        iterated_data, sheet_name=predicted_table, engine="openpyxl"
+                    ).iloc[-max_imported_length:, :]
                 )
 
-            except TypeError:
+            elif data_type_suffix == "json":
+
+                import json
+
+                if is_file:
+                    with open(iterated_data) as json_file:
+                        list_of_dataframes.append(
+                            json.load(json_file)[predicted_table]
+                            if predicted_table
+                            else json.load(json_file)
+                        )
+
+                else:
+                    list_of_dataframes.append(
+                        json.loads(iterated_data)[predicted_table]
+                        if predicted_table
+                        else json.loads(iterated_data)
+                    )
+
+            elif data_type_suffix in ("h5", "hdf5"):
+                list_of_dataframes.append(
+                    pd.read_hdf(iterated_data).iloc[-max_imported_length:, :]
+                )
+
+            elif data_type_suffix in ("parquet"):
+                list_of_dataframes.append(
+                    pd.read_parquet(iterated_data).iloc[-max_imported_length:, :]
+                )
+
+            else:
                 raise TypeError(
                     mylogging.return_str(
-                        f"Your file format {data_type_suffix} not implemented yet. You can use csv, excel, parquet or txt.",
+                        f"Your file format {data_type_suffix} not implemented yet. You can use csv, excel, parquet, h5 or txt.",
                         "Wrong (not implemented) format",
                     )
                 )
-
-            except Exception as err:
-                if not file_path_exist:
-                    raise FileNotFoundError(
-                        mylogging.return_str(
-                            "File not found on configured path. If you are using relative path, file must have be in CWD "
-                            "(current working directory) or must be inserted in system paths (sys.path.insert(0, 'your_path')). If url, check if page is available.",
-                            caption="File not found error",
-                        )
-                    )
-                else:
-                    raise RuntimeError(
-                        mylogging.return_str(
-                            "Data load error. File found on path, but not loaded. Check if you use "
-                            "corrent locales - correct value and decimal separators in config (different in US and EU...). "
-                            " If it's web link, URL has to have .csv suffix. If it's link, that will generate csv link after "
-                            f"load, setup request_datatype_suffix param.\n\n Detailed error: \n\n {err}",
-                            caption="Data load failed",
-                        )
-                    )
 
     else:
         list_of_dataframes = data
