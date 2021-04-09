@@ -63,9 +63,9 @@ def test_integration():
         remove_nans_or_replace="interpolate",
     )
 
-    # Preprocess data. It return preprocessed data, but also last undifferenced value and scaler for inverse
+    # Preprocess data. It return preprocessed data, but also scaler for inverse
     # transformation, so unpack it with _
-    data_preprocessed_df, _, _ = mdpp.preprocess_data(
+    data_preprocessed_df, _ = mdpp.preprocess_data(
         data_consolidated,
         remove_outliers=True,
         smoothit=(11, 2),
@@ -74,7 +74,7 @@ def test_integration():
         standardizeit="standardize",
     )
 
-    data_preprocessed, _, _ = mdpp.preprocess_data(
+    data_preprocessed, _ = mdpp.preprocess_data(
         data_consolidated.values,
         remove_outliers=True,
         smoothit=(11, 2),
@@ -110,7 +110,7 @@ def test_preprocessing():
     data_df = df_df.values.copy()
 
     # Predicted column moved to index 0, but for test reason test, use different one
-    processed_df, last_undiff_value_df, final_scaler_df = mdpp.preprocess_data(
+    processed_df, final_scaler_df = mdpp.preprocess_data(
         df_df,
         remove_outliers=1,
         correlation_threshold=0.9,
@@ -120,13 +120,13 @@ def test_preprocessing():
 
     inverse_processed_df = mdpp.preprocess_data_inverse(
         processed_df["Predicted"].iloc[1:],
-        final_scaler=final_scaler_df,
+        data_transform="difference",
         last_undiff_value=test_df["Predicted"][0],
         standardizeit="standardize",
-        data_transform="difference",
+        final_scaler=final_scaler_df,
     )
 
-    processed_df_2, last_undiff_value_df_2, final_scaler_df_2 = mdpp.preprocess_data(
+    processed_df_2, final_scaler_df_2 = mdpp.preprocess_data(
         data_df,
         remove_outliers=1,
         correlation_threshold=0.9,
@@ -367,6 +367,10 @@ def test_resample():
 def test_add_frequency_columns():
     data = np.array([[0, 2] * 64, [0, 0, 0, 5] * 32]).T
     mdpp.add_frequency_columns(data, window=8)
+
+
+def test_binnig():
+    mdpp.binning(np.array(range(10)), bins=3, type="cut")
 
 
 def test_add_derived_columns():

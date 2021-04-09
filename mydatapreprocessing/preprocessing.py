@@ -29,10 +29,10 @@ Example:
     ...     data_loaded, predicted_column="weight", data_orientation="index", remove_nans_threshold=0.9,
     ...     remove_nans_or_replace='interpolate')
 
-    Preprocess data. It return preprocessed data, but also last undifferenced value and scaler for inverse
+    Preprocess data. It return preprocessed data, but scaler for inverse
     transformation, so unpack it with _
 
-    >>> data_preprocessed, _, _ = mdpp.preprocess_data(
+    >>> data_preprocessed, _ = mdpp.preprocess_data(
     ...     data_consolidated, remove_outliers=True, smoothit=False, correlation_threshold=False,
     ...     data_transform=False, standardizeit='standardize')
 
@@ -131,7 +131,8 @@ def load_data(
 
     Returns:
         pd.DataFrame, dict, list : Loaded data. Usually in pd.DataFrame format, but sometimes as dict or list,
-            if it needs to be processed before conversion (because of orientation).
+        if it needs to be processed before conversion (because of orientation). Usually function consolidate
+        is used afterwards, that can use all return types.
     """
 
     list_of_dataframes = []
@@ -421,7 +422,7 @@ def data_consolidation(
 
     Returns:
         np.ndarray, pd.DataFrame, str: Data in standardized form. Data array for prediction - predicted column on index 0,
-        and column for ploting as pandas dataframe.
+        and column for ploting as pandas dataframe. Data has the same type as input.
 
     """
 
@@ -628,61 +629,6 @@ def data_consolidation(
     return data_for_predictions_df
 
 
-def rolling_windows(data, window):
-    """Generate matrix of rolling windows. E.g for matrix [1, 2, 3, 4, 5] and window 2
-    it will create [[1 2], [2 3], [3 4], [4 5]]. From matrix [[1, 2, 3], [4, 5, 6]] it will create
-    [[[1 2], [2 3]], [[4 5], [5 6]]].
-
-    Args:
-        data (np.ndarray): Array data input.
-        window (int): Number of values in created window.
-
-    Returns:
-        np.ndarray: Array of defined windows
-    """
-    shape = data.shape[:-1] + (data.shape[-1] - window + 1, window)
-    strides = data.strides + (data.strides[-1],)
-    return np.lib.stride_tricks.as_strided(data, shape=shape, strides=strides)
-
-
-def add_frequency_columns(data, window):
-    """Use fourier transform on running window and add it's maximum and std as new data column.
-
-    Args:
-        data (pd.DataFrame): Data we want to use.
-        window (int): length of running window.
-
-    Returns:
-        pd.Dataframe: Data with new columns, that contain informations of running frequency analysis.
-    """
-    data = pd.DataFrame(data)
-
-    if window > len(data.values):
-        mylogging.warn(
-            "Length of data much be much bigger than window used for generating new data columns",
-            caption="Adding frequency columns failed",
-        )
-
-    windows = rolling_windows(data.values.T, window)
-
-    ffted = np.fft.fft(windows, axis=2) / window
-
-    absolute = np.abs(ffted)[:, :, 1:]
-    angle = np.angle(ffted)[:, :, 1:]
-
-    data = data[-ffted.shape[1] :]
-
-    for i, j in enumerate(data):
-        data[f"{j} - FFT windowed abs max index"] = np.nanargmax(absolute, axis=2)[i]
-        data[f"{j} - FFT windowed angle max index"] = np.nanargmax(angle, axis=2)[i]
-        data[f"{j} - FFT windowed abs max"] = np.nanmax(absolute, axis=2)[i]
-        data[f"{j} - FFT windowed abs std"] = np.nanstd(absolute, axis=2)[i]
-        data[f"{j} - FFT windowed angle max"] = np.nanmax(angle, axis=2)[i]
-        data[f"{j} - FFT windowed angle std"] = np.nanstd(angle, axis=2)[i]
-
-    return data
-
-
 def add_derived_columns(
     data,
     differences=True,
@@ -708,7 +654,7 @@ def add_derived_columns(
 
     Returns:
         pd.DataFrame: Data with more columns, that can have more informations,
-        than original data. Number of rows can be little bit smaller.
+        than original data. Number of rows can be little bit smaller. Data has the same type as input.
     """
 
     results = [data]
@@ -781,6 +727,8 @@ def preprocess_data(
     correlation_threshold=0,
     data_transform=None,
     standardizeit="standardize",
+    bins=False,
+    binning_type="cut",
 ):
     """Main preprocessing function, that call other functions based on configuration. Mostly for preparing
     data to be optimal as input into machine learning models.
@@ -795,6 +743,11 @@ def preprocess_data(
             neighbor values. Defaults to None.
         standardizeit (str, optional): How to standardize data. '01' and '-11' means scope from to for normalization.
             'robust' use RobustScaler and 'standard' use StandardScaler - mean is 0 and std is 1. Defaults to 'standardize'.
+        bins (int, None): Whether to discretize value into defined number of bins (their average). None make no discretization,
+            int define number of bins.
+        binning_type (str): "cut" for equal size of bins intervals (different number of members in bins)
+            or "qcut" for equal number of members in bins and various size of bins. It uses pandas cut
+            or qcut function.
 
     Returns:
         np.ndarray, pd.DataFrame: Preprocessed data. If input in numpy array, then also output in array, if dataframe input, then dataframe output.
@@ -814,13 +767,7 @@ def preprocess_data(
         )
 
     if data_transform == "difference":
-        if isinstance(preprocessed, np.ndarray):
-            last_undiff_value = preprocessed[-1, 0]
-        else:
-            last_undiff_value = preprocessed.iloc[-1, 0]
         preprocessed = do_difference(preprocessed)
-    else:
-        last_undiff_value = None
 
     if standardizeit:
         preprocessed, final_scaler = standardize(
@@ -829,7 +776,10 @@ def preprocess_data(
     else:
         final_scaler = None
 
-    return preprocessed, last_undiff_value, final_scaler
+    if bins:
+        preprocessed = binning(preprocessed, bins, binning_type)
+
+    return preprocessed, final_scaler
 
 
 def preprocess_data_inverse(
@@ -861,6 +811,61 @@ def preprocess_data_inverse(
 
     if data_transform == "difference":
         data = inverse_difference(data, last_undiff_value)
+
+    return data
+
+
+def rolling_windows(data, window):
+    """Generate matrix of rolling windows. E.g for matrix [1, 2, 3, 4, 5] and window 2
+    it will create [[1 2], [2 3], [3 4], [4 5]]. From matrix [[1, 2, 3], [4, 5, 6]] it will create
+    [[[1 2], [2 3]], [[4 5], [5 6]]].
+
+    Args:
+        data (np.ndarray): Array data input.
+        window (int): Number of values in created window.
+
+    Returns:
+        np.ndarray: Array of defined windows
+    """
+    shape = data.shape[:-1] + (data.shape[-1] - window + 1, window)
+    strides = data.strides + (data.strides[-1],)
+    return np.lib.stride_tricks.as_strided(data, shape=shape, strides=strides)
+
+
+def add_frequency_columns(data, window):
+    """Use fourier transform on running window and add it's maximum and std as new data column.
+
+    Args:
+        data (pd.DataFrame): Data we want to use.
+        window (int): length of running window.
+
+    Returns:
+        pd.Dataframe: Data with new columns, that contain informations of running frequency analysis.
+    """
+    data = pd.DataFrame(data)
+
+    if window > len(data.values):
+        mylogging.warn(
+            "Length of data much be much bigger than window used for generating new data columns",
+            caption="Adding frequency columns failed",
+        )
+
+    windows = rolling_windows(data.values.T, window)
+
+    ffted = np.fft.fft(windows, axis=2) / window
+
+    absolute = np.abs(ffted)[:, :, 1:]
+    angle = np.angle(ffted)[:, :, 1:]
+
+    data = data[-ffted.shape[1] :]
+
+    for i, j in enumerate(data):
+        data[f"{j} - FFT windowed abs max index"] = np.nanargmax(absolute, axis=2)[i]
+        data[f"{j} - FFT windowed angle max index"] = np.nanargmax(angle, axis=2)[i]
+        data[f"{j} - FFT windowed abs max"] = np.nanmax(absolute, axis=2)[i]
+        data[f"{j} - FFT windowed abs std"] = np.nanstd(absolute, axis=2)[i]
+        data[f"{j} - FFT windowed angle max"] = np.nanmax(angle, axis=2)[i]
+        data[f"{j} - FFT windowed angle std"] = np.nanstd(angle, axis=2)[i]
 
     return data
 
@@ -921,11 +926,12 @@ def keep_corelated_data(data, threshold=0.5):
     """Remove columns that are not corelated enough to predicted columns. Predicted column is supposed to be 0.
 
     Args:
-        data (np.array, pd.DataFrame): Time series data.
+        data (np.ndarray, pd.DataFrame): Time series data.
         threshold (float, optional): After correlation matrix is evaluated, all columns that are correlated less than threshold are deleted. Defaults to 0.2.
 
     Returns:
-        np.array, pd.DataFrame: Data with no columns that are not corelated with predicted column.
+        np.ndarray, pd.DataFrame: Data with no columns that are not corelated with predicted column.
+        If input in numpy array, then also output in array, if dataframe input, then dataframe output.
     """
     if data.ndim == 1 or data.shape[1] == 1:
         return data
@@ -957,11 +963,11 @@ def remove_the_outliers(data, threshold=3, main_column=0):
     predicted column will be deleted. Predicted column is supposed to be 0.
 
     Args:
-        data (np.array, pd.DataFrame): Time series data. Must have ndim = 2, if univariate, reshape...
+        data (np.ndarray, pd.DataFrame): Time series data. Must have ndim = 2, if univariate, reshape...
         threshold (int, optional): How many times must be standard deviation from mean to be ignored. Defaults to 3.
         main_column ((int, index)):
     Returns:
-        np.array: Cleaned data.
+        np.ndarray: Cleaned data.
 
     Examples:
 
@@ -1088,14 +1094,15 @@ def standardize_one_way(data, min, max, axis=0, inplace=False):
     Reason is for builded applications to do not carry sklearn with build.
 
     Args:
-        data ((np.array, pd.DataFrame)): Data.
+        data ((np.ndarray, pd.DataFrame)): Data.
         min (float): Minimum in transformed axis.
         max (float): Max in transformed axis.
         axis (int, optional): 0 to columns, 1 to rows. Defaults to 0.
         inplace (bool, optional): If true, no copy will be returned, but original object. Defaults to False.
 
     Returns:
-        (np.array, pd.DataFrame): Standardized data. If numpy inserted, numpy returned, same for dataframe.
+        np.ndarray, pd.DataFrame: Standardized data. If numpy inserted, numpy returned, same for dataframe.
+        If input in numpy array, then also output in array, if dataframe input, then dataframe output.
     """
     if not inplace:
         data = data.copy()
@@ -1118,23 +1125,71 @@ def standardize_one_way(data, min, max, axis=0, inplace=False):
     return data
 
 
+def binning(data, bins, type):
+    """Discretize value on defined number of bins. It will return the same shape of data, where middle
+    (average) values of bins interval returned.
+
+    Args:
+        data ((np.ndarray, pd.DataFrame)): Data for preprocessing. ndim = 2 (n_samples, n_features).
+        bins (int): Number of bins - unique values.
+        type (str): "cut" for equal size of bins intervals (different number of members in bins)
+            or "qcut" for equal number of members in bins and various size of bins. It uses pandas cut
+            or qcut function.
+
+    Returns:
+        np.ndarray, pd.DataFrame: Discretized data of same type as input. If input in numpy
+        array, then also output in array, if dataframe input, then dataframe output.
+
+    Example:
+
+    >>> import mydatapreprocessing.preprocessing as mdpp
+    ...
+    >>> mdpp.binning(np.array(range(10)), bins=3, type="cut")
+            0
+    0  1.4955
+    1  1.4955
+    2  1.4955
+    3  1.4955
+    4  4.5000
+    5  4.5000
+    6  4.5000
+    7  7.5000
+    8  7.5000
+    9  7.5000
+    """
+
+    data = pd.DataFrame(data)
+
+    if type == "qcut":
+        func = pd.qcut
+
+    if type == "cut":
+        func = pd.cut
+
+    for i in data:
+        data[i] = func(data[i].values, bins)
+        data[i] = data[i].map(lambda x: x.mid)
+
+    return data
+
+
 def split(data, predicts=7):
     """Divide data set on train and test set. Predicted column is supposed to be 0.
 
     Args:
-        data (pandas.DataFrame, ndarray): Time series data.
+        data (pd.DataFrame, np.ndarray): Time series data.
         predicts (int, optional): Number of predicted values. Defaults to 7.
 
     Returns:
-        ndarray, ndarray: Train set and test set.
+        pd.DataFrame, np.ndarray: Train set and test set. If input in numpy array, then also output in array, if dataframe input, then dataframe output.
 
-    Examples:
+    Example:
 
         >>> data = np.array([1, 2, 3, 4])
         >>> train, test = (split(data, predicts=2))
         >>> print(train, test)
-        [2, 3]
-        [4, 5]
+        [1, 2]
+        [3, 4]
     """
     if isinstance(data, pd.DataFrame):
         train = data.iloc[:-predicts, :]
@@ -1182,14 +1237,14 @@ def fitted_power_transform(data, fitted_stdev, mean=None, fragments=10, iteratio
     similiar standar deviation, similiar mean if specified. It use Box-Cox power transform in SciPy lib.
 
     Args:
-        data (np.array): Array of data that should be transformed (one column => ndim = 1).
+        data (np.ndarray): Array of data that should be transformed (one column => ndim = 1).
         fitted_stdev (float): Standard deviation that we want to have.
         mean (float, optional): Mean of transformed data. Defaults to None.
         fragments (int, optional): How many lambdas will be used in one iteration. Defaults to 9.
         iterations (int, optional): How many iterations will be used to find best transform. Defaults to 4.
 
     Returns:
-        np.array: Transformed data with demanded standard deviation and mean.
+        np.ndarray: Transformed data with demanded standard deviation and mean.
     """
 
     if data.ndim == 2 and 1 not in data.shape:
@@ -1237,7 +1292,7 @@ def add_none_to_gaps(df):
     Args:
         df (pd.DataFrame): Dataframe with time index.
     Returns:
-        df: Df with None row inserted in time gaps.
+        pd.DataFrame: Dataframe with None row inserted in time gaps.
     """
 
     sampling_threshold = (

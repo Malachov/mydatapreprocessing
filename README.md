@@ -58,9 +58,9 @@ extended2 = mdpp.add_derived_columns(to_be_extended2, differences=True, second_d
 
 # Feature extraction is under development  :[
 
-# Preprocess data. It return preprocessed data, but also last undifferenced value and scaler for inverse
+# Preprocess data. It return preprocessed data, but also scaler for inverse
 # transformation, so unpack it with _
-data_preprocessed, _, _ = mdpp.preprocess_data(data_consolidated, remove_outliers=True, smoothit=False,
+data_preprocessed, _ = mdpp.preprocess_data(data_consolidated, remove_outliers=True, smoothit=False,
                                               correlation_threshold=False, data_transform=False, standardizeit='standardize')
 ```
 
