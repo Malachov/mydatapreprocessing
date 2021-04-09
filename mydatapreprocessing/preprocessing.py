@@ -29,10 +29,10 @@ Example:
     ...     data_loaded, predicted_column="weight", data_orientation="index", remove_nans_threshold=0.9,
     ...     remove_nans_or_replace='interpolate')
 
-    Preprocess data. It return preprocessed data, but scaler for inverse
+    Preprocess data. It return preprocessed data, but also last undifferenced value and scaler for inverse
     transformation, so unpack it with _
 
-    >>> data_preprocessed, _ = mdpp.preprocess_data(
+    >>> data_preprocessed, _, _ = mdpp.preprocess_data(
     ...     data_consolidated, remove_outliers=True, smoothit=False, correlation_threshold=False,
     ...     data_transform=False, standardizeit='standardize')
 
@@ -767,7 +767,13 @@ def preprocess_data(
         )
 
     if data_transform == "difference":
+        if isinstance(preprocessed, np.ndarray):
+            last_undiff_value = preprocessed[-1, 0]
+        else:
+            last_undiff_value = preprocessed.iloc[-1, 0]
         preprocessed = do_difference(preprocessed)
+    else:
+        last_undiff_value = None
 
     if standardizeit:
         preprocessed, final_scaler = standardize(
@@ -779,7 +785,7 @@ def preprocess_data(
     if bins:
         preprocessed = binning(preprocessed, bins, binning_type)
 
-    return preprocessed, final_scaler
+    return preprocessed, last_undiff_value, final_scaler
 
 
 def preprocess_data_inverse(
