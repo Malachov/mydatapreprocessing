@@ -14,6 +14,10 @@ Install just with
 pip install mydatapreprocessing
 ```
 
+There are some libraries that not every user will be using (for some data inputs).
+If you want to be sure to have all libraries, you can download `requirements_advanced.txt` and then install
+advanced requirements with `pip install -r requirements_advanced.txt`.
+
 ## Preprocessing
 
 First - preprocessing load data, consolidate it and do the preprocessing. It contains functions like load_data, data_consolidation, preprocess_data, preprocess_data_inverse, add_frequency_columns, rolling_windows, add_derived_columns etc.

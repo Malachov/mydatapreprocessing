@@ -11,6 +11,8 @@ Functions are documented in it's docstrings.
 Input data are in shape (x_samples, x_features).
 
 Example:
+========
+
     >>> import mydatapreprocessing as mdp
     ...
     >>> data = np.array(
@@ -89,6 +91,7 @@ def make_sequences(
             np.array, np.array: X and y. Inputs and outputs (that can be used for example in sklearn models).
 
     Example:
+
         >>> import mydatapreprocessing as mdp
         ...
         >>> data = np.array(

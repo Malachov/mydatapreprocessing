@@ -32,14 +32,24 @@
 
 Library contain 3 modules - preprocessing, inputs and generatedata.
 
+Links
+=====
+
+Repo on github - https://github.com/Malachov/mydatapreprocessing
+Readthedocs documentation - https://mydatapreprocessing.readthedocs.io
+
 Installation
-------------
+============
 
 Python >=3.6 (Python 2 is not supported).
 
 Install just with::
 
     pip install mydatapreprocessing
+
+There are some libraries that not every user will be using (for some data inputs).
+If you want to be sure to have all libraries, you can download ``requirements_advanced.txt`` and then install
+advanced requirements with ``pip install -r requirements_advanced.txt``.
 
 """
 __version__ = "1.1.32"
