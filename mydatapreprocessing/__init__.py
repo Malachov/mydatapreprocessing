@@ -31,6 +31,16 @@
     :alt: Codecov
 
 Library contain 3 modules - preprocessing, inputs and generatedata.
+
+Installation
+------------
+
+Python >=3.6. Python 2 is not supported.
+
+Install just with::
+
+    pip install mydatapreprocessing
+
 """
 __version__ = "1.1.32"
 __author__ = "Daniel Malachov"

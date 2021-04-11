@@ -10,6 +10,16 @@
 
 Library contain 3 modules - preprocessing, inputs and generatedata.
 
+## Installation
+
+Python >=3.6. Python 2 is not supported.
+
+Install just with
+
+```console
+pip install mydatapreprocessing
+```
+
 ## Preprocessing
 
 First - preprocessing load data, consolidate it and do the preprocessing. It contains functions like load_data, data_consolidation, preprocess_data, preprocess_data_inverse, add_frequency_columns, rolling_windows, add_derived_columns etc.
