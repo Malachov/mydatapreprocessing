@@ -57,15 +57,28 @@ Example:
     >>> # ["path/to/my1.csv", "path/to/my1.csv"]
 """
 
-import pandas as pd
 import numpy as np
+import pandas as pd
+
+import mylogging
+
 import warnings
 from pathlib import Path
-import requests
 import itertools
 import importlib
 
-import mylogging
+# Lazy load
+
+# from mydatapreprocessing import generatedata
+
+# import requests
+# import scipy.signal
+# import scipy.stats
+# from sklearn import preprocessing
+# import json
+# import tkinter as tk
+
+# from tkinter import filedialog
 
 
 def get_file_paths(
@@ -185,6 +198,9 @@ def load_data(
                 is_file = False
 
             if not is_file:
+
+                import requests
+
                 try:
                     request = requests.get(iterated_data)
                 except Exception:
@@ -799,7 +815,7 @@ def preprocess_data_inverse(
     Only predicted column is also returned. Order is reverse than preprocessing. Output is in numpy array.
 
     Args:
-        data (np.ndarray, pd.DataFrame): Preprocessed data
+        data (np.ndarray): One dimension (one column) preprocessed data. Do not use ndim > 1.
         standardizeit (bool, optional): Whether use inverse standardization and what. Choices [None, 'standardize', '-11', '01', 'robust']. Defaults to False.
         final_scaler (sklearn.preprocessing.__x__scaler, optional): Scaler used in standardization. Defaults to None.
         data_transform (bool, optional): Use data transformation. Choices [False, 'difference]. Defaults to False.
@@ -808,9 +824,6 @@ def preprocess_data_inverse(
     Returns:
         np.ndarray: Inverse preprocessed data
     """
-
-    if isinstance(data, (pd.Series, pd.DataFrame)):
-        data = data.values
 
     if standardizeit:
         data = final_scaler.inverse_transform(data.reshape(1, -1)).ravel()
@@ -1253,14 +1266,19 @@ def fitted_power_transform(data, fitted_stdev, mean=None, fragments=10, iteratio
         np.ndarray: Transformed data with demanded standard deviation and mean.
     """
 
+    if not importlib.util.find_spec("scipy"):
+        raise ImportError(
+            "scipy library is necessary for smooth function. Install via `pip install scipy`"
+        )
+
+    import scipy.stats
+
     if data.ndim == 2 and 1 not in data.shape:
         raise ValueError(
             mylogging.return_str(
                 "Only one column can be power transformed. Use ravel if have shape (n, 1)"
             )
         )
-
-    import scipy.stats
 
     lmbda_low = 0
     lmbda_high = 3

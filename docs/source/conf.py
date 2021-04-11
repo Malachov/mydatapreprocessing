@@ -1,39 +1,29 @@
-# Generate rst files with
-# sphinx-apidoc -f -e -o source/ ../mydatapreprocessing
-# Only other important file is index.rst
-
-# Configuration file for the Sphinx documentation builder.
-#
-# This file only contains a selection of the most common options. For a full
-# list see the documentation:
-# https://www.sphinx-doc.org/en/master/usage/configuration.html
-
-# -- Path setup --------------------------------------------------------------
-
-# If extensions (or modules to document with autodoc) are in another directory,
-# add these directories to sys.path here. If the directory is relative to the
-# documentation root, use os.path.abspath to make it absolute, like shown here.
-#
-
 import sys
 import pathlib
 import datetime
 
+# Suppose separate build and source structure and logo.png in _static folder
+
+# Settings
+project = "mydatapreprocessing"
+author = "Daniel Malachov"
+github_user = "Malachov"
+
+# End of settings
+###################
+
+# Folders to sys path to be able to import
 script_dir = pathlib.Path(__file__).resolve()
-lib_path = script_dir.parents[2].as_posix()
-sys.path.insert(0, lib_path)
+root_path = script_dir.parents[2]
+lib_path = root_path / project
 
-# Delete one.. its foru source extension
-sys.path.insert(1, script_dir.as_posix())
-lib_path2 = script_dir.parents[2] / "mydatapreprocessing"
-sys.path.insert(2, lib_path2.as_posix())
-
+for i in [script_dir, root_path, lib_path]:
+    if i.as_posix() not in sys.path:
+        sys.path.insert(0, i.as_posix())
 
 # -- Project information -----------------------------------------------------
 
-project = "mydatapreprocessing"
-copyright = "2020, Daniel Malachov"
-author = "Daniel Malachov"
+copyright = f"2020, {author}"
 
 # The full version, including alpha/beta/rc tags
 release = datetime.datetime.now().strftime("%d-%m-%Y")
@@ -44,10 +34,9 @@ source_suffix = [".rst", ".md"]
 
 # -- General configuration ---------------------------------------------------
 html_theme_options = {
-    "github_user": "Malachov",
-    "github_repo": "mydatapreprocessing",
+    "github_user": github_user,
+    "github_repo": project,
     "github_banner": True,
-    "logo": "logo.png",
 }
 
 # Add any Sphinx extension module names here, as strings. They can be
@@ -56,7 +45,6 @@ html_theme_options = {
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",
-    "sphinx.ext.intersphinx",
     "sphinx.ext.viewcode",
     "sphinx.ext.githubpages",
     "sphinx.ext.imgmath",
@@ -64,7 +52,7 @@ extensions = [
     "m2r2",
 ]
 
-# 'about.html'
+# 'about.html',
 html_sidebars = {"**": ["navi.html", "searchbox.html"]}
 
 # Add any paths that contain templates here, relative to this directory.
@@ -86,6 +74,8 @@ html_theme = "alabaster"
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
+
+# html_extra_path = ['../extra']
 
 html_css_files = [
     "https://malachov.github.io/readthedocs-sphinx-alabaster-css/custom.css",

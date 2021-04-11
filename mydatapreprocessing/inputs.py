@@ -46,15 +46,11 @@ Example:
     If constant param is True, then bias 1 is added to every sample on index 0.
 """
 
-import pandas as pd
-
-pd.DataFrame
-
-
 import numpy as np
 
-from mydatapreprocessing.preprocessing import rolling_windows
 import mylogging
+
+from mydatapreprocessing.preprocessing import rolling_windows
 
 
 def make_sequences(

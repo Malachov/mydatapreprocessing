@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 
 """
-mydatapreprocessing
-===================
 
 .. image:: https://img.shields.io/pypi/pyversions/mydatapreprocessing.svg
     :target: https://pypi.python.org/pypi/mydatapreprocessing/
@@ -34,7 +32,7 @@ mydatapreprocessing
 
 Library contain 3 modules - preprocessing, inputs and generatedata.
 """
-__version__ = "1.1.31"
+__version__ = "1.1.32"
 __author__ = "Daniel Malachov"
 __license__ = "MIT"
 __email__ = "malachovd@seznam.cz"

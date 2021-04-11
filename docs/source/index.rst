@@ -1,21 +1,28 @@
+*******************
+mydatapreprocessing
+*******************
+
 .. automodule:: mydatapreprocessing
 
-`preprocessing <../latest/mydatapreprocessing.preprocessing.html>`_
--------------------------------------------------------------------
 
+Submodules
+==========
+
+`preprocessing </mydatapreprocessing.preprocessing.html>`_
+----------------------------------------------------------
 .. automodule:: mydatapreprocessing.preprocessing
 
-`inputs <../latest/mydatapreprocessing.inputs.html>`_
------------------------------------------------------
 
+`inputs </mydatapreprocessing.inputs.html>`_
+--------------------------------------------
 .. automodule:: mydatapreprocessing.inputs
 
-`generatedata <../latest/mydatapreprocessing.generatedata.html>`_
------------------------------------------------------
 
+`generatedata </mydatapreprocessing.generatedata.html>`_
+--------------------------------------------------------
 .. automodule:: mydatapreprocessing.generatedata
 
-Index
-=====
-* :ref:`genindex`
+
+`Index </genindex.html>`_
+-------------------------
 

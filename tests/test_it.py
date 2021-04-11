@@ -6,17 +6,18 @@ in terminal in tests folder.
 """
 #%%
 
-import sys
 import numpy as np
 import pandas as pd
+import json
+import requests
+
+import mylogging
+
+import sys
 from pathlib import Path
 import inspect
 import os
-import json
-import requests
-import urllib
 
-import mylogging
 
 # Find paths and add to sys.path to be able to import local modules
 test_dir_path = Path(
@@ -119,7 +120,7 @@ def test_preprocessing():
     )
 
     inverse_processed_df = mdpp.preprocess_data_inverse(
-        processed_df["Predicted"].iloc[1:],
+        processed_df["Predicted"].iloc[1:].values,
         data_transform="difference",
         last_undiff_value=test_df["Predicted"][0],
         standardizeit="standardize",

@@ -16,8 +16,12 @@ Only real data are ECG heart signal returned with function get_eeg().
 """
 
 import numpy as np
-import mylogging
 import importlib
+
+import mylogging
+
+# Lazy imports
+# import wfdb
 
 
 def gen_sin(n=1000):
@@ -90,7 +94,7 @@ def get_eeg(n=1000):
         np.ndarray: Slope test data.
     """
 
-    if not importlib.util.find_spec("xlrd"):
+    if not importlib.util.find_spec("wfdb"):
         raise ModuleNotFoundError(
             mylogging.return_str(
                 "For parsing eeg signal, wfdb library is necessary. Install with `pip install wfdb`"
