@@ -1,4 +1,4 @@
-mylogging>=2.0.1
+mylogging>=2.0.4
 numpy
-pandas==1.1.5
+pandas
 requests

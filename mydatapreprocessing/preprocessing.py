@@ -5,13 +5,14 @@ and do preprocessing like resampling, standardization, string embedding, new col
 If you want to see how functions work - working examples with printed results are in tests - visual.py.
 
 There are many small functions, but there they are called automatically with main preprocess functions.
+
     - load_data
     - data_consolidation
     - preprocess_data
     - preprocess_data_inverse
 
 Note:
-    In data consolidation, predicted column is moved on index 0!!!
+    In data consolidation, predicted column is moved on index 0 !!!
 
 Example:
 
