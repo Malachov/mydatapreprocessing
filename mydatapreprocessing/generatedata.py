@@ -29,7 +29,7 @@ def gen_sin(n=1000):
     """Generate test data of length n in sinus shape.
 
     Args:
-        n (int): Length of data.
+        n (int, optional): Length of data. Defaults to 1000.
 
     Returns:
         np.ndarray: Sinus shaped data.
@@ -42,19 +42,17 @@ def gen_sin(n=1000):
     return np.sin(2 * np.pi * f * x / fs)
 
 
-def gen_sign(n=1000, periods=220):
+def gen_sign(n=1000):
     """Generate test data of length n in signum shape.
 
     Args:
-        n (int): Length of data.
+        n (int, optional): Length of data. Defaults to 1000.
 
     Returns:
         np.ndarray: Signum shaped data.
     """
 
-    sin = gen_sin(n=n)
-
-    return np.sign(sin)
+    return np.sign(gen_sin(n=n))
 
 
 # Random
@@ -62,7 +60,7 @@ def gen_random(n=1000):
     """Generate random test data of length.
 
     Args:
-        n (int): Length of data.
+        n (int, optional): Length of data. Defaults to 1000.
 
     Returns:
         np.ndarray: Random test data.
@@ -76,7 +74,7 @@ def gen_slope(n=1000):
     """Generate random test data of length.
 
     Args:
-        n (int): Length of data.
+        n (int, optional): Length of data. Defaults to 1000.
 
     Returns:
         np.ndarray: Slope test data.
@@ -86,10 +84,10 @@ def gen_slope(n=1000):
 
 
 def get_eeg(n=1000):
-    """Download eeg data.
+    """Download real EEG data.
 
     Args:
-        n (int): Length of data.
+        n (int, optional): Length of data. Defaults to 1000.
 
     Returns:
         np.ndarray: Slope test data.
@@ -98,12 +96,10 @@ def get_eeg(n=1000):
     if not importlib.util.find_spec("wfdb"):
         raise ModuleNotFoundError(
             mylogging.return_str(
-                "For parsing eeg signal, wfdb library is necessary. Install with `pip install wfdb`"
+                "For parsing EEG signal, wfdb library is necessary. Install with `pip install wfdb`"
             )
         )
 
     import wfdb
 
-    return wfdb.rdrecord(
-        "a103l", pn_dir="challenge-2015/training/", channels=[1], sampto=n
-    ).p_signal
+    return wfdb.rdrecord("a103l", pn_dir="challenge-2015/training/", channels=[1], sampto=n).p_signal

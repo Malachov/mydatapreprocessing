@@ -10,7 +10,7 @@
     :target: https://badge.fury.io/py/mydatapreprocessing
     :alt: PyPI package
 
-.. image:: https://img.shields.io/lgtm/grade/python/g/Malachov/mydatapreprocessing.svg?logo=lgtm&logoWidth=18
+.. image:: https://img.shields.io/lgtm/grade/python/github/Malachov/mydatapreprocessing.svg
     :target: https://lgtm.com/projects/g/Malachov/mydatapreprocessing/context:python
     :alt: Language grade: Python
 
@@ -36,6 +36,7 @@ Links
 =====
 
 Repo on github - https://github.com/Malachov/mydatapreprocessing
+
 Readthedocs documentation - https://mydatapreprocessing.readthedocs.io
 
 Installation
@@ -52,7 +53,7 @@ If you want to be sure to have all libraries, you can download ``requirements_ad
 advanced requirements with ``pip install -r requirements_advanced.txt``.
 
 """
-__version__ = "1.1.32"
+__version__ = "1.1.33"
 __author__ = "Daniel Malachov"
 __license__ = "MIT"
 __email__ = "malachovd@seznam.cz"

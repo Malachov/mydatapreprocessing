@@ -39,24 +39,26 @@ Example:
     ...     data_transform=False, standardizeit='standardize')
 
 
-    Allowed data formats for load_data are examples
+    Allowed data formats for load_data are examples::
 
-    >>> # myarray_or_dataframe # Numpy array or Pandas.DataFrame
-    >>> # r"/home/user/my.json" # Local file. The same with .parquet, .h5, .json or .xlsx.
-    ...     On windows it's necessary to use raw string - 'r' in front of string because of escape symbols \
-    >>> # "https://yoururl/your.csv" # Web url (with suffix). Same with json.
-    >>> # "https://blockchain.info/unconfirmed-transactions?format=json" # In this case you have to specify
-    ...     also 'request_datatype_suffix': "json", 'data_orientation': "index", 'predicted_table': 'txs',
-    >>> # [{'col_1': 3, 'col_2': 'a'}, {'col_1': 0, 'col_2': 'd'}] # List of records
-    >>> # {'col_1': [3, 2, 1, 0], 'col_2': ['a', 'b', 'c', 'd']} # Dict with colums or rows (index)
-    ...     - necessary to setup data_orientation!
-    ...
-    >>> # You can use more files in list and data will be concatenated. It can be list of paths or list of python objects. Example:
-    >>> # [{'col_1': 3, 'col_2': 'a'}, {'col_1': 0, 'col_2': 'd'}]  # List of records
-    >>> # [np.random.randn(20, 3), np.random.randn(25, 3)]  # Dataframe same way
-    >>> # ["https://raw.githubusercontent.com/jbrownlee/Datasets/master/daily-min-temperatures.csv",
-    ...     "https://raw.githubusercontent.com/jbrownlee/Datasets/master/daily-min-temperatures.csv"]  # List of URLs
-    >>> # ["path/to/my1.csv", "path/to/my1.csv"]
+        myarray_or_dataframe # Numpy array or Pandas.DataFrame
+        r"/home/user/my.json" # Local file. The same with .parquet, .h5, .json or .xlsx.
+        "https://yoururl/your.csv" # Web url (with suffix). Same with json.
+        "https://blockchain.info/unconfirmed-transactions?format=json" # In this case you have to specify
+            also 'request_datatype_suffix': "json", 'data_orientation': "index", 'predicted_table': 'txs',
+        [{'col_1': 3, 'col_2': 'a'}, {'col_1': 0, 'col_2': 'd'}] # List of records
+        {'col_1': [3, 2, 1, 0], 'col_2': ['a', 'b', 'c', 'd']} # Dict with colums or rows (index) - necessary
+            to setup data_orientation!
+
+    You can use more files in list and data will be concatenated. It can be list of paths or list of python objects. For example::
+
+        [{'col_1': 3, 'col_2': 'a'}, {'col_1': 0, 'col_2': 'd'}]  # List of records
+        [np.random.randn(20, 3), np.random.randn(25, 3)]  # Dataframe same way
+        ["https://raw.githubusercontent.com/jbrownlee/Datasets/master/daily-min-temperatures.csv",
+            "https://raw.githubusercontent.com/jbrownlee/Datasets/master/daily-min-temperatures.csv"]  # List of URLs
+        ["path/to/my1.csv", "path/to/my1.csv"]
+
+    On windows it's necessary to use raw string - 'r' in front of string because of escape symbols \
 """
 
 import numpy as np
@@ -97,7 +99,7 @@ def get_file_paths(
 
     Args:
         filetypes (list, optional): Accepted file types / suffixes. List of strings or list of tuples.
-            Defaults to [("csv", ".csv")].
+            Defaults to [("csv", ".csv"), ("Excel (xlsx, xls)", ".xlsx .xls"), ("h5", ".h5"), ("parquet", ".parquet"), ("json", ".json")].
         title (str, optional): Just a name of dialog window. Defaults to 'Select file'.
 
     Returns:
@@ -123,6 +125,7 @@ def load_data(
     request_datatype_suffix="",
     data_orientation="",
 ):
+
     """Load data from path or url or other python format (numpy array, list, dict) into dataframe.
     Available formats are csv, excel xlsx, parquet, json or h5. Allow multiple files loading at once - just put
     it in list e.g. [df1, df2, df3] or ['myfile1.csv', 'myfile2.csv']. Structure of files does not have to be the same.
@@ -133,16 +136,22 @@ def load_data(
 
     Args:
         data (str, pathlib.Path): Path, url or 'test' or 'sql'. Check configuration file for examples.
-        header (int, optional): Row index used as column names. Defaults to 0.
+        header (int, optional): Row index used as column names. Defaults to None.
         csv_style ((dict, None), optional): Define CSV separator and decimal. En locale usually use {'sep': ",", 'decimal': "."}
             some Europian country use {'sep': ";", 'decimal': ","}. If None - values are infered. Defaults to None.
         predicted_table (str, optional): If using excel (xlsx) - it means what sheet to use, if json,
             it means what key values, if SQL, then it mean what table. Else it have no impact. Defaults to ''.
-        max_imported_length (int, optional): Max length of imported samples (before resampling). If 0, than full length. Defaults to 0.
+        max_imported_length (int, optional): Max length of imported samples (before resampling). If 0, than full length.
+            Defaults to 0.
         request_datatype_suffix(str, optional): 'json' for example. If using url with no extension,
-            define whichdatatype is on this url with GET request
+            define whichdatatype is on this url with GET request. Defaults to "".
         data_orientation(str, optional): 'columns' or 'index'. If using json or dictionary, it describe how data are
-            oriented. Default is 'columns' if None used. If orientation is records (in pandas terminology), it's detected automatically.
+            oriented. Default is 'columns' if None used. If orientation is records (in pandas terminology), it's detected
+            automatically. Defaults to "".
+
+    Raises:
+        FileNotFoundError, TypeError, ValueError, ModuleNotFoundError: If not existing file, or url, or if necessary
+            dependency library not found.
 
     Returns:
         pd.DataFrame, dict, list : Loaded data. Usually in pd.DataFrame format, but sometimes as dict or list,
@@ -208,9 +217,7 @@ def load_data(
                 except Exception:
                     request = None
 
-                if not request or not (
-                    request.status_code >= 200 and request.status_code < 300
-                ):
+                if not request or not (request.status_code >= 200 and request.status_code < 300):
 
                     raise FileNotFoundError(
                         mylogging.return_str(
@@ -226,8 +233,7 @@ def load_data(
 
             # If not suffix inferred, then maybe url that return as request - than suffix have to be configured
             if not data_type_suffix or (
-                data_type_suffix not in ["csv", "json", "xlsx", "xls"]
-                and request_datatype_suffix
+                data_type_suffix not in ["csv", "json", "xlsx", "xls"] and request_datatype_suffix
             ):
                 data_type_suffix = request_datatype_suffix.lower()
 
@@ -259,9 +265,7 @@ def load_data(
                     header = "infer"
 
                 if not csv_style:
-                    sep = pd.read_csv(
-                        iterated_data, sep=None, iterator=True
-                    )._engine.data.dialect.delimiter
+                    sep = pd.read_csv(iterated_data, sep=None, iterator=True)._engine.data.dialect.delimiter
 
                     if sep not in [",", ";", "\t"]:
                         raise ValueError(
@@ -280,9 +284,9 @@ def load_data(
 
                 try:
                     list_of_dataframes.append(
-                        pd.read_csv(
-                            iterated_data, header=header, sep=sep, decimal=decimal
-                        ).iloc[-max_imported_length:, :]
+                        pd.read_csv(iterated_data, header=header, sep=sep, decimal=decimal).iloc[
+                            -max_imported_length:, :
+                        ]
                     )
                 except UnicodeDecodeError:
                     list_of_dataframes.append(
@@ -322,9 +326,9 @@ def load_data(
                 if not predicted_table:
                     predicted_table = 0
                 list_of_dataframes.append(
-                    pd.read_excel(
-                        iterated_data, sheet_name=predicted_table, engine="openpyxl"
-                    ).iloc[-max_imported_length:, :]
+                    pd.read_excel(iterated_data, sheet_name=predicted_table, engine="openpyxl").iloc[
+                        -max_imported_length:, :
+                    ]
                 )
 
             elif data_type_suffix == "json":
@@ -334,9 +338,7 @@ def load_data(
                 if is_file:
                     with open(iterated_data) as json_file:
                         list_of_dataframes.append(
-                            json.load(json_file)[predicted_table]
-                            if predicted_table
-                            else json.load(json_file)
+                            json.load(json_file)[predicted_table] if predicted_table else json.load(json_file)
                         )
 
                 else:
@@ -347,14 +349,10 @@ def load_data(
                     )
 
             elif data_type_suffix in ("h5", "hdf5"):
-                list_of_dataframes.append(
-                    pd.read_hdf(iterated_data).iloc[-max_imported_length:, :]
-                )
+                list_of_dataframes.append(pd.read_hdf(iterated_data).iloc[-max_imported_length:, :])
 
             elif data_type_suffix in ("parquet"):
-                list_of_dataframes.append(
-                    pd.read_parquet(iterated_data).iloc[-max_imported_length:, :]
-                )
+                list_of_dataframes.append(pd.read_parquet(iterated_data).iloc[-max_imported_length:, :])
 
             else:
                 raise TypeError(
@@ -417,25 +415,29 @@ def data_consolidation(
 
     Args:
         data (pd.DataFrame): Input data in well standardized format.
-        predicted_column ((int, str), optional): Predicted column name or index. Move on first column and test if number. If None, it's ignored. Defaults to None.
+        predicted_column ((int, str), optional): Predicted column name or index. Move on first column and test if number.
+            If None, it's ignored. Defaults to None.
         other_columns (int, optional): Whether use other columns or only predicted one. Defaults to 1.
         datalength (int, optional): Data length after resampling. Defaults to 0.
         datetime_column (str, optional): Name or index of datetime column. Defaults to ''.
         freq (int, optional): Frequency of resampled data. Defaults to 0.
         resample_function (str, optional): 'sum' or 'mean'. Whether sum resampled columns, or use average. Defaults to 'sum'.
-        embedding(str, optional): 'label' or 'one-hot'. Categorical encoding. Create numbers from strings. 'label' give each category (unique string) concrete number. Defaults to 'interpolate'.
-            Result will have same number of columns. 'one-hot' create for every category new column. Only columns, where are strings repeating (unique_threshlold) will be used.
-        unique_threshlold(float, optional): Remove string columns, that have to many categories. E.g 0.9 define, that if column contain more that 90% of NOT unique values it's deleted. Defaults to 0.6.
-            Min is 0, max is 1. It will remove ids, hashes etc.
-        remove_nans_threshold (float, optional): From 0 to 1. Require that many non-nan numeric values to not be deleted. E.G if value is 0.9 with column
-            with 10 values, 90% must be numeric that implies max 1 np.nan can be presented, otherwise column will be deleted.
-        remove_nans_or_replace (str, float, optional): 'interpolate', 'remove', 'neighbor', 'mean' or value. Remove or replace rest nan values.
-            If you want to keep nan, setup value to np.nan. If you want to use concrete value, use float or int type. Defaults to 'interpolate'.
-        dtype (str, optional): Output dtype. E.g. 'float32'.
+        embedding(str, optional): 'label' or 'one-hot'. Categorical encoding. Create numbers from strings. 'label' give each
+            category (unique string) concrete number. Result will have same number of columns. 'one-hot' create for every
+            category new column. Only columns, where are strings repeating (unique_threshlold) will be used. Defaults to 'label'.
+        unique_threshlold(float, optional): Remove string columns, that have to many categories. E.g 0.9 define, that if
+            column contain more that 90% of NOT unique values it's deleted. Min is 0, max is 1. It will remove ids,
+            hashes etc. Defaults to 0.6.
+        remove_nans_threshold (float, optional): From 0 to 1. Require that many non-nan numeric values to not be deleted.
+            E.G if value is 0.9 with column with 10 values, 90% must be numeric that implies max 1 np.nan can be presented,
+            otherwise column will be deleted. Defaults to 0.85.
+        remove_nans_or_replace (str, float, optional): 'interpolate', 'remove', 'neighbor', 'mean' or value. Remove or replace
+            rest nan values. If you want to keep nan, setup value to np.nan. If you want to use concrete value, use float or
+            int type. Defaults to 'interpolate'.
+        dtype (str, optional): Output dtype. Defaults to 'float32'.
 
     Raises:
-        KeyError, TypeError: If wrong configuration in configuration.py.
-            E.g. if predicted column name not found in dataframe.
+        KeyError, TypeError: May happen if wrong params. E.g. if predicted column name not found in dataframe.
 
 
     Returns:
@@ -493,11 +495,7 @@ def data_consolidation(
         else:
             predicted_column_name = "Predicted column"
             data_for_predictions_df.rename(
-                columns={
-                    data_for_predictions_df.columns[
-                        predicted_column
-                    ]: predicted_column_name
-                },
+                columns={data_for_predictions_df.columns[predicted_column]: predicted_column_name},
                 inplace=True,
             )
 
@@ -515,9 +513,7 @@ def data_consolidation(
 
         try:
             if isinstance(datetime_column, str):
-                data_for_predictions_df.set_index(
-                    datetime_column, drop=True, inplace=True
-                )
+                data_for_predictions_df.set_index(datetime_column, drop=True, inplace=True)
 
             else:
                 data_for_predictions_df.set_index(
@@ -526,9 +522,7 @@ def data_consolidation(
                     inplace=True,
                 )
 
-            data_for_predictions_df.index = pd.to_datetime(
-                data_for_predictions_df.index
-            )
+            data_for_predictions_df.index = pd.to_datetime(data_for_predictions_df.index)
 
         except Exception:
             raise KeyError(
@@ -539,9 +533,7 @@ def data_consolidation(
             )
 
     # Convert strings numbers (e.g. '6') to numbers
-    data_for_predictions_df = data_for_predictions_df.apply(
-        pd.to_numeric, errors="ignore"
-    )
+    data_for_predictions_df = data_for_predictions_df.apply(pd.to_numeric, errors="ignore")
 
     if embedding:
         data_for_predictions_df = categorical_embedding(
@@ -556,9 +548,7 @@ def data_consolidation(
     if predicted_column_name:
         # TODO setup other columns in define input so every model can choose and simplier config input types
         if not other_columns:
-            data_for_predictions_df = pd.DataFrame(
-                data_for_predictions_df[predicted_column_name]
-            )
+            data_for_predictions_df = pd.DataFrame(data_for_predictions_df[predicted_column_name])
 
         if predicted_column_name not in data_for_predictions_df.columns:
             raise KeyError(
@@ -579,9 +569,7 @@ def data_consolidation(
             data_for_predictions_df = data_for_predictions_df.asfreq(freq, fill_value=0)
 
         else:
-            data_for_predictions_df.index.freq = pd.infer_freq(
-                data_for_predictions_df.index
-            )
+            data_for_predictions_df.index.freq = pd.infer_freq(data_for_predictions_df.index)
 
             if data_for_predictions_df.index.freq is None:
                 reset_index = True
@@ -635,9 +623,7 @@ def data_consolidation(
                 data_for_predictions_df[col].mean()
             )
 
-    if isinstance(
-        remove_nans_or_replace, (int, float) or np.isnan(remove_nans_or_replace)
-    ):
+    if isinstance(remove_nans_or_replace, (int, float) or np.isnan(remove_nans_or_replace)):
         data_for_predictions_df.fillna(remove_nans_or_replace, inplace=True)
 
     # Forward fill and interpolate can miss som nans if on first row
@@ -654,8 +640,8 @@ def add_derived_columns(
     multiplications=True,
     rolling_means=True,
     rolling_stds=True,
-    mean_distances=True,
     window=10,
+    mean_distances=True,
 ):
     """This will create many columns that can be valuable for making predictions like difference, or
     rolling mean or distance from average. Computed columns will be appened to original data. It will process all the columns,
@@ -663,12 +649,13 @@ def add_derived_columns(
 
     Args:
         data (pd.DataFrame): Data that we want to extract more information from.
-        difference (bool): Compute difference between n and n-1 sample
-        second_difference (bool): Compute second difference.
-        multiplicated (bool): Column multiplicated with other column.
-        rolling_mean (bool): Rolling mean with defined window.
-        rolling_std (bool): Rolling std with defined window.
-        mean_distance (bool): Distance from average.
+        differences (bool, optional): Compute difference between n and n-1 sample. Defaults to True.
+        second_difference (bool, optional): Compute second difference. Defaults to True.
+        multiplications (bool, optional): Column multiplicated with other column. Defaults to True.
+        rolling_means (bool, optional): Rolling mean with defined window. Defaults to True.
+        rolling_stds (bool, optional): Rolling std with defined window. Defaults to True.
+        window (int, optional): Window used for rolling_stds and rolling_means.
+        mean_distances (bool, optional): Distance from average. Defaults to True.
 
     Returns:
         pd.DataFrame: Data with more columns, that can have more informations,
@@ -725,17 +712,11 @@ def add_derived_columns(
 
         for i in range(data.shape[1]):
             mean_distanced[i] = data.values.T[i] - data.values.T[i].mean()
-        results.append(
-            pd.DataFrame(
-                mean_distanced.T, columns=[f"{i} - Mean distance" for i in data.columns]
-            )
-        )
+        results.append(pd.DataFrame(mean_distanced.T, columns=[f"{i} - Mean distance" for i in data.columns]))
 
     min_length = min(len(i) for i in results)
 
-    return pd.concat(
-        [i.iloc[-min_length:].reset_index(drop=True) for i in results], axis=1
-    )
+    return pd.concat([i.iloc[-min_length:].reset_index(drop=True) for i in results], axis=1)
 
 
 def preprocess_data(
@@ -761,11 +742,11 @@ def preprocess_data(
             neighbor values. Defaults to None.
         standardizeit (str, optional): How to standardize data. '01' and '-11' means scope from to for normalization.
             'robust' use RobustScaler and 'standard' use StandardScaler - mean is 0 and std is 1. Defaults to 'standardize'.
-        bins (int, None): Whether to discretize value into defined number of bins (their average). None make no discretization,
-            int define number of bins.
-        binning_type (str): "cut" for equal size of bins intervals (different number of members in bins)
+        bins ((int, None), optional): Whether to discretize value into defined number of bins (their average). None make no discretization,
+            int define number of bins. Defaults to False.
+        binning_type (str, optional): "cut" for equal size of bins intervals (different number of members in bins)
             or "qcut" for equal number of members in bins and various size of bins. It uses pandas cut
-            or qcut function.
+            or qcut function. Defaults to 'cut'.
 
     Returns:
         np.ndarray, pd.DataFrame: Preprocessed data. If input in numpy array, then also output in array, if dataframe input, then dataframe output.
@@ -780,9 +761,7 @@ def preprocess_data(
         preprocessed = smooth(preprocessed, smoothit[0], smoothit[1])
 
     if correlation_threshold:
-        preprocessed = keep_corelated_data(
-            preprocessed, threshold=correlation_threshold
-        )
+        preprocessed = keep_corelated_data(preprocessed, threshold=correlation_threshold)
 
     if data_transform == "difference":
         if isinstance(preprocessed, np.ndarray):
@@ -794,9 +773,7 @@ def preprocess_data(
         last_undiff_value = None
 
     if standardizeit:
-        preprocessed, final_scaler = standardize(
-            preprocessed, used_scaler=standardizeit
-        )
+        preprocessed, final_scaler = standardize(preprocessed, used_scaler=standardizeit)
     else:
         final_scaler = None
 
@@ -837,9 +814,17 @@ def preprocess_data_inverse(
 
 
 def rolling_windows(data, window):
-    """Generate matrix of rolling windows. E.g for matrix [1, 2, 3, 4, 5] and window 2
-    it will create [[1 2], [2 3], [3 4], [4 5]]. From matrix [[1, 2, 3], [4, 5, 6]] it will create
-    [[[1 2], [2 3]], [[4 5], [5 6]]].
+    """Generate matrix of rolling windows.
+
+    Example:
+
+        >>> import mydatapreprocessing.preprocessing as mdp
+        ...
+        >>> mdp.rolling_windows(np.array([1, 2, 3, 4, 5]), window=2)
+        array([[1, 2],
+               [2, 3],
+               [3, 4],
+               [4, 5]])
 
     Args:
         data (np.ndarray): Array data input.
@@ -898,11 +883,14 @@ def categorical_embedding(data, embedding="label", unique_threshlold=0.6):
     """Transform string categories such as 'US', 'FR' into numeric values, that can be used in machile learning model.
 
     Args:
-        data (pd.DataFrame): Data with string (Object) columns.
-        embedding(str, optional): 'label' or 'one-hot'. Categorical encoding. Create numbers from strings. 'label' give each category (unique string) concrete number.
-            Result will have same number of columns. 'one-hot' create for every category new column. Only columns, where are strings repeating (unique_threshlold) will be used.
-        unique_threshlold(float, optional): Remove string columns, that have to many categories (ids, hashes etc.). E.g 0.9 defines that in column of length 100, max number of
-            categories to not to be deleted is 10 (90% non unique repeating values). Defaults to 0.6. Min is 0, max is 1.
+        data (pd.DataFrame): Data with string (pandas Object dtype) columns.
+        embedding(str, optional): 'label' or 'one-hot'. Categorical encoding. Create numbers from strings. 'label'
+            give each category (unique string) concrete number. Result will have same number of columns.
+            'one-hot' create for every category new column. Only columns, where are strings repeating (unique_threshlold)
+            will be used. Defaults to "label".
+        unique_threshlold(float, optional): Remove string columns, that have to many categories (ids, hashes etc.).
+            E.g 0.9 defines that in column of length 100, max number of categories to not to be deleted is
+            10 (90% non unique repeating values). Defaults to 0.6. Min is 0, max is 1. Defaults is 0.6.
 
     Returns:
         pd.DataFrame: Dataframe where string columns transformed to numeric.
@@ -914,9 +902,7 @@ def categorical_embedding(data, embedding="label", unique_threshlold=0.6):
 
         try:
 
-            if (data_for_embedding[i].nunique() / len(data_for_embedding[i])) > (
-                1 - unique_threshlold
-            ):
+            if (data_for_embedding[i].nunique() / len(data_for_embedding[i])) > (1 - unique_threshlold):
                 to_drop.append(i)
                 continue
 
@@ -926,9 +912,7 @@ def categorical_embedding(data, embedding="label", unique_threshlold=0.6):
                 data_for_embedding[i] = data_for_embedding[i].cat.codes
 
             if embedding == "one-hot":
-                data_for_embedding = data_for_embedding.join(
-                    pd.get_dummies(data_for_embedding[i])
-                )
+                data_for_embedding = data_for_embedding.join(pd.get_dummies(data_for_embedding[i]))
                 to_drop.append(i)
 
         except Exception:
@@ -948,7 +932,8 @@ def keep_corelated_data(data, threshold=0.5):
 
     Args:
         data (np.ndarray, pd.DataFrame): Time series data.
-        threshold (float, optional): After correlation matrix is evaluated, all columns that are correlated less than threshold are deleted. Defaults to 0.2.
+        threshold (float, optional): After correlation matrix is evaluated, all columns that are correlated less
+            than threshold are deleted. Defaults to 0.2.
 
     Returns:
         np.ndarray, pd.DataFrame: Data with no columns that are not corelated with predicted column.
@@ -986,7 +971,8 @@ def remove_the_outliers(data, threshold=3, main_column=0):
     Args:
         data (np.ndarray, pd.DataFrame): Time series data. Must have ndim = 2, if univariate, reshape...
         threshold (int, optional): How many times must be standard deviation from mean to be ignored. Defaults to 3.
-        main_column ((int, index)):
+        main_column ((int, index), optional): Main column that we relate outliers to. Defaults to 0.
+
     Returns:
         np.ndarray: Cleaned data.
 
@@ -1002,9 +988,7 @@ def remove_the_outliers(data, threshold=3, main_column=0):
         data_std = data[:, main_column].std()
 
         range_array = np.array(range(data.shape[0]))
-        names_to_del = range_array[
-            abs(data[:, main_column] - data_mean) > threshold * data_std
-        ]
+        names_to_del = range_array[abs(data[:, main_column] - data_mean) > threshold * data_std]
         data = np.delete(data, names_to_del, axis=0)
 
     elif isinstance(data, pd.DataFrame):
@@ -1023,10 +1007,10 @@ def do_difference(data):
     """Transform data into neighbor difference. For example from [1, 2, 4] into [1, 2].
 
     Args:
-        dataset (np.ndarray, pd.DataFrame): Numpy on or multi dimensional array.
+        data (np.ndarray, pd.DataFrame): Data.
 
     Returns:
-        ndarray: Differenced data.
+        np.ndarray: Differenced data.
 
     Examples:
 
@@ -1146,16 +1130,16 @@ def standardize_one_way(data, min, max, axis=0, inplace=False):
     return data
 
 
-def binning(data, bins, type):
+def binning(data, bins, type="cut"):
     """Discretize value on defined number of bins. It will return the same shape of data, where middle
     (average) values of bins interval returned.
 
     Args:
         data ((np.ndarray, pd.DataFrame)): Data for preprocessing. ndim = 2 (n_samples, n_features).
         bins (int): Number of bins - unique values.
-        type (str): "cut" for equal size of bins intervals (different number of members in bins)
+        type (str, optional): "cut" for equal size of bins intervals (different number of members in bins)
             or "qcut" for equal number of members in bins and various size of bins. It uses pandas cut
-            or qcut function.
+            or qcut function. Defaults to "cut".
 
     Returns:
         np.ndarray, pd.DataFrame: Discretized data of same type as input. If input in numpy
@@ -1227,24 +1211,20 @@ def smooth(data, window=101, polynom_order=2):
 
     Args:
         data (ndarray): Input data.
-        window (tuple, optional): Length of sliding window. Must be odd.
-        polynom_order - Must be smaller than window.
+        window (int, optional): Length of sliding window. Must be odd. Defaults to 101.
+        polynom_order (int, optional) - Must be smaller than window. Defaults to 2.
 
     Returns:
         ndarray: Cleaned data with less noise.
     """
     if not importlib.util.find_spec("scipy"):
-        raise ImportError(
-            "scipy library is necessary for smooth function. Install via `pip install scipy`"
-        )
+        raise ImportError("scipy library is necessary for smooth function. Install via `pip install scipy`")
 
     import scipy.signal
 
     if isinstance(data, pd.DataFrame):
         for i in range(data.shape[1]):
-            data.iloc[:, i] = scipy.signal.savgol_filter(
-                data.values[:, i], window, polynom_order
-            )
+            data.iloc[:, i] = scipy.signal.savgol_filter(data.values[:, i], window, polynom_order)
 
     elif isinstance(data, np.ndarray):
         for i in range(data.shape[1]):
@@ -1261,25 +1241,21 @@ def fitted_power_transform(data, fitted_stdev, mean=None, fragments=10, iteratio
         data (np.ndarray): Array of data that should be transformed (one column => ndim = 1).
         fitted_stdev (float): Standard deviation that we want to have.
         mean (float, optional): Mean of transformed data. Defaults to None.
-        fragments (int, optional): How many lambdas will be used in one iteration. Defaults to 9.
-        iterations (int, optional): How many iterations will be used to find best transform. Defaults to 4.
+        fragments (int, optional): How many lambdas will be used in one iteration. Defaults to 10.
+        iterations (int, optional): How many iterations will be used to find best transform. Defaults to 5.
 
     Returns:
         np.ndarray: Transformed data with demanded standard deviation and mean.
     """
 
     if not importlib.util.find_spec("scipy"):
-        raise ImportError(
-            "scipy library is necessary for smooth function. Install via `pip install scipy`"
-        )
+        raise ImportError("scipy library is necessary for smooth function. Install via `pip install scipy`")
 
     import scipy.stats
 
     if data.ndim == 2 and 1 not in data.shape:
         raise ValueError(
-            mylogging.return_str(
-                "Only one column can be power transformed. Use ravel if have shape (n, 1)"
-            )
+            mylogging.return_str("Only one column can be power transformed. Use ravel if have shape (n, 1)")
         )
 
     lmbda_low = 0
@@ -1321,20 +1297,13 @@ def add_none_to_gaps(df):
         pd.DataFrame: Dataframe with None row inserted in time gaps.
     """
 
-    sampling_threshold = (
-        remove_the_outliers(np.diff(df.index[:50]).reshape(-1, 1), threshold=1).mean()
-        * 3
-    )
+    sampling_threshold = remove_the_outliers(np.diff(df.index[:50]).reshape(-1, 1), threshold=1).mean() * 3
     nons = []
     memory = None
 
     for i in df.index:
         if memory and i - memory > sampling_threshold:
-            nons.append(
-                pd.DataFrame(
-                    [[np.nan] * df.shape[1]], index=[memory + sampling_threshold]
-                )
-            )
+            nons.append(pd.DataFrame([[np.nan] * df.shape[1]], index=[memory + sampling_threshold]))
         memory = i
 
     return pd.concat([df, *nons]).sort_index()

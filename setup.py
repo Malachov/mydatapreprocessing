@@ -22,7 +22,7 @@ setup(
     description='Library/framework for making predictions.',
     long_description_content_type='text/markdown',
     long_description=readme,
-    packages=find_packages(),
+    packages=find_packages(exclude=("tests",)),
     include_package_data=True,
     platforms='any',
     classifiers=[
@@ -33,7 +33,6 @@ setup(
         'Programming Language :: Python :: 3.8',
         'Natural Language :: English',
         'Environment :: Other Environment',
-        'Intended Audience :: Developers',
         'License :: OSI Approved :: MIT License',
         'Operating System :: OS Independent',
         'Topic :: Scientific/Engineering :: Artificial Intelligence',
