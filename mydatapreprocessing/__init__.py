@@ -14,10 +14,6 @@
     :target: https://lgtm.com/projects/g/Malachov/mydatapreprocessing/context:python
     :alt: Language grade: Python
 
-.. image:: https://travis-ci.com/Malachov/mydatapreprocessing.svg?branch=master
-    :target: https://travis-ci.com/Malachov/mydatapreprocessing
-    :alt: Build Status
-
 .. image:: https://readthedocs.org/projects/mydatapreprocessing/badge/?version=latest
     :target: https://mydatapreprocessing.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation Status
