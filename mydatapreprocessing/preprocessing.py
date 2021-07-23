@@ -22,13 +22,13 @@ Example:
 
     Load data from file or URL
 
-    >>> data_loaded = mdpp.load_data(data, request_datatype_suffix=".json", predicted_table='txs')
+    >>> data_loaded = mdpp.load_data(data, request_datatype_suffix=".json", data_orientation="index", predicted_table='txs')
 
     Transform various data into defined format - pandas dataframe - convert to numeric if possible, keep
     only numeric data and resample ifg configured. It return array, dataframe
 
     >>> data_consolidated = mdpp.data_consolidation(
-    ...     data_loaded, predicted_column="weight", data_orientation="index", remove_nans_threshold=0.9,
+    ...     data_loaded, predicted_column="weight", remove_nans_threshold=0.9,
     ...     remove_nans_or_replace='interpolate')
 
     Preprocess data. It return preprocessed data, but also last undifferenced value and scaler for inverse
@@ -980,7 +980,7 @@ def remove_the_outliers(data, threshold=3, main_column=0):
 
         >>> data = np.array([[1, 3, 5, 2, 3, 4, 5, 66, 3]])
         >>> print(remove_the_outliers(data))
-        [1, 3, 5, 2, 3, 4, 5, 3]
+        [[ 1  3  5  2  3  4  5 66  3]]
     """
 
     if isinstance(data, np.ndarray):
@@ -1016,7 +1016,7 @@ def do_difference(data):
 
         >>> data = np.array([1, 3, 5, 2])
         >>> print(do_difference(data))
-        [2, 2, -3]
+        [ 2  2 -3]
     """
 
     if isinstance(data, np.ndarray):
@@ -1039,7 +1039,7 @@ def inverse_difference(differenced_predictions, last_undiff_value):
 
         >>> data = np.array([1, 1, 1, 1])
         >>> print(inverse_difference(data, 1))
-        [2, 3, 4, 5]
+        [2 3 4 5]
     """
 
     assert differenced_predictions.ndim == 1, "Data input must be one-dimensional."
@@ -1150,18 +1150,21 @@ def binning(data, bins, type="cut"):
     >>> import mydatapreprocessing.preprocessing as mdpp
     ...
     >>> mdpp.binning(np.array(range(10)), bins=3, type="cut")
-            0
-    0  1.4955
-    1  1.4955
-    2  1.4955
-    3  1.4955
-    4  4.5000
-    5  4.5000
-    6  4.5000
-    7  7.5000
-    8  7.5000
-    9  7.5000
+    array([[1.4955],
+           [1.4955],
+           [1.4955],
+           [1.4955],
+           [4.5   ],
+           [4.5   ],
+           [4.5   ],
+           [7.5   ],
+           [7.5   ],
+           [7.5   ]])
+
     """
+
+    if isinstance(data, np.ndarray):
+        convert_to_array = True
 
     data = pd.DataFrame(data)
 
@@ -1175,14 +1178,17 @@ def binning(data, bins, type="cut"):
         data[i] = func(data[i].values, bins)
         data[i] = data[i].map(lambda x: x.mid)
 
-    return data
+    if convert_to_array:
+        return data.values
+    else:
+        return data
 
 
 def split(data, predicts=7):
     """Divide data set on train and test set. Predicted column is supposed to be 0.
 
     Args:
-        data (pd.DataFrame, np.ndarray): Time series data.
+        data (pd.DataFrame, np.ndarray): Time series data. ndim has to be 2, reshape if necessary.
         predicts (int, optional): Number of predicted values. Defaults to 7.
 
     Returns:
@@ -1190,11 +1196,13 @@ def split(data, predicts=7):
 
     Example:
 
-        >>> data = np.array([1, 2, 3, 4])
-        >>> train, test = (split(data, predicts=2))
-        >>> print(train, test)
-        [1, 2]
-        [3, 4]
+        >>> data = np.array([[1], [2], [3], [4]])
+        >>> train, test = split(data, predicts=2)
+        >>> train
+        array([[1],
+               [2]])
+        >>> test
+        array([3, 4])
     """
     if isinstance(data, pd.DataFrame):
         train = data.iloc[:-predicts, :]

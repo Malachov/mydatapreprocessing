@@ -49,12 +49,12 @@ If you want to be sure to have all libraries, you can download ``requirements_ad
 advanced requirements with ``pip install -r requirements_advanced.txt``.
 
 """
-__version__ = "1.1.33"
+__version__ = "1.1.34"
 __author__ = "Daniel Malachov"
 __license__ = "MIT"
 __email__ = "malachovd@seznam.cz"
 
-__all__ = ["preprocessing", "inputs", "generatedata"]
+__all__ = ["preprocessing", "inputs", "generatedata", "database"]
 
 import warnings
 
@@ -64,3 +64,4 @@ with warnings.catch_warnings():
     from . import preprocessing
     from . import inputs
     from . import generatedata
+    from . import database

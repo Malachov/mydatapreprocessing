@@ -7,6 +7,7 @@ Submodules
 .. toctree::
    :maxdepth: 4
 
+   mydatapreprocessing.database
    mydatapreprocessing.generatedata
    mydatapreprocessing.inputs
    mydatapreprocessing.preprocessing

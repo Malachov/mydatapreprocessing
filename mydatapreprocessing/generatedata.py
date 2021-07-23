@@ -7,13 +7,11 @@ Example:
     ...
     >>> data = mdp.generatedata.gen_sin(1000)
     >>> data
-    array([ 0.00000000e+00, 3.92598158e-02, 7.84590957e-02, 1.17537397e-01,
-            1.56434465e-01, 1.95090322e-01, 2.33445364e-01, 2.71440450e-01,
+    array([ 0.00000000e+00,  3.92598158e-02,  7.84590957e-02,  1.17537397e-01,
+            1.56434465e-01,  1.95090322e-01,  2.33445364e-01,  2.71440450e-01,
             ...
-            ...
-    ])
 
-Only real data are ECG heart signal returned with function get_eeg().
+Only 'real' data are ECG heart signal returned with function get_eeg().
 """
 
 import numpy as np
