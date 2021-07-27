@@ -128,6 +128,7 @@ def load_data(
     max_imported_length=0,
     request_datatype_suffix="",
     data_orientation="",
+    ssl_verification=False,
 ):
 
     """Load data from path or url or other python format (numpy array, list, dict) into dataframe.
@@ -217,7 +218,7 @@ def load_data(
                 import requests
 
                 try:
-                    request = requests.get(iterated_data)
+                    request = requests.get(iterated_data, verify=ssl_verification)
                 except Exception:
                     request = None
 
