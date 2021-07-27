@@ -20,61 +20,86 @@ advanced requirements with `pip install -r requirements_advanced.txt`.
 
 ## Preprocessing
 
-First - preprocessing load data, consolidate it and do the preprocessing. It contains functions like load_data, data_consolidation, preprocess_data, preprocess_data_inverse, add_frequency_columns, rolling_windows, add_derived_columns etc.
+Load data from web link or local file (json, csv, excel file, parquet, h5...), consolidate it (to pandas dataframe)
+and do preprocessing like resampling, standardization, string embedding, new columns derivation.
+If you want to see how functions work - working examples with printed results are in tests - visual.py.
+
+There are many small functions, but there they are called automatically with main preprocess functions.
+
+    - load_data
+    - data_consolidation
+    - preprocess_data
+    - preprocess_data_inverse
+
+Note:
+    In data consolidation, predicted column is moved on index 0 !!!
 
 ### Example
 
 ```python
 import mydatapreprocessing.preprocessing as mdpp
-
-data = "https://blockchain.info/unconfirmed-transactions?format=json"
-
-# Load data from file or URL
-data_loaded = mdpp.load_data(data, request_datatype_suffix=".json", predicted_table='txs')
-
-
-#Some examples of other inputs to data_load function
-
-# myarray_or_dataframe # Numpy array or Pandas.DataFrame
-# r"/home/user/my.json" # Local file. The same with .parquet, .h5, .json or .xlsx. On windows it's necessary to use raw string - 'r' in front of string because of escape symbols \
-# "https://yoururl/your.csv" # Web url (with suffix). Same with json.
-# "https://blockchain.info/unconfirmed-transactions?format=json" # In this case you have to specify also 'request_datatype_suffix': "json", 'data_orientation': "index", 'predicted_table': 'txs',
-# {'col_1': [3, 2, 1, 0], 'col_2': ['a', 'b', 'c', 'd']} # Dict with colums or rows (index) - necessary to setup data_orientation!
-
-
-# You can use more files in list and data will be concatenated. It can be list of paths or list of python objects. Example:
-
-# [{'col_1': 3, 'col_2': 'a'}, {'col_1': 0, 'col_2': 'd'}]  # List of records
-# [np.random.randn(20, 3), np.random.randn(25, 3)]  # Dataframe same way
-# ["https://raw.githubusercontent.com/jbrownlee/Datasets/master/daily-min-temperatures.csv", "https://raw.githubusercontent.com/jbrownlee/Datasets/master/daily-min-temperatures.csv"]  # List of URLs
-# ["path/to/my1.csv", "path/to/my1.csv"]
-
-
-# Transform various data into defined format - pandas dataframe - convert to numeric if possible, keep
-# only numeric data and resample ifg configured. It return array, dataframe
-data_consolidated = mdpp.data_consolidation(
-    data_loaded, predicted_column="weight", data_orientation="index", remove_nans_threshold=0.9, remove_nans_or_replace='interpolate')
-
-# You can add some extra informations to the data that can help (beware it can slow down the machine learning model)
-to_be_extended = np.array([[0, 2] * 64, [0, 0, 0, 5] * 32]).T
-extended = mdpp.add_frequency_columns(to_be_extended, window=8)
-
-
-to_be_extended2 = pd.DataFrame([range(30), range(30, 60)]).T
-extended2 = mdpp.add_derived_columns(to_be_extended2, differences=True, second_differences=True, multiplications=True,
-                                    rolling_means=True, rolling_stds=True, mean_distances=True, window=10)
-
-# Feature extraction is under development  :[
-
-# Preprocess data. It return preprocessed data, but also scaler for inverse
-# transformation, so unpack it with _
-data_preprocessed, _ = mdpp.preprocess_data(data_consolidated, remove_outliers=True, smoothit=False,
-                                              correlation_threshold=False, data_transform=False, standardizeit='standardize')
 ```
+
+
+You can use local files as well as web urls
+
+```python
+
+data1 = mdpp.load_data(PATH_TO_FILE.csv)
+
+data2 = mdpp.load_data(
+    "https://blockchain.info/unconfirmed-transactions?format=json",
+    request_datatype_suffix=".json",
+    data_orientation="index",
+    predicted_table="txs",
+)  
+```
+
+Transform various data into defined format - pandas dataframe - convert to numeric if possible, keep
+only numeric data and resample ifg configured. It return array, dataframe
+
+```python
+data_consolidated = mdpp.data_consolidation(
+    data_loaded, predicted_column="weight", remove_nans_threshold=0.9, remove_nans_or_replace="interpolate"
+)
+```
+
+`preprocess_data` returns preprocessed data, but also last undifferenced value and scaler for inverse transformation, so unpack it with _
+
+data_preprocessed, _, _ = mdpp.preprocess_data(
+    data_consolidated,
+    remove_outliers=True,
+    smoothit=False,
+    correlation_threshold=False,
+    data_transform=False,
+    standardizeit="standardize",
+)
+
+
+Allowed data formats for load_data are examples
+
+    myarray_or_dataframe # Numpy array or Pandas.DataFrame
+    r"/home/user/my.json" # Local file. The same with .parquet, .h5, .json or .xlsx.
+    "https://yoururl/your.csv" # Web url (with suffix). Same with json.
+    "https://blockchain.info/unconfirmed-transactions?format=json" # In this case you have to specify
+        also 'request_datatype_suffix': "json", 'data_orientation': "index", 'predicted_table': 'txs',
+    [{'col_1': 3, 'col_2': 'a'}, {'col_1': 0, 'col_2': 'd'}] # List of records
+    {'col_1': [3, 2, 1, 0], 'col_2': ['a', 'b', 'c', 'd']} # Dict with colums or rows (index) - necessary
+        to setup data_orientation!
+
+You can use more files in list and data will be concatenated. It can be list of paths or list of python objects. For example::
+
+    [{'col_1': 3, 'col_2': 'a'}, {'col_1': 0, 'col_2': 'd'}]  # List of records
+    [np.random.randn(20, 3), np.random.randn(25, 3)]  # Dataframe same way
+    ["https://raw.githubusercontent.com/jbrownlee/Datasets/master/daily-min-temperatures.csv",
+        "https://raw.githubusercontent.com/jbrownlee/Datasets/master/daily-min-temperatures.csv"]  # List of URLs
+    ["path/to/my1.csv", "path/to/my1.csv"]
+
+On windows it's necessary to use raw string - 'r' in front of string because of escape symbols \
 
 ## Inputs
 
-Second module is inputs. It take tabular time series data and put it into format (input vector X, output vector y and input for predicted value x_input) that can be inserted into machine learning models for example on sklearn or tensorflow. It contain functions make_sequences, create_inputs and create_tests_outputs
+It take tabular time series data and put it into format (input vector X, output vector y and input for predicted value x_input) that can be inserted into machine learning models for example on sklearn or tensorflow. It contain functions make_sequences, create_inputs and create_tests_outputs
 
 ### Example
 
@@ -85,11 +110,9 @@ data = np.array([[1, 3, 5, 2, 3, 4, 5, 66, 3]]).T
 seqs, Y, x_input, test_inputs = mdpi.inputs.make_sequences(data, predicts=7, repeatit=3, n_steps_in=6, n_steps_out=1, constant=1)
 ```
 
-Third module is generatedata. It generate some basic data like sin, ramp random. In the future, it will also import some real datasets for models KPI.
-
 ## generatedata
 
-Third module generate data that can be used for validating machine learning time series prediction results. It can define for example sig, sign, ramp signal or download ECG heart signal.
+This module generate data that can be used for example for validating machine learning time series prediction results. It can define data like sig, sign, ramp signal or download ECG heart signal.
 
 ### Example
 

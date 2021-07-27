@@ -18,26 +18,30 @@ Example:
 ========
 
     >>> import mydatapreprocessing.preprocessing as mdpp
-    >>> data = "https://blockchain.info/unconfirmed-transactions?format=json"
 
-    Load data from file or URL
+    You can use local files as well as web urls
 
-    >>> data_loaded = mdpp.load_data(data, request_datatype_suffix=".json", data_orientation="index", predicted_table='txs')
+    >>> data1 = mdpp.load_data("https://blockchain.info/unconfirmed-transactions?format=json", request_datatype_suffix=".json", data_orientation="index", predicted_table='txs')
+    >>> # data2 = mdpp.load_data(PATH_TO_FILE.csv)
 
     Transform various data into defined format - pandas dataframe - convert to numeric if possible, keep
     only numeric data and resample ifg configured. It return array, dataframe
 
     >>> data_consolidated = mdpp.data_consolidation(
-    ...     data_loaded, predicted_column="weight", remove_nans_threshold=0.9,
-    ...     remove_nans_or_replace='interpolate')
+    ...     data_loaded, predicted_column="weight", remove_nans_threshold=0.9, remove_nans_or_replace="interpolate"
+    ... )
 
-    Preprocess data. It return preprocessed data, but also last undifferenced value and scaler for inverse
+    ``preprocess_data`` returns preprocessed data, but also last undifferenced value and scaler for inverse
     transformation, so unpack it with _
 
     >>> data_preprocessed, _, _ = mdpp.preprocess_data(
-    ...     data_consolidated, remove_outliers=True, smoothit=False, correlation_threshold=False,
-    ...     data_transform=False, standardizeit='standardize')
-
+    ...     data_consolidated,
+    ...     remove_outliers=True,
+    ...     smoothit=False,
+    ...     correlation_threshold=False,
+    ...     data_transform=False,
+    ...     standardizeit="standardize",
+    ... )
 
     Allowed data formats for load_data are examples::
 
