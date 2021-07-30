@@ -1,48 +1,79 @@
 #%%
 """ Visual test on various components. Mostly for data preparation and input creating functions.
-Just run and manually check results.
+Just run and check results to know what functions do and how.
 
 """
-import sys
-import pathlib
 import numpy as np
+import sys
+from pathlib import Path
+import inspect
+import os
 
-script_dir = pathlib.Path(__file__).resolve()
-lib_path_str = script_dir.parents[1].as_posix()
-sys.path.insert(0, lib_path_str)
+import mylogging
+
+# Find paths and add to sys.path to be able to import local modules
+test_dir_path = Path(os.path.abspath(inspect.getframeinfo(inspect.currentframe()).filename)).parent
+root_path = test_dir_path.parent
+
+if test_dir_path.as_posix() not in sys.path:
+    sys.path.insert(0, test_dir_path.as_posix())
+
+if root_path.as_posix() not in sys.path:
+    sys.path.insert(0, root_path.as_posix())
+
+mylogging.config.COLOR = 0
+np.random.seed(2)
+
 
 import mydatapreprocessing.inputs as mdi
 import mydatapreprocessing.preprocessing as mdp
 
 
-### Config ###
-
-print_preprocessing = 1
-print_postprocessing = 1
-
-
-def visual_test(print_preprocessing, print_postprocessing):
+def test_visual(print_preprocessing=1, print_postprocessing=1):
 
     np.set_printoptions(suppress=True, precision=1)
 
     # Data must have 2 dimensions. If you have only one column, reshape(-1, 1)!!!
     data = np.array([[1, 3, 5, 2, 3, 4, 5, 66, 3, 2, 4, 5, 6, 0, 0, 0, 0, 7, 3, 4, 55, 3, 2]]).T
 
-    data_multi_col = np.array([[1, 22, 3, 3, 5, 8, 3, 3, 5, 8], [5, 6, 7, 6, 7, 8, 3, 9, 5, 8], [8, 9, 10, 6, 8, 8, 3, 3, 7, 8]]).T
+    data_multi_col = np.array(
+        [[1, 22, 3, 3, 5, 8, 3, 3, 5, 8], [5, 6, 7, 6, 7, 8, 3, 9, 5, 8], [8, 9, 10, 6, 8, 8, 3, 3, 7, 8]]
+    ).T
 
     # Some calculations, that are to long to do in f-strings - Just ignore...
 
-    seqs, Y, x_input, test_inputs = mdi.make_sequences(data, predicts=7, repeatit=3, n_steps_in=6, n_steps_out=1, constant=1)
-    seqs_2, Y_2, x_input2, test_inputs2 = mdi.make_sequences(data, predicts=7, repeatit=3, n_steps_in=4, n_steps_out=2, constant=0)
-    seqs_m, Y_m, x_input_m, test_inputs_m = mdi.make_sequences(data_multi_col, predicts=7, repeatit=3, n_steps_in=4, n_steps_out=1, default_other_columns_length=None, constant=1)
-    seqs_2_m, Y_2_m, x_input2_m, test_inputs2_m = mdi.make_sequences(data_multi_col, predicts=7, repeatit=3, n_steps_in=3, n_steps_out=2, default_other_columns_length=1, constant=0)
+    seqs, Y, x_input, test_inputs = mdi.make_sequences(
+        data, predicts=7, repeatit=3, n_steps_in=6, n_steps_out=1, constant=1
+    )
+    seqs_2, Y_2, x_input2, test_inputs2 = mdi.make_sequences(
+        data, predicts=7, repeatit=3, n_steps_in=4, n_steps_out=2, constant=0
+    )
+    seqs_m, Y_m, x_input_m, test_inputs_m = mdi.make_sequences(
+        data_multi_col,
+        predicts=7,
+        repeatit=3,
+        n_steps_in=4,
+        n_steps_out=1,
+        default_other_columns_length=None,
+        constant=1,
+    )
+    seqs_2_m, Y_2_m, x_input2_m, test_inputs2_m = mdi.make_sequences(
+        data_multi_col,
+        predicts=7,
+        repeatit=3,
+        n_steps_in=3,
+        n_steps_out=2,
+        default_other_columns_length=1,
+        constant=0,
+    )
 
     normalized, scaler = mdp.standardize(data)
     normalized_multi, scaler_multi = mdp.standardize(data_multi_col)
 
     if print_preprocessing:
 
-        print(f"""
+        print(
+            f"""
 
                 ##########################
                 ### preprocessing ###
@@ -94,10 +125,12 @@ def visual_test(print_preprocessing, print_postprocessing):
         ### Make batch sequences - n_steps_in=3, n_steps_out=2, default_other_columns_length=1, constant=0 ### \n
         Original: \n {data_multi_col} \n\nsequences: \n{seqs_2_m} \n\nY: \n{Y_2_m} \nx_input: \n\n{x_input2_m} \n\n Tests inputs:{test_inputs2_m} \n
 
-        """)
+        """
+        )
 
     if print_postprocessing:
-        print(f"""
+        print(
+            f"""
 
                 ###########################
                 ### Data_postprocessing ###
@@ -106,8 +139,5 @@ def visual_test(print_preprocessing, print_postprocessing):
         Original: \n {data}, original std = {data.std()}, original mean = {data.mean()} \n\ntransformed: \n{mdp.fitted_power_transform(data, 10, 10)} \n\ntransformed std = {mdp.fitted_power_transform(data, 10, 10).std()},
         transformed mean = {mdp.fitted_power_transform(data, 10, 10).mean()} (shoud be 10 and 10)\n
 
-        """)
-
-
-if __name__ == "__main__":
-    visual_test(print_preprocessing=print_preprocessing, print_postprocessing=print_postprocessing)
+        """
+        )

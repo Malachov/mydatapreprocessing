@@ -49,7 +49,7 @@ If you want to be sure to have all libraries, you can download ``requirements_ad
 advanced requirements with ``pip install -r requirements_advanced.txt``.
 
 """
-__version__ = "1.1.35"
+__version__ = "1.1.36"
 __author__ = "Daniel Malachov"
 __license__ = "MIT"
 __email__ = "malachovd@seznam.cz"

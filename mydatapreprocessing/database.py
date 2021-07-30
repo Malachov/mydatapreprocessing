@@ -2,6 +2,19 @@
 connect credentials. The database_deploy than deploy data to the database server.
 
 It is working only for mssql server so far.
+
+Example::
+
+    data = mdp.database.database_load(
+        server=".",
+        database="DemoData",
+        query='''
+            SELECT TOP (1000) [ID] ,[ProductName]
+            FROM [DemoData].[dbo].[Products]
+        '''
+        username="sa",
+        password="Ahojdatadata123",
+    )
 """
 
 # Lazy imports
@@ -11,10 +24,31 @@ It is working only for mssql server so far.
 # import urllib
 
 
-def database_load(server, database, query, use_last_line, reversit):
+def database_load(
+    query,
+    server,
+    database,
+    driver="{SQL Server}",
+    username=None,
+    password=None,
+    trusted_connection=None,
+):
     """Load database into dataframe and create datetime index. !!! This function have to be change for every particular database !!!
 
-    Note:
+    Args:
+        query (str, optional): Used query.
+        server (string): Name of server.
+        database (str): Name of database.
+        driver (str): Used driver. One can be downloaded on https://docs.microsoft.com/en-us/sql/connect/odbc/download-odbc-driver-for-sql-server?view=sql-server-ver15
+            Defaults to '{SQL Server}'.
+        username ((str, None)): Username. 'sa' for root on mssql.
+        password (str): Password.
+        trusted_connection (bool): If using windows authontification.
+
+    Returns:
+        pd.DataFrame: Dataframe with data from database based on input SQL query.
+
+    Example:
 
         This is how the query could look like in python::
 
@@ -38,67 +72,100 @@ def database_load(server, database, query, use_last_line, reversit):
 
                 ORDER BY
                     {col_desc}
-
             '''
-
-    Args:
-        server (string): Name of server.
-        database (str): Name of database.
-        query (str, optional): Used query.
-        use_last_line (bool, optional): Last value may have not been complete yet. If False, it's removed. Defaults to False.
-        reversit (bool, optional): If want to limit number of loaded lines, you can use select top and use reversed order.
-            If you need to reverse it back, set this to True. Defaults to False
-
-    Returns:
-        pd.DataFrame: Dataframe with data from database based on input SQL query.
-
     """
 
     import pandas as pd
-    import pyodbc
 
-    server = "SERVER={};".format(server)
-    database = "DATABASE={};".format(database)
-    sql_params = r"DRIVER={ODBC Driver 13 for SQL Server};" + server + database + "Trusted_Connection=yes;"
-
-    sql_conn = pyodbc.connect(sql_params)
-
-    df = pd.read_sql(query, sql_conn)
-
-    if reversit:
-        df = df.iloc[::-1]
-
-    if not use_last_line:
-        df = df.iloc[:-1, :]
+    connection = create_connection(
+        server=server,
+        database=database,
+        driver=driver,
+        username=username,
+        password=password,
+        trusted_connection=trusted_connection,
+    )
+    df = pd.read_sql(query, connection)
 
     return df
 
 
-def database_deploy(server, database, df):
+def database_write(
+    df,
+    server,
+    database,
+    table,
+    port=None,
+    index=False,
+    driver="{SQL Server}",
+    username=None,
+    password=None,
+    trusted_connection=None,
+    schema=None,
+    if_exists="append",
+):
     """Deploy dataframe to SQL server.
+
+    Args:
+        df (pd.DataFrame): Dataframe passed to database.
+        server (string): Name of server.
+        database (str): Name of database.
+        table (str): Used table.
+        port ((str, int)): Used port.
+        index (bool): Whether use index as a column
+        driver (str): Used driver. One can be downloaded on https://docs.microsoft.com/en-us/sql/connect/odbc/download-odbc-driver-for-sql-server?view=sql-server-ver15
+            Defaults to '{SQL Server}'.        username
+        username ((str, None)): Username. 'sa' for root on mssql.
+        password (str): Password.
+        trusted_connection (bool): If using windows authontification.
+        schema (str): Used schema. Defaults to None.
+        if_exists (str): 'fail', 'replace', 'append'. Define whether append new
+            data on the end, remove and replace or fail if table exists.
+    """
+
+    connection = create_connection(
+        server=server,
+        database=database,
+        driver=driver,
+        port=port,
+        username=username,
+        password=password,
+        trusted_connection=trusted_connection,
+    )
+
+    df.to_sql(name=table, con=connection, if_exists=if_exists, index=index, schema=schema)
+
+
+def create_connection(
+    server, database, driver="{SQL Server}", port=None, username=None, password=None, trusted_connection=None
+):
+    """Create connection, that can be used in another function to connect the databse.
 
     Args:
         server (string): Name of server.
         database (str): Name of database.
-        df (pd.DataFrame): Dataframe passed to database.
-    """
-
+        table (str): Used table.
+        port ((str, int)): Used port.
+        driver (str): Used driver. One can be downloaded on https://docs.microsoft.com/en-us/sql/connect/odbc/download-odbc-driver-for-sql-server?view=sql-server-ver15
+            Defaults to '{SQL Server}'.        username
+        username ((str, None)): Username. 'sa' for root on mssql.
+        password (str): Password.
+        trusted_connection (bool): If using windows authontification."""
     from sqlalchemy import create_engine
     import urllib
 
-    driver = "{SQL Server}"
-    params = urllib.parse.quote_plus(
-        f"DRIVER={driver};SERVER={server};DATABASE={database};Trusted_Connection=yes"
-    )
+    connection_string = f"DRIVER={driver};SERVER={server};DATABASE={database};"
+    if port:
+        connection_string = connection_string + f"PORT={str(port)};"
+    if trusted_connection:
+        connection_string = connection_string + "Trusted_Connection=yes;"
+    if username:
+        connection_string = connection_string + f"UID={username};"
+    if password:
+        connection_string = connection_string + f"PWD={password};"
+
+    params = urllib.parse.quote_plus(connection_string)
 
     conn_str = f"mssql+pyodbc:///?odbc_connect={params}"
 
-    engine = create_engine(conn_str)
-
-    df.to_sql(
-        name="FactProduction",
-        con=engine,
-        schema="Stage",
-        if_exists="append",
-        index=False,
-    )
+    return create_engine(conn_str)

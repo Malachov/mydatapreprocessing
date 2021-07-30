@@ -21,7 +21,7 @@ Example:
 
     You can use local files as well as web urls
 
-    >>> data1 = mdpp.load_data("https://blockchain.info/unconfirmed-transactions?format=json", request_datatype_suffix=".json", data_orientation="index", predicted_table='txs')
+    >>> data_loaded = mdpp.load_data("https://blockchain.info/unconfirmed-transactions?format=json", request_datatype_suffix=".json", data_orientation="index", predicted_table='txs')
     >>> # data2 = mdpp.load_data(PATH_TO_FILE.csv)
 
     Transform various data into defined format - pandas dataframe - convert to numeric if possible, keep
@@ -153,6 +153,8 @@ def load_data(
         data_orientation(str, optional): 'columns' or 'index'. If using json or dictionary, it describe how data are
             oriented. Default is 'columns' if None used. If orientation is records (in pandas terminology), it's detected
             automatically. Defaults to "".
+        ssl_verification(bool, optional): If using data from web, it use requests and sometimes, there can be ssl verification
+            error, this skip verification, with adding verify param to requests call.
 
     Raises:
         FileNotFoundError, TypeError, ValueError, ModuleNotFoundError: If not existing file, or url, or if necessary
