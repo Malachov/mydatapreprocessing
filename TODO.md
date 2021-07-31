@@ -1,10 +1,10 @@
 # List of what could be done
 
-[ ] Add features
+- [ ] Add features
     use_last_line (bool, optional): Last value may have not been complete yet. If False, it's removed. Defaults to False.
     reversit (bool, optional): If want to limit number of loaded lines, you can use select top and use reversed order.
         If you need to reverse it back, set this to True. Defaults to False
-
+- [ ] Add Sqlite and postgres to databases 
 - [ ] Join load and consolidate to get_data
 - [ ] Rename to mydataprocessing - load data and data consolidation to own submodule - get_data
 - [ ] Defince inplace argument in consolidation, data_preprocessing, and do inplace operations where possible

@@ -137,17 +137,16 @@ def database_write(
 
 
 def create_connection(
-    server, database, driver="{SQL Server}", port=None, username=None, password=None, trusted_connection=None
+    server, database, port=None, driver="{SQL Server}", username=None, password=None, trusted_connection=None
 ):
     """Create connection, that can be used in another function to connect the databse.
 
     Args:
         server (string): Name of server.
         database (str): Name of database.
-        table (str): Used table.
-        port ((str, int)): Used port.
+        port ((str, int)): Used port. May work with None.
         driver (str): Used driver. One can be downloaded on https://docs.microsoft.com/en-us/sql/connect/odbc/download-odbc-driver-for-sql-server?view=sql-server-ver15
-            Defaults to '{SQL Server}'.        username
+            Defaults to '{SQL Server}'.
         username ((str, None)): Username. 'sa' for root on mssql.
         password (str): Password.
         trusted_connection (bool): If using windows authontification."""

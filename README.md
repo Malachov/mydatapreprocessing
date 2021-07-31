@@ -45,9 +45,9 @@ You can use local files as well as web urls
 
 ```python
 
-data1 = mdpp.load_data(PATH_TO_FILE.csv)
+# data_from_file = mdpp.load_data(PATH_TO_FILE.csv)
 
-data2 = mdpp.load_data(
+data_from_url = mdpp.load_data(
     "https://blockchain.info/unconfirmed-transactions?format=json",
     request_datatype_suffix=".json",
     data_orientation="index",
@@ -60,7 +60,7 @@ only numeric data and resample ifg configured. It return array, dataframe
 
 ```python
 data_consolidated = mdpp.data_consolidation(
-    data_loaded, predicted_column="weight", remove_nans_threshold=0.9, remove_nans_or_replace="interpolate"
+    data_from_url, predicted_column="weight", remove_nans_threshold=0.9, remove_nans_or_replace="interpolate"
 )
 ```
 

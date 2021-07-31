@@ -645,9 +645,8 @@ def add_derived_columns(
     differences=True,
     second_differences=True,
     multiplications=True,
-    rolling_means=True,
-    rolling_stds=True,
-    window=10,
+    rolling_means=10,
+    rolling_stds=10,
     mean_distances=True,
 ):
     """This will create many columns that can be valuable for making predictions like difference, or
@@ -659,8 +658,8 @@ def add_derived_columns(
         differences (bool, optional): Compute difference between n and n-1 sample. Defaults to True.
         second_difference (bool, optional): Compute second difference. Defaults to True.
         multiplications (bool, optional): Column multiplicated with other column. Defaults to True.
-        rolling_means (bool, optional): Rolling mean with defined window. Defaults to True.
-        rolling_stds (bool, optional): Rolling std with defined window. Defaults to True.
+        rolling_means ((int, None), optional): Rolling mean with defined window. Defaults to 10.
+        rolling_stds ((int, None), optional): Rolling std with defined window. Defaults to 10.
         window (int, optional): Window used for rolling_stds and rolling_means.
         mean_distances (bool, optional): Distance from average. Defaults to True.
 
@@ -701,7 +700,7 @@ def add_derived_columns(
     if rolling_means:
         results.append(
             pd.DataFrame(
-                np.mean(rolling_windows(data.values.T, window), axis=2).T,
+                np.mean(rolling_windows(data.values.T, rolling_means), axis=2).T,
                 columns=[f"{i} - Rolling mean" for i in data.columns],
             )
         )
@@ -709,7 +708,7 @@ def add_derived_columns(
     if rolling_stds:
         results.append(
             pd.DataFrame(
-                np.std(rolling_windows(data.values.T, window), axis=2).T,
+                np.std(rolling_windows(data.values.T, rolling_stds), axis=2).T,
                 columns=[f"{i} - Rolling std" for i in data.columns],
             )
         )

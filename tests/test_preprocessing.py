@@ -338,10 +338,9 @@ def test_add_derived_columns():
         differences=True,
         second_differences=True,
         multiplications=True,
-        rolling_means=True,
-        rolling_stds=True,
+        rolling_means=10,
+        rolling_stds=10,
         mean_distances=True,
-        window=10,
     )
 
 

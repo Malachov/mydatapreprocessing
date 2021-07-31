@@ -38,7 +38,7 @@ def test_databases():
     client = docker.from_env()
     container = client.containers.run("mssql:latest", ports={1433: 1433}, detach=True)
 
-    time.sleep(20)
+    time.sleep(50)
 
     df = pd.DataFrame([range(1, 11), ["Product " + str(i) for i in range(10)]]).T
     df.columns = ["ID", "ProductName"]
@@ -66,7 +66,7 @@ def test_databases():
         )
 
     except Exception:
-        pass
+        mylogging.traceback()
 
     finally:
         container.stop()
