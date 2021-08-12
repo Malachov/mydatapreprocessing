@@ -18,9 +18,9 @@ Submodules
 .. automodule:: mydatapreprocessing.inputs
 
 
-`generatedata </page/mydatapreprocessing.generatedata.html>`_
+`generate_data </page/mydatapreprocessing.generate_data.html>`_
 -------------------------------------------------------------
-.. automodule:: mydatapreprocessing.generatedata
+.. automodule:: mydatapreprocessing.generate_data
 
 
 `Index </page/genindex.html>`_

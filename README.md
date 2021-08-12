@@ -2,7 +2,9 @@
 
 [![Python versions](https://img.shields.io/pypi/pyversions/mydatapreprocessing.svg)](https://pypi.python.org/pypi/mydatapreprocessing/) [![PyPI version](https://badge.fury.io/py/mydatapreprocessing.svg)](https://badge.fury.io/py/mydatapreprocessing) [![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/Malachov/mydatapreprocessing.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/Malachov/mydatapreprocessing/context:python) [![Build Status](https://travis-ci.com/Malachov/mydatapreprocessing.svg?branch=master)](https://travis-ci.com/Malachov/mydatapreprocessing) [![Documentation Status](https://readthedocs.org/projects/mydatapreprocessing/badge/?version=latest)](https://mydatapreprocessing.readthedocs.io/en/latest/?badge=latest) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![codecov](https://codecov.io/gh/Malachov/mydatapreprocessing/branch/master/graph/badge.svg)](https://codecov.io/gh/Malachov/mydatapreprocessing)
 
-Library contain 3 modules - preprocessing, inputs and generatedata.
+Load data from web link or local file (json, csv, excel file, parquet, h5...), consolidate it (resample data, clean NaN values, do string embedding) derive new featurs via columns derivation and do preprocessing like
+standardization or smoothing. If you want to see how functions works, check it's docstrings - working examples with printed results are also in tests - visual.py.
+
 
 ## Installation
 
@@ -18,106 +20,78 @@ There are some libraries that not every user will be using (for some data inputs
 If you want to be sure to have all libraries, you can download `requirements_advanced.txt` and then install
 advanced requirements with `pip install -r requirements_advanced.txt`.
 
-## Preprocessing
 
-Load data from web link or local file (json, csv, excel file, parquet, h5...), consolidate it (to pandas dataframe)
-and do preprocessing like resampling, standardization, string embedding, new columns derivation.
-If you want to see how functions work - working examples with printed results are in tests - visual.py.
+## Examples
 
-There are many small functions, but there they are called automatically with main preprocess functions.
-
-    - load_data
-    - data_consolidation
-    - preprocess_data
-    - preprocess_data_inverse
-
-Note:
-    In data consolidation, predicted column is moved on index 0 !!!
-
-### Example
-
+<!--phmdoctest-setup-->
 ```python
-import mydatapreprocessing.preprocessing as mdpp
+import mydatapreprocessing as mdp
 ```
 
+Load data. You can use
+- python formats (numpy.ndarray, pd.DataFrame, list, tuple, dict)
+- local files
+- web urls
 
-You can use local files as well as web urls
+You can load more data at once in list.
 
+Syntax is always the same.
+
+<!--phmdoctest-label test_load_data-->
+<!--phmdoctest-share-names-->
 ```python
-
-# data_from_file = mdpp.load_data(PATH_TO_FILE.csv)
-
-data_from_url = mdpp.load_data(
+data = mdp.load_data.load_data(
     "https://blockchain.info/unconfirmed-transactions?format=json",
     request_datatype_suffix=".json",
     data_orientation="index",
     predicted_table="txs",
-)  
+)
+# data2 = mdp.load_data.load_data([PATH_TO_FILE.csv, PATH_TO_FILE2.csv])
 ```
 
-Transform various data into defined format - pandas dataframe - convert to numeric if possible, keep
-only numeric data and resample ifg configured. It return array, dataframe
+If you want to use data for some machine learning models, you will probably want to remove Nan values, convert string columns to numeric if possible, do encoding or keep only numeric data and resample.
 
+<!--phmdoctest-label test_consolidation-->
+<!--phmdoctest-share-names-->
 ```python
-data_consolidated = mdpp.data_consolidation(
-    data_from_url, predicted_column="weight", remove_nans_threshold=0.9, remove_nans_or_replace="interpolate"
+data_consolidated = mdp.preprocessing.data_consolidation(
+    data, predicted_column="weight", remove_nans_threshold=0.9, remove_nans_or_replace="interpolate"
 )
 ```
 
-`preprocess_data` returns preprocessed data, but also last undifferenced value and scaler for inverse transformation, so unpack it with _
+Functions in `feature_engineering` and `preprocessing` expects that data are in form (*n_samples*, *n_features*).
+*n_samples* are ususally much bigger and therefore transformed in `data_consolidation` if necessary.
 
-data_preprocessed, _, _ = mdpp.preprocess_data(
-    data_consolidated,
+Extend original data with
+
+<!--phmdoctest-label test_feature_engineering-->
+<!--phmdoctest-share-names-->
+```python
+data_extended = mdp.feature_engineering.add_derived_columns(data_consolidated, differences=True, rolling_means=32)
+```
+
+`preprocess_data` returns preprocessed data, but also last undifferenced value and scaler for inverse
+transformation, so unpack it with _
+
+<!--phmdoctest-label test_preprocess_data-->
+<!--phmdoctest-share-names-->
+```python
+data_preprocessed, _, _ = mdp.preprocessing.preprocess_data(
+    data_extended,
     remove_outliers=True,
     smoothit=False,
     correlation_threshold=False,
     data_transform=False,
     standardizeit="standardize",
 )
-
-
-Allowed data formats for load_data are examples
-
-    myarray_or_dataframe # Numpy array or Pandas.DataFrame
-    r"/home/user/my.json" # Local file. The same with .parquet, .h5, .json or .xlsx.
-    "https://yoururl/your.csv" # Web url (with suffix). Same with json.
-    "https://blockchain.info/unconfirmed-transactions?format=json" # In this case you have to specify
-        also 'request_datatype_suffix': "json", 'data_orientation': "index", 'predicted_table': 'txs',
-    [{'col_1': 3, 'col_2': 'a'}, {'col_1': 0, 'col_2': 'd'}] # List of records
-    {'col_1': [3, 2, 1, 0], 'col_2': ['a', 'b', 'c', 'd']} # Dict with colums or rows (index) - necessary
-        to setup data_orientation!
-
-You can use more files in list and data will be concatenated. It can be list of paths or list of python objects. For example::
-
-    [{'col_1': 3, 'col_2': 'a'}, {'col_1': 0, 'col_2': 'd'}]  # List of records
-    [np.random.randn(20, 3), np.random.randn(25, 3)]  # Dataframe same way
-    ["https://raw.githubusercontent.com/jbrownlee/Datasets/master/daily-min-temperatures.csv",
-        "https://raw.githubusercontent.com/jbrownlee/Datasets/master/daily-min-temperatures.csv"]  # List of URLs
-    ["path/to/my1.csv", "path/to/my1.csv"]
-
-On windows it's necessary to use raw string - 'r' in front of string because of escape symbols \
-
-## Inputs
-
-It take tabular time series data and put it into format (input vector X, output vector y and input for predicted value x_input) that can be inserted into machine learning models for example on sklearn or tensorflow. It contain functions make_sequences, create_inputs and create_tests_outputs
-
-### Example
-
-```python
-import mydatapreprocessing.inputs as mdpi
-
-data = np.array([[1, 3, 5, 2, 3, 4, 5, 66, 3]]).T
-seqs, Y, x_input, test_inputs = mdpi.inputs.make_sequences(data, predicts=7, repeatit=3, n_steps_in=6, n_steps_out=1, constant=1)
 ```
 
-## generatedata
+Create models inputs with
 
-This module generate data that can be used for example for validating machine learning time series prediction results. It can define data like sig, sign, ramp signal or download ECG heart signal.
-
-### Example
-
+<!--phmdoctest-label test_create_inputs-->
+<!--phmdoctest-share-names-->
 ```python
-import mydatapreprocessing as mdp
-
-data = mdp.generatedata.gen_sin(1000)
+seqs, Y, x_input, test_inputs = mdp.create_model_inputs.make_sequences(
+    data_extended.values, predicts=7, repeatit=3, n_steps_in=6, n_steps_out=1, constant=1
+)
 ```

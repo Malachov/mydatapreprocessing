@@ -1,7 +1,6 @@
 #%%
 """ Visual test on various components. Mostly for data preparation and input creating functions.
 Just run and check results to know what functions do and how.
-
 """
 import numpy as np
 import sys
@@ -25,8 +24,9 @@ mylogging.config.COLOR = 0
 np.random.seed(2)
 
 
-import mydatapreprocessing.inputs as mdi
-import mydatapreprocessing.preprocessing as mdp
+import mydatapreprocessing.create_model_inputs as mdi
+import mydatapreprocessing.preprocessing as mdpp
+import mydatapreprocessing as mdp
 
 
 def test_visual(print_preprocessing=1, print_postprocessing=1):
@@ -67,8 +67,8 @@ def test_visual(print_preprocessing=1, print_postprocessing=1):
         constant=0,
     )
 
-    normalized, scaler = mdp.standardize(data)
-    normalized_multi, scaler_multi = mdp.standardize(data_multi_col)
+    normalized, scaler = mdpp.standardize(data)
+    normalized_multi, scaler_multi = mdpp.standardize(data_multi_col)
 
     if print_preprocessing:
 
@@ -85,11 +85,11 @@ def test_visual(print_preprocessing=1, print_postprocessing=1):
 
         ### Remove outliers ### \n
 
-        With outliers: \n {data} \n\nWith no outliers: \n{mdp.remove_the_outliers(data, threshold = 3)} \n
+        With outliers: \n {data} \n\nWith no outliers: \n{mdpp.remove_the_outliers(data, threshold = 3)} \n
 
         ### Difference transform ### \n
-        Original data: \n {data} \n\nDifferenced data: \n{mdp.do_difference(data[:, 0])} \n\n
-        Backward difference: \n{mdp.inverse_difference(mdp.do_difference(data[:, 0]), data[0, 0])}\n
+        Original data: \n {data} \n\nDifferenced data: \n{mdpp.do_difference(data[:, 0])} \n\n
+        Backward difference: \n{mdpp.inverse_difference(mdpp.do_difference(data[:, 0]), data[0, 0])}\n
 
         ### Standardize ### \n
         Original: \n {data} \n\nStandardized: \n{normalized} \n
@@ -97,7 +97,7 @@ def test_visual(print_preprocessing=1, print_postprocessing=1):
         Inverse standardization: \n{scaler.inverse_transform(normalized)} \n
 
         ### Split ### \n
-        Original: \n {data} \n\nsplited train: \n{mdp.split(data)[0]} \n \n\nsplited test: \n{mdp.split(data)[1]} \n
+        Original: \n {data} \n\nsplited train: \n{mdp.misc.split(data)[0]} \n \n\nsplited test: \n{mdp.misc.split(data)[1]} \n
 
         ### Make sequences - n_steps_in = 6, n_steps_out = 1, constant = 1 ### \n
         Original: \n {data} \n\nsequences: \n{seqs} \n\nY: \n{Y} \n\nx_input:{x_input} \n\n Tests inputs:{test_inputs}\n
@@ -110,14 +110,14 @@ def test_visual(print_preprocessing=1, print_postprocessing=1):
             ####################\n
 
         ### Remove outliers ### \n
-        With outliers: \n {data_multi_col} \n\nWith no outliers: \n{mdp.remove_the_outliers(data_multi_col, threshold = 1)} \n
+        With outliers: \n {data_multi_col} \n\nWith no outliers: \n{mdpp.remove_the_outliers(data_multi_col, threshold = 1)} \n
 
         ### Standardize ### \n
         Original: \n {data_multi_col} \n\nStandardized: \n{normalized_multi} \n
         Inverse standardization: \n {scaler_multi.inverse_transform(normalized_multi[:, 0])} \n
 
         ### Split ### \n
-        Original: \n {data_multi_col} \n\nsplited train: \n{mdp.split(data_multi_col, predicts=2)[0]} \n \n\nsplited test: \n{mdp.split(data_multi_col, predicts=2)[1]} \n
+        Original: \n {data_multi_col} \n\nsplited train: \n{mdp.misc.split(data_multi_col, predicts=2)[0]} \n \n\nsplited test: \n{mdp.misc.split(data_multi_col, predicts=2)[1]} \n
 
         ### Make sequences - n_steps_in=4, n_steps_out=1, default_other_columns_length=None, constant=1 ### \n
         Original: \n {data_multi_col} \n\nsequences: \n{seqs_m} \n\nY: \n{Y_m} \nx_input: \n\n{x_input_m} \n\n Tests inputs:{test_inputs_m} \n
@@ -136,8 +136,8 @@ def test_visual(print_preprocessing=1, print_postprocessing=1):
                 ### Data_postprocessing ###
                 ###########################\n
         ### Fitt power transform ### \n
-        Original: \n {data}, original std = {data.std()}, original mean = {data.mean()} \n\ntransformed: \n{mdp.fitted_power_transform(data, 10, 10)} \n\ntransformed std = {mdp.fitted_power_transform(data, 10, 10).std()},
-        transformed mean = {mdp.fitted_power_transform(data, 10, 10).mean()} (shoud be 10 and 10)\n
+        Original: \n {data}, original std = {data.std()}, original mean = {data.mean()} \n\ntransformed: \n{mdpp.fitted_power_transform(data, 10, 10)} \n\ntransformed std = {mdpp.fitted_power_transform(data, 10, 10).std()},
+        transformed mean = {mdpp.fitted_power_transform(data, 10, 10).mean()} (shoud be 10 and 10)\n
 
         """
         )
