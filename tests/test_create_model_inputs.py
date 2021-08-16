@@ -1,5 +1,11 @@
 import numpy as np
 
+import mypythontools
+
+# Find paths and add to sys.path to be able to import local modules
+mypythontools.tests.setup_tests()
+
+
 import mydatapreprocessing.create_model_inputs as mdpi
 
 

@@ -1,8 +1,15 @@
+import json
+from pathlib import Path
+
+import requests
 import numpy as np
 import pandas as pd
-import json
-import requests
-from pathlib import Path
+
+import mypythontools
+
+# Find paths and add to sys.path to be able to import local modules
+mypythontools.tests.setup_tests()
+
 
 import mydatapreprocessing.load_data as mdpd
 

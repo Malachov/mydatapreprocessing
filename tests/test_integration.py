@@ -1,4 +1,10 @@
 import numpy as np
+
+import mypythontools
+
+# Find paths and add to sys.path to be able to import local modules
+mypythontools.tests.setup_tests()
+
 import mydatapreprocessing as mdp
 
 np.random.seed(2)
