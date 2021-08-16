@@ -1,27 +1,6 @@
-#%%
-import mylogging
-
-import sys
-from pathlib import Path
-import inspect
-import os
 import numpy as np
 
-
-# Find paths and add to sys.path to be able to import local modules
-test_dir_path = Path(os.path.abspath(inspect.getframeinfo(inspect.currentframe()).filename)).parent
-root_path = test_dir_path.parent
-
-if test_dir_path.as_posix() not in sys.path:
-    sys.path.insert(0, test_dir_path.as_posix())
-
-if root_path.as_posix() not in sys.path:
-    sys.path.insert(0, root_path.as_posix())
-
-mylogging.config.COLOR = 0
-np.random.seed(2)
-
-import mydatapreprocessing as mdp
+import mydatapreprocessing.create_model_inputs as mdpi
 
 
 def test_make_sequences():
@@ -32,7 +11,7 @@ def test_make_sequences():
             [17, 18, 19, 20, 21, 22, 23, 24],
         ]
     ).T
-    X, y, x_input, _ = mdp.inputs.make_sequences(data, n_steps_in=2, n_steps_out=3, constant=1)
+    X, y, x_input, _ = mdpi.make_sequences(data, n_steps_in=2, n_steps_out=3, constant=1)
 
     X_res = np.array(
         [
@@ -44,7 +23,7 @@ def test_make_sequences():
     x_inpu_res = np.array([[1.0, 5.0, 6.0, 7.0, 8.0, 13.0, 14.0, 15.0, 16.0, 21.0, 22.0, 23.0, 24.0]])
 
     data2 = np.array([[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], [11, 12, 13, 14, 15, 16, 17, 18, 19, 20]]).T
-    X2, y2, x_input2, test_inputs2 = mdp.inputs.make_sequences(
+    X2, y2, x_input2, test_inputs2 = mdpi.make_sequences(
         data2, n_steps_in=2, n_steps_out=1, constant=0, predicts=3, repeatit=2
     )
 

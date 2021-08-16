@@ -2,7 +2,7 @@
 Usual data inputs types are (X, y, x_input). X stands for vector of inputs, y for vector of outputs and
 x_input is input for new predictions we want to create.
 
-There are three functions. `make_sequences` that create seqences from time samples, `create_inputs`
+There are functions `make_sequences` that create seqences from time samples, `create_inputs`
 that tell the first function what sequences create for what models and `create_tests_outputs`
 that for defined inputs create outputs that we can compute error criterion like rmse with.
 
@@ -13,7 +13,7 @@ import numpy as np
 
 import mylogging
 
-from mydatapreprocessing.preprocessing import rolling_windows
+from mydatapreprocessing.misc import rolling_windows
 
 
 def make_sequences(
@@ -47,8 +47,6 @@ def make_sequences(
 
     Examples:
 
-        >>> import mydatapreprocessing as mdp
-        ...
         >>> data = np.array(
         ...     [[ 1,  9, 17],
         ...      [ 2, 10, 18],
@@ -58,7 +56,7 @@ def make_sequences(
         ...      [ 6, 14, 22],
         ...      [ 7, 15, 23],
         ...      [ 8, 16, 24]])
-        >>> X, y, x_input, _ = mdp.inputs.make_sequences(data, n_steps_in= 2, n_steps_out=3)
+        >>> X, y, x_input, _ = make_sequences(data, n_steps_in= 2, n_steps_out=3)
         >>> X
         array([[ 1,  2,  3,  4,  9, 10, 11, 12, 17, 18, 19, 20],
                [ 2,  3,  4,  5, 10, 11, 12, 13, 18, 19, 20, 21]])

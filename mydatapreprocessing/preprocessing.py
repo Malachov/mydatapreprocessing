@@ -1,68 +1,11 @@
-"""Module for data loading and preprocessing.
+"""Module for data preprocessing.
 
-Load data from web link or local file (json, csv, excel file, parquet, h5...), consolidate it (to pandas dataframe)
-and do preprocessing like resampling, standardization, string embedding, new columns derivation.
-If you want to see how functions work - working examples with printed results are in tests - visual.py.
+You can consolidate data with `data_consolidation` and optimize it for example for machine learning models.
 
-There are many small functions, but there they are called automatically with main preprocess functions.
+Then you can preprocess the data to be able to achieve even better results.
 
-    - load_data
-    - data_consolidation
-    - preprocess_data
-    - preprocess_data_inverse
-
-Note:
-    In data consolidation, predicted column is moved on index 0 !!!
-
-Example:
-========
-
-    >>> import mydatapreprocessing.preprocessing as mdpp
-
-    You can use local files as well as web urls
-
-    >>> data_loaded = mdpp.load_data("https://blockchain.info/unconfirmed-transactions?format=json", request_datatype_suffix=".json", data_orientation="index", predicted_table='txs')
-    >>> # data2 = mdpp.load_data(PATH_TO_FILE.csv)
-
-    Transform various data into defined format - pandas dataframe - convert to numeric if possible, keep
-    only numeric data and resample ifg configured. It return array, dataframe
-
-    >>> data_consolidated = mdpp.data_consolidation(
-    ...     data_loaded, predicted_column="weight", remove_nans_threshold=0.9, remove_nans_or_replace="interpolate"
-    ... )
-
-    ``preprocess_data`` returns preprocessed data, but also last undifferenced value and scaler for inverse
-    transformation, so unpack it with _
-
-    >>> data_preprocessed, _, _ = mdpp.preprocess_data(
-    ...     data_consolidated,
-    ...     remove_outliers=True,
-    ...     smoothit=False,
-    ...     correlation_threshold=False,
-    ...     data_transform=False,
-    ...     standardizeit="standardize",
-    ... )
-
-    Allowed data formats for load_data are examples::
-
-        myarray_or_dataframe # Numpy array or Pandas.DataFrame
-        r"/home/user/my.json" # Local file. The same with .parquet, .h5, .json or .xlsx.
-        "https://yoururl/your.csv" # Web url (with suffix). Same with json.
-        "https://blockchain.info/unconfirmed-transactions?format=json" # In this case you have to specify
-            also 'request_datatype_suffix': "json", 'data_orientation': "index", 'predicted_table': 'txs',
-        [{'col_1': 3, 'col_2': 'a'}, {'col_1': 0, 'col_2': 'd'}] # List of records
-        {'col_1': [3, 2, 1, 0], 'col_2': ['a', 'b', 'c', 'd']} # Dict with colums or rows (index) - necessary
-            to setup data_orientation!
-
-    You can use more files in list and data will be concatenated. It can be list of paths or list of python objects. For example::
-
-        [{'col_1': 3, 'col_2': 'a'}, {'col_1': 0, 'col_2': 'd'}]  # List of records
-        [np.random.randn(20, 3), np.random.randn(25, 3)]  # Dataframe same way
-        ["https://raw.githubusercontent.com/jbrownlee/Datasets/master/daily-min-temperatures.csv",
-            "https://raw.githubusercontent.com/jbrownlee/Datasets/master/daily-min-temperatures.csv"]  # List of URLs
-        ["path/to/my1.csv", "path/to/my1.csv"]
-
-    On windows it's necessary to use raw string - 'r' in front of string because of escape symbols \
+There are many small functions that you can use separately, but there is main function `preprocess_data` that
+call all the functions based on input params for you. For inverse preprocessing use `preprocess_data_inverse`
 """
 
 import numpy as np
@@ -71,336 +14,13 @@ import pandas as pd
 import mylogging
 
 import warnings
-from pathlib import Path
-import itertools
 import importlib
 
 # Lazy load
 
-# from mydatapreprocessing import generatedata
-
-# import requests
 # import scipy.signal
 # import scipy.stats
 # from sklearn import preprocessing
-# import json
-# import tkinter as tk
-
-# from tkinter import filedialog
-
-
-def get_file_paths(
-    filetypes=[
-        ("csv", ".csv"),
-        ("Excel (xlsx, xls)", ".xlsx .xls"),
-        ("h5", ".h5"),
-        ("parquet", ".parquet"),
-        ("json", ".json"),
-    ],
-    title="Select files",
-):
-    """Open dialog window where you can choose files you want to use. It will return tuple with string paths.
-
-    Args:
-        filetypes (list, optional): Accepted file types / suffixes. List of strings or list of tuples.
-            Defaults to [("csv", ".csv"), ("Excel (xlsx, xls)", ".xlsx .xls"), ("h5", ".h5"), ("parquet", ".parquet"), ("json", ".json")].
-        title (str, optional): Just a name of dialog window. Defaults to 'Select file'.
-
-    Returns:
-        tuple: Tuple with string paths.
-    """
-    import tkinter as tk
-    from tkinter import filedialog
-
-    # Open dialog window where user can choose which files to use
-    root = tk.Tk()
-    root.withdraw()
-    root.wm_attributes("-topmost", 1)
-
-    return filedialog.askopenfilenames(filetypes=filetypes, title=title)
-
-
-def load_data(
-    data,
-    header=None,
-    csv_style=None,
-    predicted_table="",
-    max_imported_length=0,
-    request_datatype_suffix="",
-    data_orientation="",
-    ssl_verification=False,
-):
-
-    """Load data from path or url or other python format (numpy array, list, dict) into dataframe.
-    Available formats are csv, excel xlsx, parquet, json or h5. Allow multiple files loading at once - just put
-    it in list e.g. [df1, df2, df3] or ['myfile1.csv', 'myfile2.csv']. Structure of files does not have to be the same.
-    If you have files in folder and not in list, you can use `get_file_paths` function to open system dialog window,
-    select files and get the list of paths.
-
-    Data param can also be 'test' or 'sql' - you need to setup database name and query then.
-
-    Args:
-        data (str, pathlib.Path): Path, url or 'test' or 'sql'. Check configuration file for examples.
-        header (int, optional): Row index used as column names. Defaults to None.
-        csv_style ((dict, None), optional): Define CSV separator and decimal. En locale usually use {'sep': ",", 'decimal': "."}
-            some Europian country use {'sep': ";", 'decimal': ","}. If None - values are infered. Defaults to None.
-        predicted_table (str, optional): If using excel (xlsx) - it means what sheet to use, if json,
-            it means what key values, if SQL, then it mean what table. Else it have no impact. Defaults to ''.
-        max_imported_length (int, optional): Max length of imported samples (before resampling). If 0, than full length.
-            Defaults to 0.
-        request_datatype_suffix(str, optional): 'json' for example. If using url with no extension,
-            define whichdatatype is on this url with GET request. Defaults to "".
-        data_orientation(str, optional): 'columns' or 'index'. If using json or dictionary, it describe how data are
-            oriented. Default is 'columns' if None used. If orientation is records (in pandas terminology), it's detected
-            automatically. Defaults to "".
-        ssl_verification(bool, optional): If using data from web, it use requests and sometimes, there can be ssl verification
-            error, this skip verification, with adding verify param to requests call.
-
-    Raises:
-        FileNotFoundError, TypeError, ValueError, ModuleNotFoundError: If not existing file, or url, or if necessary
-            dependency library not found.
-
-    Returns:
-        pd.DataFrame, dict, list : Loaded data. Usually in pd.DataFrame format, but sometimes as dict or list,
-        if it needs to be processed before conversion (because of orientation). Usually function consolidate
-        is used afterwards, that can use all return types.
-    """
-
-    list_of_dataframes = []
-
-    # It can be list of more files or it can be just one path. Put it in list to same way of processing
-    if not isinstance(data, (list, tuple)):
-        data = [data]
-
-    if isinstance(data[0], (list, tuple)):
-        return pd.DataFrame.from_records(data)
-
-    # If data is only path or URL or test or SQL
-    elif isinstance(data, (list, tuple)) and isinstance(data[0], (str, Path)):
-
-        if str(data[0]).lower() == "test":
-            from mydatapreprocessing import generatedata
-
-            data = generatedata.gen_random()
-            mylogging.info(
-                "Test data was used. Setup config.py 'data'. Check official readme for help how to configure data."
-            )
-
-            return data
-
-        # ############# Load SQL data #############
-        # elif str(data).lower() == 'sql':
-        #     try:
-        #         data = mydatapreprocessing.database.database_load(server=config.server, database=config.database, freq=config.freq,
-        #                                                 data_limit=config.max_imported_length)
-
-        #     except Exception:
-        #         raise RuntimeError(user_message("ERROR - Data load from SQL server failed - "
-        #                                         "Setup server, database and predicted column name in config"))
-
-        #     return data
-
-        for i in data:
-            data_path = Path(i)
-            iterated_data = None
-
-            try:
-                if data_path.exists():
-                    iterated_data = data_path.as_posix()
-                    is_file = True
-                else:
-                    iterated_data = i
-                    is_file = False
-            except Exception:
-                iterated_data = i
-                is_file = False
-
-            if not is_file:
-
-                import requests
-
-                try:
-                    request = requests.get(iterated_data, verify=ssl_verification)
-                except Exception:
-                    request = None
-
-                if not request or not (request.status_code >= 200 and request.status_code < 300):
-
-                    raise FileNotFoundError(
-                        mylogging.return_str(
-                            "File not found on configured path. If you are using relative path, file must have be in CWD "
-                            "(current working directory) or must be inserted in system path (sys.path.insert(0, 'your_path'))."
-                            "If url, check if page is available.",
-                            caption="File not found error",
-                        )
-                    )
-
-            # For example csv or json. On url, take everything after last dot
-            data_type_suffix = data_path.suffix[1:].lower()
-
-            # If not suffix inferred, then maybe url that return as request - than suffix have to be configured
-            if not data_type_suffix or (
-                data_type_suffix not in ["csv", "json", "xlsx", "xls"] and request_datatype_suffix
-            ):
-                data_type_suffix = request_datatype_suffix.lower()
-
-                if data_type_suffix.startswith("."):
-                    data_type_suffix = data_type_suffix[1:]
-
-            # If it's URL with suffix, we usually need url, if its url link with no suffix, we need get request response
-            if not is_file:
-                if data_type_suffix == "json":
-                    iterated_data = request.content
-
-                if data_type_suffix == "csv":
-                    iterated_data = i
-
-            if not data_type_suffix:
-                raise TypeError(
-                    mylogging.return_str(
-                        "Data has no suffix (e.g. csv) and is not 'test' or 'sql'. "
-                        "If using url with no suffix, setup 'request_datatype_suffix'"
-                        "Or insert data with local path or insert data for example in "
-                        f"dataframe or numpy array. \n\nYour configured data are {data}",
-                        caption="Data load error",
-                    )
-                )
-
-            if data_type_suffix == "csv":
-
-                if not header:
-                    header = "infer"
-
-                if not csv_style:
-                    sep = pd.read_csv(iterated_data, sep=None, iterator=True)._engine.data.dialect.delimiter
-
-                    if sep not in [",", ";", "\t"]:
-                        raise ValueError(
-                            mylogging.return_str(
-                                "CSV separator not infered. Infering not possible if description with symbols on "
-                                "first few lines. Define parameter csv_style - separator and decimal manually and "
-                                "skip description with header parameter."
-                            )
-                        )
-
-                    decimal = "," if sep == ";" else "."
-
-                else:
-                    sep = csv_style["sep"]
-                    decimal = csv_style["decimal"]
-
-                try:
-                    list_of_dataframes.append(
-                        pd.read_csv(iterated_data, header=header, sep=sep, decimal=decimal).iloc[
-                            -max_imported_length:, :
-                        ]
-                    )
-                except UnicodeDecodeError:
-                    list_of_dataframes.append(
-                        pd.read_csv(
-                            iterated_data,
-                            header=header,
-                            sep=csv_style["sep"],
-                            decimal=csv_style["decimal"],
-                            encoding="cp1252",
-                        ).iloc[-max_imported_length:, :]
-                    )
-
-            elif data_type_suffix == "xls":
-                if not importlib.util.find_spec("xlrd"):
-                    raise ModuleNotFoundError(
-                        mylogging.return_str(
-                            "If using excel 'xlsx' file, library xlrd is necessary. Use \n\n\t`pip install xlrd`"
-                        )
-                    )
-
-                if not predicted_table:
-                    predicted_table = 0
-                    list_of_dataframes.append(
-                        pd.read_excel(iterated_data, sheet_name=predicted_table).iloc[
-                            -max_imported_length:, :
-                        ]
-                    )
-
-            elif data_type_suffix == "xlsx":
-                if not importlib.util.find_spec("openpyxl"):
-                    raise ModuleNotFoundError(
-                        mylogging.return_str(
-                            "If using excel 'xls' file, library openpyxl is necessary. Use \n\n\t`pip install openpyxl`"
-                        )
-                    )
-
-                if not predicted_table:
-                    predicted_table = 0
-                list_of_dataframes.append(
-                    pd.read_excel(iterated_data, sheet_name=predicted_table, engine="openpyxl").iloc[
-                        -max_imported_length:, :
-                    ]
-                )
-
-            elif data_type_suffix == "json":
-
-                import json
-
-                if is_file:
-                    with open(iterated_data) as json_file:
-                        list_of_dataframes.append(
-                            json.load(json_file)[predicted_table] if predicted_table else json.load(json_file)
-                        )
-
-                else:
-                    list_of_dataframes.append(
-                        json.loads(iterated_data)[predicted_table]
-                        if predicted_table
-                        else json.loads(iterated_data)
-                    )
-
-            elif data_type_suffix in ("h5", "hdf5"):
-                list_of_dataframes.append(pd.read_hdf(iterated_data).iloc[-max_imported_length:, :])
-
-            elif data_type_suffix in ("parquet"):
-                list_of_dataframes.append(pd.read_parquet(iterated_data).iloc[-max_imported_length:, :])
-
-            else:
-                raise TypeError(
-                    mylogging.return_str(
-                        f"Your file format {data_type_suffix} not implemented yet. You can use csv, excel, parquet, h5 or txt.",
-                        "Wrong (not implemented) format",
-                    )
-                )
-
-    else:
-        list_of_dataframes = data
-
-    orientation = "columns" if not data_orientation else data_orientation
-
-    for i, j in enumerate(list_of_dataframes):
-        if isinstance(j, dict):
-            # If just one column, put in list to have same syntax further
-            if not isinstance(next(iter(j.values())), list):
-                list_of_dataframes[i] = {k: [l] for (k, l) in j.items()}
-
-            list_of_dataframes[i] = pd.DataFrame.from_dict(j, orient=orientation)
-
-        elif isinstance(j, list):
-            list_of_dataframes[i] = pd.DataFrame.from_records(j)
-
-        elif not isinstance(j, pd.DataFrame):
-            list_of_dataframes[i] = pd.DataFrame(j)
-
-    data = pd.concat(list_of_dataframes, ignore_index=True)
-
-    if data.empty:
-        raise TypeError(
-            mylogging.return_str(
-                "Input data must be in pd.dataframe, pd.series, numpy array or in a path (str or pathlib) with supported formats"
-                " - csv, xlsx, txt or parquet. It also can be a list of paths, files etc. If you want to generate list of file paths, "
-                "you can use get_file_paths(). Check config comments for more informations...",
-                "Data format error",
-            )
-        )
-
-    return data
 
 
 def data_consolidation(
@@ -417,8 +37,12 @@ def data_consolidation(
     remove_nans_or_replace="interpolate",
     dtype="float32",
 ):
-    """Transform input data in various formats and shapes into data in defined shape, that other functions rely on.
+    """Transform input data in various formats and shapes into data in defined shape optimal for machine learning models, that other functions rely on.
     If you have data in other format than dataframe, use `load_data` first.
+
+    Note:
+        This function return only numeric data. All string columns will be removed (use embedding if you need)
+        Predicted column is moved on index 0 !!!
 
     Args:
         data (pd.DataFrame): Input data in well standardized format.
@@ -426,7 +50,7 @@ def data_consolidation(
             If None, it's ignored. Defaults to None.
         other_columns (int, optional): Whether use other columns or only predicted one. Defaults to 1.
         datalength (int, optional): Data length after resampling. Defaults to 0.
-        datetime_column (str, optional): Name or index of datetime column. Defaults to ''.
+        datetime_column (str, None, optional): Name or index of datetime column. Defaults to None.
         freq (int, optional): Frequency of resampled data. Defaults to 0.
         resample_function (str, optional): 'sum' or 'mean'. Whether sum resampled columns, or use average. Defaults to 'sum'.
         embedding(str, optional): 'label' or 'one-hot'. Categorical encoding. Create numbers from strings. 'label' give each
@@ -640,91 +264,6 @@ def data_consolidation(
     return data_for_predictions_df
 
 
-def add_derived_columns(
-    data,
-    differences=True,
-    second_differences=True,
-    multiplications=True,
-    rolling_means=10,
-    rolling_stds=10,
-    mean_distances=True,
-):
-    """This will create many columns that can be valuable for making predictions like difference, or
-    rolling mean or distance from average. Computed columns will be appened to original data. It will process all the columns,
-    so a lot of redundant data will be created. It is necessary do some feature extraction afterwards to remove noncorrelated columns.
-
-    Args:
-        data (pd.DataFrame): Data that we want to extract more information from.
-        differences (bool, optional): Compute difference between n and n-1 sample. Defaults to True.
-        second_difference (bool, optional): Compute second difference. Defaults to True.
-        multiplications (bool, optional): Column multiplicated with other column. Defaults to True.
-        rolling_means ((int, None), optional): Rolling mean with defined window. Defaults to 10.
-        rolling_stds ((int, None), optional): Rolling std with defined window. Defaults to 10.
-        window (int, optional): Window used for rolling_stds and rolling_means.
-        mean_distances (bool, optional): Distance from average. Defaults to True.
-
-    Returns:
-        pd.DataFrame: Data with more columns, that can have more informations,
-        than original data. Number of rows can be little bit smaller. Data has the same type as input.
-    """
-
-    results = [data]
-
-    if differences:
-        results.append(
-            pd.DataFrame(
-                np.diff(data.values, axis=0),
-                columns=[f"{i} - Difference" for i in data.columns],
-            )
-        )
-
-    if second_differences:
-        results.append(
-            pd.DataFrame(
-                np.diff(data.values, axis=0, n=2),
-                columns=[f"{i} - Second difference" for i in data.columns],
-            )
-        )
-
-    if multiplications:
-
-        combinations = list(itertools.combinations(data.columns, 2))
-        combinations_names = [f"Multiplicated {i}" for i in combinations]
-        multiplicated = np.zeros((len(data), len(combinations)))
-
-        for i, j in enumerate(combinations):
-            multiplicated[:, i] = data[j[0]] * data[j[1]]
-
-        results.append(pd.DataFrame(multiplicated, columns=combinations_names))
-
-    if rolling_means:
-        results.append(
-            pd.DataFrame(
-                np.mean(rolling_windows(data.values.T, rolling_means), axis=2).T,
-                columns=[f"{i} - Rolling mean" for i in data.columns],
-            )
-        )
-
-    if rolling_stds:
-        results.append(
-            pd.DataFrame(
-                np.std(rolling_windows(data.values.T, rolling_stds), axis=2).T,
-                columns=[f"{i} - Rolling std" for i in data.columns],
-            )
-        )
-
-    if mean_distances:
-        mean_distanced = np.zeros(data.T.shape)
-
-        for i in range(data.shape[1]):
-            mean_distanced[i] = data.values.T[i] - data.values.T[i].mean()
-        results.append(pd.DataFrame(mean_distanced.T, columns=[f"{i} - Mean distance" for i in data.columns]))
-
-    min_length = min(len(i) for i in results)
-
-    return pd.concat([i.iloc[-min_length:].reset_index(drop=True) for i in results], axis=1)
-
-
 def preprocess_data(
     data,
     remove_outliers=False,
@@ -817,72 +356,6 @@ def preprocess_data_inverse(
         data = inverse_difference(data, last_undiff_value)
 
     return data
-
-
-def rolling_windows(data, window):
-    """Generate matrix of rolling windows.
-
-    Example:
-
-        >>> import mydatapreprocessing.preprocessing as mdp
-        ...
-        >>> mdp.rolling_windows(np.array([1, 2, 3, 4, 5]), window=2)
-        array([[1, 2],
-               [2, 3],
-               [3, 4],
-               [4, 5]])
-
-    Args:
-        data (np.ndarray): Array data input.
-        window (int): Number of values in created window.
-
-    Returns:
-        np.ndarray: Array of defined windows
-    """
-    shape = data.shape[:-1] + (data.shape[-1] - window + 1, window)
-    strides = data.strides + (data.strides[-1],)
-    return np.lib.stride_tricks.as_strided(data, shape=shape, strides=strides)
-
-
-def add_frequency_columns(data, window):
-    """Use fourier transform on running window and add it's maximum and std as new data column.
-
-    Args:
-        data (pd.DataFrame): Data we want to use.
-        window (int): length of running window.
-
-    Returns:
-        pd.Dataframe: Data with new columns, that contain informations of running frequency analysis.
-    """
-    data = pd.DataFrame(data)
-
-    if window > len(data.values):
-        mylogging.warn(
-            "Length of data much be much bigger than window used for generating new data columns",
-            caption="Adding frequency columns failed",
-        )
-
-    windows = rolling_windows(data.values.T, window)
-
-    ffted = np.fft.fft(windows, axis=2) / window
-
-    absolute = np.abs(ffted)[:, :, 1:]
-    angle = np.angle(ffted)[:, :, 1:]
-
-    data = data[-ffted.shape[1] :]
-
-    for i, j in enumerate(data):
-        data[f"{j} - FFT windowed abs max index"] = np.nanargmax(absolute, axis=2)[i]
-        data[f"{j} - FFT windowed angle max index"] = np.nanargmax(angle, axis=2)[i]
-        data[f"{j} - FFT windowed abs max"] = np.nanmax(absolute, axis=2)[i]
-        data[f"{j} - FFT windowed abs std"] = np.nanstd(absolute, axis=2)[i]
-        data[f"{j} - FFT windowed angle max"] = np.nanmax(angle, axis=2)[i]
-        data[f"{j} - FFT windowed angle std"] = np.nanstd(angle, axis=2)[i]
-
-    return data
-
-
-### Data consolidation functions...
 
 
 def categorical_embedding(data, embedding="label", unique_threshlold=0.6):
@@ -1190,36 +663,6 @@ def binning(data, bins, type="cut"):
         return data
 
 
-def split(data, predicts=7):
-    """Divide data set on train and test set. Predicted column is supposed to be 0.
-
-    Args:
-        data (pd.DataFrame, np.ndarray): Time series data. ndim has to be 2, reshape if necessary.
-        predicts (int, optional): Number of predicted values. Defaults to 7.
-
-    Returns:
-        pd.DataFrame, np.ndarray: Train set and test set. If input in numpy array, then also output in array, if dataframe input, then dataframe output.
-
-    Example:
-
-        >>> data = np.array([[1], [2], [3], [4]])
-        >>> train, test = split(data, predicts=2)
-        >>> train
-        array([[1],
-               [2]])
-        >>> test
-        array([3, 4])
-    """
-    if isinstance(data, pd.DataFrame):
-        train = data.iloc[:-predicts, :]
-        test = data.iloc[-predicts:, 0]
-    else:
-        train = data[:-predicts, :]
-        test = data[-predicts:, 0]
-
-    return train, test
-
-
 def smooth(data, window=101, polynom_order=2):
     """Smooth data (reduce noise) with Savitzky-Golay filter. For more info on filter check scipy docs.
 
@@ -1299,25 +742,3 @@ def fitted_power_transform(data, fitted_stdev, mean=None, fragments=10, iteratio
         transformed_results = transformed_results - mean_difference
 
     return transformed_results
-
-
-def add_none_to_gaps(df):
-    """If empty windows in sampled signal, it will add None values (one row) to the empty window start.
-    Reason is to correct plotting. Points are connected, but not between two gaps.
-
-    Args:
-        df (pd.DataFrame): Dataframe with time index.
-    Returns:
-        pd.DataFrame: Dataframe with None row inserted in time gaps.
-    """
-
-    sampling_threshold = remove_the_outliers(np.diff(df.index[:50]).reshape(-1, 1), threshold=1).mean() * 3
-    nons = []
-    memory = None
-
-    for i in df.index:
-        if memory and i - memory > sampling_threshold:
-            nons.append(pd.DataFrame([[np.nan] * df.shape[1]], index=[memory + sampling_threshold]))
-        memory = i
-
-    return pd.concat([df, *nons]).sort_index()
