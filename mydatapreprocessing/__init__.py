@@ -100,7 +100,7 @@ Examples:
     ... )
 
 """
-__version__ = "1.1.39"
+__version__ = "2.0.0"
 __author__ = "Daniel Malachov"
 __license__ = "MIT"
 __email__ = "malachovd@seznam.cz"
