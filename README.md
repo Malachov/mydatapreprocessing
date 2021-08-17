@@ -5,6 +5,12 @@
 Load data from web link or local file (json, csv, excel file, parquet, h5...), consolidate it (resample data, clean NaN values, do string embedding) derive new featurs via columns derivation and do preprocessing like
 standardization or smoothing. If you want to see how functions works, check it's docstrings - working examples with printed results are also in tests - visual.py.
 
+## Links
+
+[Repo on github](https://github.com/Malachov/mydatapreprocessing)
+
+[Official readthedocs documentation](https://mydatapreprocessing.readthedocs.io)
+
 
 ## Installation
 
@@ -28,7 +34,8 @@ advanced requirements with `pip install -r requirements_advanced.txt`.
 import mydatapreprocessing as mdp
 ```
 
-Load data. You can use
+### Load data
+You can use
 - python formats (numpy.ndarray, pd.DataFrame, list, tuple, dict)
 - local files
 - web urls
@@ -49,6 +56,7 @@ data = mdp.load_data.load_data(
 # data2 = mdp.load_data.load_data([PATH_TO_FILE.csv, PATH_TO_FILE2.csv])
 ```
 
+### Consolidation
 If you want to use data for some machine learning models, you will probably want to remove Nan values, convert string columns to numeric if possible, do encoding or keep only numeric data and resample.
 
 <!--phmdoctest-label test_consolidation-->
@@ -59,6 +67,7 @@ data_consolidated = mdp.preprocessing.data_consolidation(
 )
 ```
 
+### Feature engineering
 Functions in `feature_engineering` and `preprocessing` expects that data are in form (*n_samples*, *n_features*).
 *n_samples* are ususally much bigger and therefore transformed in `data_consolidation` if necessary.
 
@@ -70,6 +79,7 @@ Extend original data with
 data_extended = mdp.feature_engineering.add_derived_columns(data_consolidated, differences=True, rolling_means=32)
 ```
 
+### Preprocessing
 `preprocess_data` returns preprocessed data, but also last undifferenced value and scaler for inverse
 transformation, so unpack it with _
 
@@ -86,6 +96,7 @@ data_preprocessed, _, _ = mdp.preprocessing.preprocess_data(
 )
 ```
 
+### Creating inputs
 Create models inputs with
 
 <!--phmdoctest-label test_create_inputs-->
