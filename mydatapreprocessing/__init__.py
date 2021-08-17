@@ -85,8 +85,8 @@ Examples:
     ...     data, predicted_column="weight", remove_nans_threshold=0.9, remove_nans_or_replace="interpolate"
     ... )
 
-   **Feature engineering**
-    
+    **Feature engineering**
+
     Functions in `feature_engineering` and `preprocessing` expects that data are in form (n_samples, n_features).
     n_samples are ususally much bigger and therefore transformed in `data_consolidation` if necessary.
 
