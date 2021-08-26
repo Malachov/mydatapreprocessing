@@ -26,10 +26,10 @@ def test_exceptions():
         exceptions.append(isinstance(e, FileNotFoundError))
 
     try:
-        test_file = Path(__file__) / "data_test"
+        test_file = Path(__file__).parent / "data_test"
         mdpd.load_data(test_file)
     except Exception as e:
-        exceptions.append(isinstance(e, FileNotFoundError))
+        exceptions.append(isinstance(e, TypeError))
 
     try:
         mdpd.load_data("https://blockchain.info/unconfirmed-transactions?format=json")

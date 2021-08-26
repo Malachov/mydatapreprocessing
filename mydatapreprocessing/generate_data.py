@@ -1,6 +1,6 @@
 """ Test data definition. Data can be used for example for validating machine learning time series prediction results.
 
-Only 'real' data are ECG heart signal returned with function get_eeg().
+Only 'real' data are ECG heart signal returned with function get_ecg().
 """
 
 import numpy as np
@@ -80,8 +80,8 @@ def ramp(n=1000):
     return np.array(range(n))
 
 
-def get_eeg(n=1000):
-    """Download real EEG data.
+def get_ecg(n=1000):
+    """Download real ECG data.
 
     Args:
         n (int, optional): Length of data. Defaults to 1000.
@@ -93,7 +93,7 @@ def get_eeg(n=1000):
     if not importlib.util.find_spec("wfdb"):
         raise ModuleNotFoundError(
             mylogging.return_str(
-                "For parsing EEG signal, wfdb library is necessary. Install with `pip install wfdb`"
+                "For parsing ECG signal, wfdb library is necessary. Install with `pip install wfdb`"
             )
         )
 

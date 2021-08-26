@@ -3,18 +3,20 @@ connect credentials. The database_deploy than deploy data to the database server
 
 It is working only for mssql server so far.
 
-Example::
+Example:
 
-    data = mdp.database.database_load(
-        server=".",
-        database="DemoData",
-        query='''
-            SELECT TOP (1000) [ID] ,[ProductName]
-            FROM [DemoData].[dbo].[Products]
-        '''
-        username="sa",
-        password="Ahojdatadata123",
-    )
+    ::
+
+        data = mdp.database.database_load(
+            server=".",
+            database="DemoData",
+            query='''
+                SELECT TOP (1000) [ID] ,[ProductName]
+                FROM [DemoData].[dbo].[Products]
+            '''
+            username="sa",
+            password="Ahojdatadata123",
+        )
 """
 
 # Lazy imports
