@@ -1,2 +1,3 @@
 [tool.pytest.ini_options]
-addopts = "--doctest-modules"
+addopts = "--doctest-modules -x --nbmake"
+python_files = ["test*.py", "demo.ipynb"]

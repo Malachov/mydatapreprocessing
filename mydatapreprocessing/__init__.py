@@ -69,10 +69,10 @@ Examples:
     Syntax is always the same.
 
     >>> data = mdp.load_data.load_data(
-    ...     "https://blockchain.info/unconfirmed-transactions?format=json",
+    ...     "https://www.ncdc.noaa.gov/cag/global/time-series/globe/land_ocean/ytd/12/1880-2016.json",
     ...     request_datatype_suffix=".json",
     ...     data_orientation="index",
-    ...     predicted_table="txs",
+    ...     predicted_table="data",
     ... )
     >>> # data2 = mdp.load_data.load_data([PATH_TO_FILE.csv, PATH_TO_FILE2.csv])
 
@@ -82,7 +82,7 @@ Examples:
     string columns to numeric if possible, do encoding or keep only numeric data and resample.
 
     >>> data = mdp.preprocessing.data_consolidation(
-    ...     data, predicted_column="weight", remove_nans_threshold=0.9, remove_nans_or_replace="interpolate"
+    ...     data, predicted_column=0, remove_nans_threshold=0.9, remove_nans_or_replace="interpolate"
     ... )
 
     **Feature engineering**
@@ -112,7 +112,7 @@ Examples:
     ... )
 
 """
-__version__ = "2.0.2"
+__version__ = "2.0.3"
 __author__ = "Daniel Malachov"
 __license__ = "MIT"
 __email__ = "malachovd@seznam.cz"

@@ -1,5 +1,10 @@
 # List of what have been done in new versions
 
+## v2.0
+- Refactored (backward incompatible) - now data loading functions are in `load_data` module and feature engineering functions are in `feature_engineering` module. Various functions not related to used modules are in `misc`.
+- Database module updated and tests done
+- Clean dataframe to table print function
+
 ## v1.1
 
 - New formats support. H5, Parquet, xlsx...
@@ -14,4 +19,4 @@
 
 ## v1.0
 
-- Realease version, CI and docs deployment developing
+- Realease version, CI and docs deployment

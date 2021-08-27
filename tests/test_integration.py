@@ -13,9 +13,9 @@ np.random.seed(2)
 def test_integration():
     # Load data from file or URL
     data_loaded = mdp.load_data.load_data(
-        "https://blockchain.info/unconfirmed-transactions?format=json",
+        "https://www.ncdc.noaa.gov/cag/global/time-series/globe/land_ocean/ytd/12/1880-2016.json",
         request_datatype_suffix=".json",
-        predicted_table="txs",
+        predicted_table="data",
         data_orientation="index",
     )
 
@@ -23,7 +23,7 @@ def test_integration():
     # only numeric data and resample ifg configured. It return array, dataframe
     data_consolidated = mdp.preprocessing.data_consolidation(
         data_loaded,
-        predicted_column="weight",
+        predicted_column=0,
         remove_nans_threshold=0.9,
         remove_nans_or_replace="interpolate",
     )

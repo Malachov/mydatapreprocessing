@@ -23,18 +23,17 @@ def test_exceptions():
     try:
         mdpd.load_data("testfile")
     except Exception as e:
+        exceptions.append(isinstance(e, TypeError))
+
+    try:
+        mdpd.load_data("testfile.csv")
+    except Exception as e:
         exceptions.append(isinstance(e, FileNotFoundError))
 
     try:
-        test_file = Path(__file__).parent / "data_test"
-        mdpd.load_data(test_file)
+        mdpd.load_data("https://www.ncgdfgddc.noaa.gov/")
     except Exception as e:
-        exceptions.append(isinstance(e, TypeError))
-
-    try:
-        mdpd.load_data("https://blockchain.info/unconfirmed-transactions?format=json")
-    except Exception as e:
-        exceptions.append(isinstance(e, TypeError))
+        exceptions.append(isinstance(e, FileNotFoundError))
 
     assert all(exceptions)
 
@@ -112,29 +111,34 @@ def test_local_files():
     csv_path2 = Path(__file__).parent / "tested2.csv"
     json_path = Path(__file__).parent / "tested.json"
     parquet_path = Path(__file__).parent / "tested.parquet"
-    hdf_path = Path(__file__).parent / "tested.h5"
+    # hdf_path = Path(__file__).parent / "tested.h5"
 
     df_imported.to_csv(csv_path.as_posix())
     df_part.to_csv(csv_path2.as_posix())
     df_imported.to_parquet(parquet_path.as_posix(), compression="gzip")
-    df_imported.to_hdf(hdf_path.as_posix(), key="df")
+    # df_imported.to_hdf(hdf_path.as_posix(), key="df")
 
-    loaded_data = requests.get("https://blockchain.info/unconfirmed-transactions?format=json").content
+    loaded_data = requests.get(
+        "https://www.ncdc.noaa.gov/cag/global/time-series/globe/land_ocean/ytd/12/1880-2016.json"
+    ).content
+
     with open(json_path, "w") as outfile:
         json.dump(json.loads(loaded_data), outfile)
 
     try:
         df_csv = mdpd.load_data(csv_path)
         df_csv_joined = mdpd.load_data([csv_path, csv_path2])
-        df_json = mdpd.load_data(json_path, request_datatype_suffix=".json", predicted_table="txs")
+        df_json = mdpd.load_data(
+            json_path, request_datatype_suffix=".json", predicted_table="data", data_orientation="index"
+        )
         df_parquet = mdpd.load_data(parquet_path)
-        df_hdf = mdpd.load_data(hdf_path)
+        # df_hdf = mdpd.load_data(hdf_path)
 
     except Exception:
         pass
 
     finally:
-        for i in [csv_path, csv_path2, json_path, parquet_path, hdf_path]:
+        for i in [csv_path, csv_path2, json_path, parquet_path]:  # , hdf_path
             i.unlink()
 
     assert all(
@@ -144,7 +148,7 @@ def test_local_files():
             df_csv.ndim,
             df_json.ndim,
             df_parquet.ndim,
-            df_hdf.ndim,
+            # df_hdf.ndim,
             len(df_csv_joined) == len(df_csv) + 10,
         ]
     )

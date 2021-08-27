@@ -20,7 +20,7 @@ np.random.seed(2)
 
 def test_databases():
     client = docker.from_env()
-    container = client.containers.run("mssql:latest", ports={1433: 1433}, detach=True)
+    container = client.containers.run("mssql:latest", ports={1433: 1433}, detach=True, auto_remove=True)
 
     time.sleep(50)
 

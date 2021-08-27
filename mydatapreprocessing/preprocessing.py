@@ -15,6 +15,7 @@ import mylogging
 
 import warnings
 import importlib
+import textwrap
 
 # Lazy load
 
@@ -742,3 +743,41 @@ def fitted_power_transform(data, fitted_stdev, mean=None, fragments=10, iteratio
         transformed_results = transformed_results - mean_difference
 
     return transformed_results
+
+
+def edit_table_to_printable(df, round=3, big_limit=10e10, line_length_limit=10):
+    """Edit dataframe to be able to use in tabulate (or somewhere else).
+
+    Args:
+        df (pd.DataFrame): Input data with numeric or text columns.
+        round (int, optional): Round numeric columns to defined decimals. Defaults to 3.
+        big_limit ((int, float), optional): If there is some very big number, convert format to
+            scientific notation. Defaults to 10e10.
+        line_length_limit (int, optional): Add line breaks if line too long. Defaults to 10.
+
+    Returns:
+        pd.DataFrame: Dataframe with shorter and more readable to be printed (usually in table).
+
+    Example:
+        >>> df = pd.DataFrame([[151646516516, 1.5648646, "Lorem ipsum something else"]])
+        >>> edit_table_to_printable(df)
+                   0      1                              2
+        0  1.516e+11  1.565  Lorem\\nipsum\\nsomething\\nelse
+    """
+    df = df.round(round)
+
+    for i in df:
+        if pd.api.types.is_numeric_dtype(df[i]):
+            # Replace very big numbers with scientific notation
+            if df[i].max() > big_limit:
+                for j, k in df[i].iteritems():
+                    if k > big_limit:
+                        df[i][j] = f"{k:.3e}"
+
+        else:
+            # Add line breaks to long strings
+            for j, k in df[i].iteritems():
+                if isinstance(k, str) and len(k) > line_length_limit:
+                    df[i][j] = textwrap.fill(df[i][j], line_length_limit)
+
+    return df
