@@ -2,7 +2,9 @@ name: binder
 channels:
   - conda-forge
 dependencies:
-  - mylogging
   - numpy
   - pandas
   - requests
+  - pip
+  - pip:
+    - mylogging
