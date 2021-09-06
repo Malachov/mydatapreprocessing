@@ -1,0 +1,8 @@
+name: binder
+channels:
+  - conda-forge
+dependencies:
+  - mylogging
+  - numpy
+  - pandas
+  - requests
