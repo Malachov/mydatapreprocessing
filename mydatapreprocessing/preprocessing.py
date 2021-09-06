@@ -16,6 +16,7 @@ import mylogging
 import warnings
 import importlib
 import textwrap
+import json
 
 # Lazy load
 
@@ -766,18 +767,21 @@ def edit_table_to_printable(df, round=3, big_limit=10e10, line_length_limit=10):
     """
     df = df.round(round)
 
-    for i in df:
-        if pd.api.types.is_numeric_dtype(df[i]):
+    for _, df_i in df.iteritems():
+
+        if pd.api.types.is_numeric_dtype(df_i):
             # Replace very big numbers with scientific notation
-            if df[i].max() > big_limit:
-                for j, k in df[i].iteritems():
-                    if k > big_limit:
-                        df[i][j] = f"{k:.3e}"
+            if df_i.max() > big_limit:
+                for k, l in df_i.iteritems():
+                    if l > big_limit:
+                        df_i[k] = f"{l:.3e}"
 
         else:
-            # Add line breaks to long strings
-            for j, k in df[i].iteritems():
-                if isinstance(k, str) and len(k) > line_length_limit:
-                    df[i][j] = textwrap.fill(df[i][j], line_length_limit)
-
+            for k, l in df_i.iteritems():
+                # Add line breaks to long strings
+                if isinstance(l, str) and len(l) > line_length_limit:
+                    df_i[k] = textwrap.fill(df_i[k], line_length_limit)
+                # Convert dictionaries to formated strings
+                if isinstance(l, dict):
+                    df_i[k] = json.dumps(l, indent=2)
     return df
