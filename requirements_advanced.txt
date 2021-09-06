@@ -1,6 +1,5 @@
 scipy
 sklearn
-pytables
 fastparquet
 pyarrow
 xlrd
