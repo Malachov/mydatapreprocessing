@@ -1,3 +1,6 @@
+venv_test/
+scratch_notepad.py
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

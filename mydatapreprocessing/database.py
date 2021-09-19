@@ -135,11 +135,19 @@ def database_write(
         trusted_connection=trusted_connection,
     )
 
-    df.to_sql(name=table, con=connection, if_exists=if_exists, index=index, schema=schema)
+    df.to_sql(
+        name=table, con=connection, if_exists=if_exists, index=index, schema=schema
+    )
 
 
 def create_connection(
-    server, database, port=None, driver="{SQL Server}", username=None, password=None, trusted_connection=None
+    server,
+    database,
+    port=None,
+    driver="{SQL Server}",
+    username=None,
+    password=None,
+    trusted_connection=None,
 ):
     """Create connection, that can be used in another function to connect the databse.
 

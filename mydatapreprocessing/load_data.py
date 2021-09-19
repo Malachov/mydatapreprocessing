@@ -168,7 +168,8 @@ def load_data(
 
             # If not suffix inferred, then maybe url that return as request - than suffix have to be configured
             if not data_type_suffix or (
-                data_type_suffix not in ["csv", "json", "xlsx", "xls"] and request_datatype_suffix
+                data_type_suffix not in ["csv", "json", "xlsx", "xls"]
+                and request_datatype_suffix
             ):
                 data_type_suffix = request_datatype_suffix.lower()
 
@@ -205,7 +206,9 @@ def load_data(
                 except Exception:
                     request = None
 
-                if not request or not (request.status_code >= 200 and request.status_code < 300):
+                if not request or not (
+                    request.status_code >= 200 and request.status_code < 300
+                ):
 
                     raise FileNotFoundError(
                         mylogging.return_str(
@@ -247,7 +250,10 @@ def load_data(
                                     break
 
                     data_line = str(data_line)
-                    if data_line.count(";") and data_line.count(";") >= data_line.count(",") - 1:
+                    if (
+                        data_line.count(";")
+                        and data_line.count(";") >= data_line.count(",") - 1
+                    ):
                         sep = ";"
                         decimal = ","
                     else:
@@ -260,9 +266,9 @@ def load_data(
 
                 try:
                     list_of_dataframes.append(
-                        pd.read_csv(iterated_data, header=header, sep=sep, decimal=decimal).iloc[
-                            -max_imported_length:, :
-                        ]
+                        pd.read_csv(
+                            iterated_data, header=header, sep=sep, decimal=decimal
+                        ).iloc[-max_imported_length:, :]
                     )
                 except UnicodeDecodeError:
                     list_of_dataframes.append(
@@ -276,7 +282,9 @@ def load_data(
                     )
                 except Exception:
                     raise RuntimeError(
-                        mylogging.return_str("CSV load failed. Try to set correct `header` and `csv_style`")
+                        mylogging.return_str(
+                            "CSV load failed. Try to set correct `header` and `csv_style`"
+                        )
                     )
 
             elif data_type_suffix == "xls":
@@ -306,9 +314,9 @@ def load_data(
                 if not predicted_table:
                     predicted_table = 0
                 list_of_dataframes.append(
-                    pd.read_excel(iterated_data, sheet_name=predicted_table, engine="openpyxl").iloc[
-                        -max_imported_length:, :
-                    ]
+                    pd.read_excel(
+                        iterated_data, sheet_name=predicted_table, engine="openpyxl"
+                    ).iloc[-max_imported_length:, :]
                 )
 
             elif data_type_suffix == "json":
@@ -318,7 +326,9 @@ def load_data(
                 if is_file:
                     with open(iterated_data) as json_file:
                         list_of_dataframes.append(
-                            json.load(json_file)[predicted_table] if predicted_table else json.load(json_file)
+                            json.load(json_file)[predicted_table]
+                            if predicted_table
+                            else json.load(json_file)
                         )
 
                 else:
@@ -329,10 +339,14 @@ def load_data(
                     )
 
             elif data_type_suffix in ("h5", "hdf5"):
-                list_of_dataframes.append(pd.read_hdf(iterated_data).iloc[-max_imported_length:, :])
+                list_of_dataframes.append(
+                    pd.read_hdf(iterated_data).iloc[-max_imported_length:, :]
+                )
 
             elif data_type_suffix in ("parquet"):
-                list_of_dataframes.append(pd.read_parquet(iterated_data).iloc[-max_imported_length:, :])
+                list_of_dataframes.append(
+                    pd.read_parquet(iterated_data).iloc[-max_imported_length:, :]
+                )
 
             else:
                 raise TypeError(

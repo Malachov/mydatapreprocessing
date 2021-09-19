@@ -22,10 +22,16 @@ def test_visual(print_preprocessing=1, print_postprocessing=1):
     np.set_printoptions(suppress=True, precision=1)
 
     # Data must have 2 dimensions. If you have only one column, reshape(-1, 1)!!!
-    data = np.array([[1, 3, 5, 2, 3, 4, 5, 66, 3, 2, 4, 5, 6, 0, 0, 0, 0, 7, 3, 4, 55, 3, 2]]).T
+    data = np.array(
+        [[1, 3, 5, 2, 3, 4, 5, 66, 3, 2, 4, 5, 6, 0, 0, 0, 0, 7, 3, 4, 55, 3, 2]]
+    ).T
 
     data_multi_col = np.array(
-        [[1, 22, 3, 3, 5, 8, 3, 3, 5, 8], [5, 6, 7, 6, 7, 8, 3, 9, 5, 8], [8, 9, 10, 6, 8, 8, 3, 3, 7, 8]]
+        [
+            [1, 22, 3, 3, 5, 8, 3, 3, 5, 8],
+            [5, 6, 7, 6, 7, 8, 3, 9, 5, 8],
+            [8, 9, 10, 6, 8, 8, 3, 3, 7, 8],
+        ]
     ).T
 
     # Some calculations, that are to long to do in f-strings - Just ignore...

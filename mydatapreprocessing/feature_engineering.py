@@ -102,11 +102,17 @@ def add_derived_columns(
 
         for i in range(data.shape[1]):
             mean_distanced[i] = data.values.T[i] - data.values.T[i].mean()
-        results.append(pd.DataFrame(mean_distanced.T, columns=[f"{i} - Mean distance" for i in data.columns]))
+        results.append(
+            pd.DataFrame(
+                mean_distanced.T, columns=[f"{i} - Mean distance" for i in data.columns]
+            )
+        )
 
     min_length = min(len(i) for i in results)
 
-    return pd.concat([i.iloc[-min_length:].reset_index(drop=True) for i in results], axis=1)
+    return pd.concat(
+        [i.iloc[-min_length:].reset_index(drop=True) for i in results], axis=1
+    )
 
 
 def add_frequency_columns(data, window):

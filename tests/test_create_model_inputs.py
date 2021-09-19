@@ -17,7 +17,9 @@ def test_make_sequences():
             [17, 18, 19, 20, 21, 22, 23, 24],
         ]
     ).T
-    X, y, x_input, _ = mdpi.make_sequences(data, n_steps_in=2, n_steps_out=3, constant=1)
+    X, y, x_input, _ = mdpi.make_sequences(
+        data, n_steps_in=2, n_steps_out=3, constant=1
+    )
 
     X_res = np.array(
         [
@@ -26,9 +28,13 @@ def test_make_sequences():
         ]
     )
     y_res = np.array([[5, 6, 7], [6, 7, 8]])
-    x_inpu_res = np.array([[1.0, 5.0, 6.0, 7.0, 8.0, 13.0, 14.0, 15.0, 16.0, 21.0, 22.0, 23.0, 24.0]])
+    x_inpu_res = np.array(
+        [[1.0, 5.0, 6.0, 7.0, 8.0, 13.0, 14.0, 15.0, 16.0, 21.0, 22.0, 23.0, 24.0]]
+    )
 
-    data2 = np.array([[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], [11, 12, 13, 14, 15, 16, 17, 18, 19, 20]]).T
+    data2 = np.array(
+        [[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], [11, 12, 13, 14, 15, 16, 17, 18, 19, 20]]
+    ).T
     X2, y2, x_input2, test_inputs2 = mdpi.make_sequences(
         data2, n_steps_in=2, n_steps_out=1, constant=0, predicts=3, repeatit=2
     )

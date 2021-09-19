@@ -15,8 +15,6 @@ import mylogging
 
 import warnings
 import importlib
-import textwrap
-import json
 
 # Lazy load
 
@@ -128,7 +126,11 @@ def data_consolidation(
         else:
             predicted_column_name = "Predicted column"
             data_for_predictions_df.rename(
-                columns={data_for_predictions_df.columns[predicted_column]: predicted_column_name},
+                columns={
+                    data_for_predictions_df.columns[
+                        predicted_column
+                    ]: predicted_column_name
+                },
                 inplace=True,
             )
 
@@ -146,7 +148,9 @@ def data_consolidation(
 
         try:
             if isinstance(datetime_column, str):
-                data_for_predictions_df.set_index(datetime_column, drop=True, inplace=True)
+                data_for_predictions_df.set_index(
+                    datetime_column, drop=True, inplace=True
+                )
 
             else:
                 data_for_predictions_df.set_index(
@@ -155,7 +159,9 @@ def data_consolidation(
                     inplace=True,
                 )
 
-            data_for_predictions_df.index = pd.to_datetime(data_for_predictions_df.index)
+            data_for_predictions_df.index = pd.to_datetime(
+                data_for_predictions_df.index
+            )
 
         except Exception:
             raise KeyError(
@@ -166,7 +172,9 @@ def data_consolidation(
             )
 
     # Convert strings numbers (e.g. '6') to numbers
-    data_for_predictions_df = data_for_predictions_df.apply(pd.to_numeric, errors="ignore")
+    data_for_predictions_df = data_for_predictions_df.apply(
+        pd.to_numeric, errors="ignore"
+    )
 
     if embedding:
         data_for_predictions_df = categorical_embedding(
@@ -181,7 +189,9 @@ def data_consolidation(
     if predicted_column_name:
         # TODO setup other columns in define input so every model can choose and simplier config input types
         if not other_columns:
-            data_for_predictions_df = pd.DataFrame(data_for_predictions_df[predicted_column_name])
+            data_for_predictions_df = pd.DataFrame(
+                data_for_predictions_df[predicted_column_name]
+            )
 
         if predicted_column_name not in data_for_predictions_df.columns:
             raise KeyError(
@@ -202,7 +212,9 @@ def data_consolidation(
             data_for_predictions_df = data_for_predictions_df.asfreq(freq, fill_value=0)
 
         else:
-            data_for_predictions_df.index.freq = pd.infer_freq(data_for_predictions_df.index)
+            data_for_predictions_df.index.freq = pd.infer_freq(
+                data_for_predictions_df.index
+            )
 
             if data_for_predictions_df.index.freq is None:
                 reset_index = True
@@ -256,7 +268,9 @@ def data_consolidation(
                 data_for_predictions_df[col].mean()
             )
 
-    if isinstance(remove_nans_or_replace, (int, float) or np.isnan(remove_nans_or_replace)):
+    if isinstance(
+        remove_nans_or_replace, (int, float) or np.isnan(remove_nans_or_replace)
+    ):
         data_for_predictions_df.fillna(remove_nans_or_replace, inplace=True)
 
     # Forward fill and interpolate can miss som nans if on first row
@@ -308,7 +322,9 @@ def preprocess_data(
         preprocessed = smooth(preprocessed, smoothit[0], smoothit[1])
 
     if correlation_threshold:
-        preprocessed = keep_corelated_data(preprocessed, threshold=correlation_threshold)
+        preprocessed = keep_corelated_data(
+            preprocessed, threshold=correlation_threshold
+        )
 
     if data_transform == "difference":
         if isinstance(preprocessed, np.ndarray):
@@ -320,7 +336,9 @@ def preprocess_data(
         last_undiff_value = None
 
     if standardizeit:
-        preprocessed, final_scaler = standardize(preprocessed, used_scaler=standardizeit)
+        preprocessed, final_scaler = standardize(
+            preprocessed, used_scaler=standardizeit
+        )
     else:
         final_scaler = None
 
@@ -383,7 +401,9 @@ def categorical_embedding(data, embedding="label", unique_threshlold=0.6):
 
         try:
 
-            if (data_for_embedding[i].nunique() / len(data_for_embedding[i])) > (1 - unique_threshlold):
+            if (data_for_embedding[i].nunique() / len(data_for_embedding[i])) > (
+                1 - unique_threshlold
+            ):
                 to_drop.append(i)
                 continue
 
@@ -393,7 +413,9 @@ def categorical_embedding(data, embedding="label", unique_threshlold=0.6):
                 data_for_embedding[i] = data_for_embedding[i].cat.codes
 
             if embedding == "one-hot":
-                data_for_embedding = data_for_embedding.join(pd.get_dummies(data_for_embedding[i]))
+                data_for_embedding = data_for_embedding.join(
+                    pd.get_dummies(data_for_embedding[i])
+                )
                 to_drop.append(i)
 
         except Exception:
@@ -469,7 +491,9 @@ def remove_the_outliers(data, threshold=3, main_column=0):
         data_std = data[:, main_column].std()
 
         range_array = np.array(range(data.shape[0]))
-        names_to_del = range_array[abs(data[:, main_column] - data_mean) > threshold * data_std]
+        names_to_del = range_array[
+            abs(data[:, main_column] - data_mean) > threshold * data_std
+        ]
         data = np.delete(data, names_to_del, axis=0)
 
     elif isinstance(data, pd.DataFrame):
@@ -677,13 +701,17 @@ def smooth(data, window=101, polynom_order=2):
         ndarray: Cleaned data with less noise.
     """
     if not importlib.util.find_spec("scipy"):
-        raise ImportError("scipy library is necessary for smooth function. Install via `pip install scipy`")
+        raise ImportError(
+            "scipy library is necessary for smooth function. Install via `pip install scipy`"
+        )
 
     import scipy.signal
 
     if isinstance(data, pd.DataFrame):
         for i in range(data.shape[1]):
-            data.iloc[:, i] = scipy.signal.savgol_filter(data.values[:, i], window, polynom_order)
+            data.iloc[:, i] = scipy.signal.savgol_filter(
+                data.values[:, i], window, polynom_order
+            )
 
     elif isinstance(data, np.ndarray):
         for i in range(data.shape[1]):
@@ -708,13 +736,17 @@ def fitted_power_transform(data, fitted_stdev, mean=None, fragments=10, iteratio
     """
 
     if not importlib.util.find_spec("scipy"):
-        raise ImportError("scipy library is necessary for smooth function. Install via `pip install scipy`")
+        raise ImportError(
+            "scipy library is necessary for smooth function. Install via `pip install scipy`"
+        )
 
     import scipy.stats
 
     if data.ndim == 2 and 1 not in data.shape:
         raise ValueError(
-            mylogging.return_str("Only one column can be power transformed. Use ravel if have shape (n, 1)")
+            mylogging.return_str(
+                "Only one column can be power transformed. Use ravel if have shape (n, 1)"
+            )
         )
 
     lmbda_low = 0
@@ -744,44 +776,3 @@ def fitted_power_transform(data, fitted_stdev, mean=None, fragments=10, iteratio
         transformed_results = transformed_results - mean_difference
 
     return transformed_results
-
-
-def edit_table_to_printable(df, round=3, big_limit=10e10, line_length_limit=10):
-    """Edit dataframe to be able to use in tabulate (or somewhere else).
-
-    Args:
-        df (pd.DataFrame): Input data with numeric or text columns.
-        round (int, optional): Round numeric columns to defined decimals. Defaults to 3.
-        big_limit ((int, float), optional): If there is some very big number, convert format to
-            scientific notation. Defaults to 10e10.
-        line_length_limit (int, optional): Add line breaks if line too long. Defaults to 10.
-
-    Returns:
-        pd.DataFrame: Dataframe with shorter and more readable to be printed (usually in table).
-
-    Example:
-        >>> df = pd.DataFrame([[151646516516, 1.5648646, "Lorem ipsum something else"]])
-        >>> edit_table_to_printable(df)
-                   0      1                              2
-        0  1.516e+11  1.565  Lorem\\nipsum\\nsomething\\nelse
-    """
-    df = df.round(round)
-
-    for _, df_i in df.iteritems():
-
-        if pd.api.types.is_numeric_dtype(df_i):
-            # Replace very big numbers with scientific notation
-            if df_i.max() > big_limit:
-                for k, l in df_i.iteritems():
-                    if l > big_limit:
-                        df_i[k] = f"{l:.3e}"
-
-        else:
-            for k, l in df_i.iteritems():
-                # Add line breaks to long strings
-                if isinstance(l, str) and len(l) > line_length_limit:
-                    df_i[k] = textwrap.fill(df_i[k], line_length_limit)
-                # Convert dictionaries to formated strings
-                if isinstance(l, dict):
-                    df_i[k] = json.dumps(l, indent=2)
-    return df

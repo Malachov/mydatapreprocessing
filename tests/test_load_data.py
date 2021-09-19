@@ -48,12 +48,16 @@ def test_numpy_and_dataframe():
 def test_numpys_and_pandas():
     assert (
         mdpd.load_data([np.random.randn(20, 3), np.random.randn(25, 3)]).ndim
-        and mdpd.load_data((pd.DataFrame(np.random.randn(20, 3)), pd.DataFrame(np.random.randn(25, 3)))).ndim
+        and mdpd.load_data(
+            (pd.DataFrame(np.random.randn(20, 3)), pd.DataFrame(np.random.randn(25, 3)))
+        ).ndim
     )
 
 
 def test_dict():
-    assert mdpd.load_data({"col_1": [3, 2, 1, 0], "col_2": [3, 2, 1, 0]}, data_orientation="index").ndim
+    assert mdpd.load_data(
+        {"col_1": [3, 2, 1, 0], "col_2": [3, 2, 1, 0]}, data_orientation="index"
+    ).ndim
 
 
 def test_list_of_dicts():
@@ -68,11 +72,15 @@ def test_list_of_dicts():
 
 
 def test_list():
-    assert mdpd.load_data([["Jon", "Smith", 21], ["Mark", "Brown", 38], ["Maria", "Lee", 42]]).ndim
+    assert mdpd.load_data(
+        [["Jon", "Smith", 21], ["Mark", "Brown", 38], ["Maria", "Lee", 42]]
+    ).ndim
 
 
 def test_tuple():
-    assert mdpd.load_data((("Jon", "Smith", 21), ("Mark", "Brown", 38), ("Maria", "Lee", 42))).ndim
+    assert mdpd.load_data(
+        (("Jon", "Smith", 21), ("Mark", "Brown", 38), ("Maria", "Lee", 42))
+    ).ndim
 
 
 def test_more_files():
@@ -129,7 +137,10 @@ def test_local_files():
         df_csv = mdpd.load_data(csv_path)
         df_csv_joined = mdpd.load_data([csv_path, csv_path2])
         df_json = mdpd.load_data(
-            json_path, request_datatype_suffix=".json", predicted_table="data", data_orientation="index"
+            json_path,
+            request_datatype_suffix=".json",
+            predicted_table="data",
+            data_orientation="index",
         )
         df_parquet = mdpd.load_data(parquet_path)
         # df_hdf = mdpd.load_data(hdf_path)

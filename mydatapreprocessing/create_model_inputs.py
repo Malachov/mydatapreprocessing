@@ -71,7 +71,9 @@ def make_sequences(
 
     if n_steps_out > n_steps_in:
         n_steps_in = n_steps_out + 1
-        mylogging.warn("n_steps_out was bigger than n_steps_in - n_steps_in changed during prediction!")
+        mylogging.warn(
+            "n_steps_out was bigger than n_steps_in - n_steps_in changed during prediction!"
+        )
 
     if default_other_columns_length == 0:
         data = data[:, 0].reshape(1, -1)
@@ -85,7 +87,10 @@ def make_sequences(
 
     if serialize_columns:
         if default_other_columns_length:
-            X = np.hstack([X[0, :]] + [X[i, :, -default_other_columns_length:] for i in range(1, len(X))])
+            X = np.hstack(
+                [X[0, :]]
+                + [X[i, :, -default_other_columns_length:] for i in range(1, len(X))]
+            )
         else:
             X = X.transpose(1, 0, 2).reshape(1, X.shape[1], -1)[0]
 
@@ -106,7 +111,9 @@ def make_sequences(
         x_input = X[-1].reshape(1, -1)
 
         x_test_inputs = X[-predicts - repeatit : -predicts, :]
-        x_test_inputs = x_test_inputs.reshape(x_test_inputs.shape[0], 1, x_test_inputs.shape[1])
+        x_test_inputs = x_test_inputs.reshape(
+            x_test_inputs.shape[0], 1, x_test_inputs.shape[1]
+        )
 
     X = X[:-n_steps_out]
 
@@ -167,7 +174,9 @@ def create_inputs(
             "one_in_one_out",
             "one_in_batch_out",
         ]:
-            used_sequentions = data[:, predicted_column_index : predicted_column_index + 1]
+            used_sequentions = data[
+                :, predicted_column_index : predicted_column_index + 1
+            ]
         else:
             used_sequentions = data
 
@@ -191,10 +200,14 @@ def create_inputs(
             model_test_inputs = []
             if used_sequentions.ndim == 1:
                 for i in range(repeatit):
-                    model_test_inputs.append(used_sequentions[: -predicts - repeatit + i + 1])
+                    model_test_inputs.append(
+                        used_sequentions[: -predicts - repeatit + i + 1]
+                    )
             else:
                 for i in range(repeatit):
-                    model_test_inputs.append(used_sequentions[:, : -predicts - repeatit + i + 1])
+                    model_test_inputs.append(
+                        used_sequentions[:, : -predicts - repeatit + i + 1]
+                    )
 
     return model_train_input, model_predict_input, model_test_inputs
 
@@ -213,7 +226,9 @@ def create_tests_outputs(data, predicts=7, repeatit=10):
     models_test_outputs = np.zeros((repeatit, predicts))
 
     for i in range(repeatit):
-        models_test_outputs[i] = data[-predicts - i : -i] if i > 0 else data[-predicts - i :]
+        models_test_outputs[i] = (
+            data[-predicts - i : -i] if i > 0 else data[-predicts - i :]
+        )
 
     models_test_outputs = models_test_outputs[::-1]
 

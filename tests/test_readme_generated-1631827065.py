@@ -1,4 +1,4 @@
-"""pytest file built from C:/Users/Malac/ownCloud/Github/mydatapreprocessing/README.md"""
+"""pytest file built from C:\\Users\\Malac\\ownCloud\\Github\\mydatapreprocessing\\README.md"""
 import pytest
 
 from phmdoctest.fixture import managenamespace
@@ -6,7 +6,7 @@ from phmdoctest.fixture import managenamespace
 
 @pytest.fixture(scope="module")
 def _phm_setup_teardown(managenamespace):
-    # setup code line 34.
+    # setup code line 36.
     import mydatapreprocessing as mdp
 
     managenamespace(operation="update", additions=locals())
@@ -34,7 +34,10 @@ def test_load_data(managenamespace):
 
 def test_consolidation(managenamespace):
     data_consolidated = mdp.preprocessing.data_consolidation(
-        data, predicted_column=0, remove_nans_threshold=0.9, remove_nans_or_replace="interpolate"
+        data,
+        predicted_column=0,
+        remove_nans_threshold=0.9,
+        remove_nans_or_replace="interpolate",
     )
 
     # Caution- no assertions.
@@ -42,7 +45,9 @@ def test_consolidation(managenamespace):
 
 
 def test_feature_engineering(managenamespace):
-    data_extended = mdp.feature_engineering.add_derived_columns(data_consolidated, differences=True, rolling_means=32)
+    data_extended = mdp.feature_engineering.add_derived_columns(
+        data_consolidated, differences=True, rolling_means=32
+    )
 
     # Caution- no assertions.
     managenamespace(operation="update", additions=locals())
@@ -64,7 +69,12 @@ def test_preprocess_data(managenamespace):
 
 def test_create_inputs(managenamespace):
     seqs, Y, x_input, test_inputs = mdp.create_model_inputs.make_sequences(
-        data_extended.values, predicts=7, repeatit=3, n_steps_in=6, n_steps_out=1, constant=1
+        data_extended.values,
+        predicts=7,
+        repeatit=3,
+        n_steps_in=6,
+        n_steps_out=1,
+        constant=1,
     )
 
     # Caution- no assertions.

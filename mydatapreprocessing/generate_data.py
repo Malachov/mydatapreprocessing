@@ -99,4 +99,6 @@ def get_ecg(n=1000):
 
     import wfdb
 
-    return wfdb.rdrecord("a103l", pn_dir="challenge-2015/training/", channels=[1], sampto=n).p_signal
+    return wfdb.rdrecord(
+        "a103l", pn_dir="challenge-2015/training/", channels=[1], sampto=n
+    ).p_signal

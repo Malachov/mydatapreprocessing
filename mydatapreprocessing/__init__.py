@@ -9,6 +9,10 @@
     :target: https://badge.fury.io/py/mydatapreprocessing
     :alt: PyPI package
 
+.. image:: https://mybinder.org/badge_logo.svg
+    :target: https://mybinder.org/v2/gh/Malachov/mydatapreprocessing/HEAD?filepath=demo.ipynb
+    :alt: Jupyter mybinder
+
 .. image:: https://img.shields.io/lgtm/grade/python/github/Malachov/mydatapreprocessing.svg
     :target: https://lgtm.com/projects/g/Malachov/mydatapreprocessing/context:python
     :alt: Language grade: Python
@@ -112,7 +116,7 @@ Examples:
     ... )
 
 """
-__version__ = "2.0.4"
+__version__ = "2.0.5"
 __author__ = "Daniel Malachov"
 __license__ = "MIT"
 __email__ = "malachovd@seznam.cz"
