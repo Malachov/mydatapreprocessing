@@ -18,10 +18,11 @@ Example:
             password="Ahojdatadata123",
         )
 """
+import mylogging
+import importlib
 
 # Lazy imports
 # import pandas as pd
-# import pyodbc
 # from sqlalchemy import create_engine
 # import urllib
 
@@ -160,6 +161,12 @@ def create_connection(
         username ((str, None)): Username. 'sa' for root on mssql.
         password (str): Password.
         trusted_connection (bool): If using windows authontification."""
+
+    if not importlib.util.find_spec("sqlalchemy"):
+        raise ModuleNotFoundError(
+            mylogging.return_str("Using databases. Install with `pip install wfdb`")
+        )
+
     from sqlalchemy import create_engine
     import urllib
 

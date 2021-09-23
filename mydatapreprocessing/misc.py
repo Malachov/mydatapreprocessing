@@ -3,6 +3,8 @@ import pandas as pd
 import json
 import textwrap
 
+import mylogging
+
 from mydatapreprocessing.preprocessing import remove_the_outliers
 
 
@@ -69,6 +71,12 @@ def add_none_to_gaps(df):
     Returns:
         pd.DataFrame: Dataframe with None row inserted in time gaps.
 
+    Raises:
+        NotImplementedError: String values are not supported, use only numeric columns.
+
+    Note:
+        Df will be converted to float64 dtypes, to be able to use np.nan.
+
     Example:
         >>> data = pd.DataFrame([[0, 1]] * 7, index=[0.1, 0.2, 0.3, 1.0, 1.1, 1.2, 2.0])
         >>> data
@@ -93,6 +101,7 @@ def add_none_to_gaps(df):
         1.3  NaN  NaN
         2.0  0.0  1.0
     """
+
     sampling = remove_the_outliers(
         np.diff(df.index[:50]).reshape(-1, 1), threshold=1
     ).mean()
@@ -103,11 +112,22 @@ def add_none_to_gaps(df):
     for i in df.index:
         if memory and i - memory > sampling_threshold:
             nons.append(
-                pd.DataFrame([[np.nan] * df.shape[1]], index=[memory + sampling])
+                pd.DataFrame(
+                    [[np.nan] * df.shape[1]],
+                    index=[memory + sampling],
+                    columns=df.columns,
+                )
             )
         memory = i
 
-    return pd.concat([df, *nons]).sort_index()
+    try:
+        result = pd.concat([df.astype("float64"), *nons]).sort_index()
+        return result
+    except NotImplementedError:
+        mylogging.traceback(
+            "If object dtype in DataFrame, it will fail. Use only numeeric dtypes."
+        )
+        raise
 
 
 def edit_table_to_printable(

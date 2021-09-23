@@ -116,7 +116,7 @@ Examples:
     ... )
 
 """
-__version__ = "2.0.5"
+__version__ = "2.0.6"
 __author__ = "Daniel Malachov"
 __license__ = "MIT"
 __email__ = "malachovd@seznam.cz"

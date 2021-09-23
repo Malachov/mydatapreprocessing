@@ -1,7 +1,6 @@
-scipy
-sklearn
 fastparquet
 pyarrow
 xlrd
 openpyxl
-wfdb
+sqlalchemy
+pyodbc
