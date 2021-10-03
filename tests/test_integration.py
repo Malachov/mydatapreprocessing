@@ -2,7 +2,6 @@ import numpy as np
 
 import mypythontools
 
-# Find paths and add to sys.path to be able to import local modules
 mypythontools.tests.setup_tests()
 
 import mydatapreprocessing as mdp
@@ -48,6 +47,4 @@ def test_integration():
         standardizeit="01",
     )
 
-    assert not np.isnan(np.min(data_preprocessed_df.values)) and not np.isnan(
-        np.min(data_preprocessed)
-    )
+    assert not np.isnan(np.min(data_preprocessed_df.values)) and not np.isnan(np.min(data_preprocessed))

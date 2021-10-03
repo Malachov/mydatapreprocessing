@@ -3,7 +3,6 @@ import pandas as pd
 
 import mypythontools
 
-# Find paths and add to sys.path to be able to import local modules
 mypythontools.tests.setup_tests()
 
 
@@ -39,7 +38,7 @@ def test_preprocessing():
     # Predicted column moved to index 0, but for test reason test, use different one
     processed_df, _, final_scaler_df = mdpp.preprocess_data(
         df_df,
-        remove_outliers=1,
+        remove_outliers=True,
         correlation_threshold=0.9,
         data_transform="difference",
         standardizeit="standardize",
@@ -55,7 +54,7 @@ def test_preprocessing():
 
     processed_df_2, _, final_scaler_df_2 = mdpp.preprocess_data(
         data_df,
-        remove_outliers=1,
+        remove_outliers=True,
         correlation_threshold=0.9,
         data_transform="difference",
         standardizeit="standardize",
@@ -69,9 +68,7 @@ def test_preprocessing():
         data_transform="difference",
     )
 
-    correct_preprocessing = np.array(
-        [[-0.707107, -0.707107], [1.414214, 1.414214], [-0.707107, -0.707107]]
-    )
+    correct_preprocessing = np.array([[-0.707107, -0.707107], [1.414214, 1.414214], [-0.707107, -0.707107]])
 
     check_1 = np.allclose(processed_df.values, correct_preprocessing)
     check_2 = np.allclose(processed_df_2, correct_preprocessing)
@@ -97,10 +94,6 @@ def test_remove_nans():
 
     not_removed = mdpp.data_consolidation(data, remove_nans_or_replace=np.nan)
 
-    mdpp.data_consolidation(data, remove_nans_threshold=0.5).shape[
-        1
-    ] > mdpp.data_consolidation(data, remove_nans_threshold=0.8).shape[1]
-
     assert (
         np.isnan(not_removed.values).any()
         and mdpp.data_consolidation(data, remove_nans_threshold=0.5).shape[1]
@@ -109,29 +102,19 @@ def test_remove_nans():
 
 
 def test_binnig():
-    mdpp.binning(np.array(range(10)), bins=3, type="cut")
+    mdpp.binning(np.array(range(10)), bins=3, binning_type="cut")
 
 
 def test_embedding():
-    data = pd.DataFrame(
-        [[1, "e", "e"], [2, "e", "l"], [3, "r", "v"], [4, "e", "r"], [5, "r", "r"]]
-    )
+    data = pd.DataFrame([[1, "e", "e"], [2, "e", "l"], [3, "r", "v"], [4, "e", "r"], [5, "r", "r"]])
 
-    embedded_one_hot = mdpp.categorical_embedding(
-        data, embedding="one-hot", unique_threshlold=0.5
-    )
-    embedded_label = mdpp.categorical_embedding(
-        data, embedding="label", unique_threshlold=0.5
-    )
+    embedded_one_hot = mdpp.categorical_embedding(data, embedding="one-hot", unique_threshold=0.5)
+    embedded_label = mdpp.categorical_embedding(data, embedding="label", unique_threshold=0.5)
 
     label_supposed_result = np.array([[1, 0], [2, 0], [3, 1], [4, 0], [5, 1]])
-    one_hot_supposed_result = np.array(
-        [[1, 1, 0], [2, 1, 0], [3, 0, 1], [4, 1, 0], [5, 0, 1]]
-    )
+    one_hot_supposed_result = np.array([[1, 1, 0], [2, 1, 0], [3, 0, 1], [4, 1, 0], [5, 0, 1]])
 
-    embedded_label_shorter = mdpp.categorical_embedding(
-        data, embedding="label", unique_threshlold=0.99
-    )
+    embedded_label_shorter = mdpp.categorical_embedding(data, embedding="label", unique_threshold=0.99)
 
     assert all(
         [
@@ -148,7 +131,7 @@ def test_resample():
         csv_style={"sep": ",", "decimal": "."},
     )
     resampled = mdpp.data_consolidation(data, datetime_column="Date", freq="M")
-    assert len(resampled) < len(data) and len(resampled) > 1
+    assert len(data) > len(resampled) > 1
 
 
 def test_fit_power_transform():

@@ -1,4 +1,4 @@
-mylogging>=3.0.3
+mylogging>=3.0.10
 numpy
 pandas
 requests

@@ -1,4 +1,2 @@
 mypythontools>=0.0.72
-pytest
-pytest-cov
 docker

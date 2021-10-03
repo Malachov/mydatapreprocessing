@@ -1,5 +1,5 @@
-"""Module include two functions: database_load and database_deploy. First download data from database - it's necessary to set up
-connect credentials. The database_deploy than deploy data to the database server.
+"""Module include two functions: database_load and database_deploy. First download data from database - it's
+necessary to set up connect credentials. The database_deploy than deploy data to the database server.
 
 It is working only for mssql server so far.
 
@@ -18,35 +18,43 @@ Example:
             password="Ahojdatadata123",
         )
 """
+from __future__ import annotations
+import importlib.util
+from typing import Union, TYPE_CHECKING
+
+import pandas as pd
+
 import mylogging
-import importlib
 
 # Lazy imports
-# import pandas as pd
-# from sqlalchemy import create_engine
-# import urllib
+if TYPE_CHECKING:
+    import sqlalchemy
+    import urllib
 
 
 def database_load(
-    query,
-    server,
-    database,
-    driver="{SQL Server}",
-    username=None,
-    password=None,
-    trusted_connection=None,
-):
-    """Load database into dataframe and create datetime index. !!! This function have to be change for every particular database !!!
+    query: str,
+    server: str,
+    database: str,
+    port: Union[str, int, None] = None,
+    driver: str = "{SQL Server}",
+    username: Union[str, None] = None,
+    password: Union[str, None] = None,
+    trusted_connection: bool = False,
+) -> pd.DataFrame:
+    """Load database into dataframe and create datetime index. !!! This function have to be change for every
+    particular database !!!
 
     Args:
-        query (str, optional): Used query.
-        server (string): Name of server.
+        query (str): Used query.
+        server (str): Name of server.
         database (str): Name of database.
-        driver (str): Used driver. One can be downloaded on https://docs.microsoft.com/en-us/sql/connect/odbc/download-odbc-driver-for-sql-server?view=sql-server-ver15
+        port (Union[str, int, None], optional): Used port. May work with None. Defaults to None.
+        driver (str, optional): Used driver. One can be downloaded on https://docs.microsoft.com/en-us/sql/connect/odbc/download-odbc-driver-for-sql-server?view=sql-server-ver15
             Defaults to '{SQL Server}'.
-        username ((str, None)): Username. 'sa' for root on mssql.
-        password (str): Password.
-        trusted_connection (bool): If using windows authontification.
+        username (Union[str, None], optional): Username. 'sa' for root on mssql.
+        password (Union[str, None], optional): Password.
+        trusted_connection (bool, optional): If using windows authentication.
 
     Returns:
         pd.DataFrame: Dataframe with data from database based on input SQL query.
@@ -66,7 +74,7 @@ def database_load(
                     INNER JOIN dbo.DimDateTime D
                     ON F.DimDateTimeId = D.DimDateTimeId
 
-                WHERE      contidion = 1
+                WHERE      condition = 1
                     and    condition2 = 1
                     and    DimOperationOutId = 69
 
@@ -77,12 +85,10 @@ def database_load(
                     {col_desc}
             '''
     """
-
-    import pandas as pd
-
     connection = create_connection(
         server=server,
         database=database,
+        port=port,
         driver=driver,
         username=username,
         password=password,
@@ -94,36 +100,36 @@ def database_load(
 
 
 def database_write(
-    df,
-    server,
-    database,
-    table,
-    port=None,
-    index=False,
-    driver="{SQL Server}",
-    username=None,
-    password=None,
-    trusted_connection=None,
-    schema=None,
-    if_exists="append",
-):
+    df: pd.DataFrame,
+    server: str,
+    database: str,
+    table: str,
+    index: bool = False,
+    port: Union[str, int, None] = None,
+    driver: str = "{SQL Server}",
+    username: Union[str, None] = None,
+    password: Union[str, None] = None,
+    trusted_connection: bool = False,
+    schema: str = None,
+    if_exists: str = "append",
+) -> None:
     """Deploy dataframe to SQL server.
 
     Args:
         df (pd.DataFrame): Dataframe passed to database.
-        server (string): Name of server.
+        server (str): Name of server.
         database (str): Name of database.
         table (str): Used table.
-        port ((str, int)): Used port.
-        index (bool): Whether use index as a column
-        driver (str): Used driver. One can be downloaded on https://docs.microsoft.com/en-us/sql/connect/odbc/download-odbc-driver-for-sql-server?view=sql-server-ver15
-            Defaults to '{SQL Server}'.        username
-        username ((str, None)): Username. 'sa' for root on mssql.
-        password (str): Password.
-        trusted_connection (bool): If using windows authontification.
+        index (bool, optional): Whether use index as a column Defaults to False.
+        port (Union[str, int, None], optional): Used port. May work with None. Defaults to None.
+        driver (str, optional): Used driver. One can be downloaded on https://docs.microsoft.com/en-us/sql/connect/odbc/download-odbc-driver-for-sql-server?view=sql-server-ver15
+            Defaults to '{SQL Server}'.
+        username (Union[str, None], optional): Username. 'sa' for root on mssql. Defaults to None.
+        password (Union[str, None], optional): Password. Defaults to None.
+        trusted_connection (bool): If using windows authentication. You dont need username and password then. Defaults to False.
         schema (str): Used schema. Defaults to None.
         if_exists (str): 'fail', 'replace', 'append'. Define whether append new
-            data on the end, remove and replace or fail if table exists.
+            data on the end, remove and replace or fail if table exists. Defaults to 'append'.
     """
 
     connection = create_connection(
@@ -136,39 +142,35 @@ def database_write(
         trusted_connection=trusted_connection,
     )
 
-    df.to_sql(
-        name=table, con=connection, if_exists=if_exists, index=index, schema=schema
-    )
+    df.to_sql(name=table, con=connection, if_exists=if_exists, index=index, schema=schema)
 
 
 def create_connection(
-    server,
-    database,
-    port=None,
-    driver="{SQL Server}",
-    username=None,
-    password=None,
-    trusted_connection=None,
-):
-    """Create connection, that can be used in another function to connect the databse.
+    server: str,
+    database: str,
+    port: Union[str, int, None] = None,
+    driver: str = "{SQL Server}",
+    username: Union[str, None] = None,
+    password: Union[str, None] = None,
+    trusted_connection: bool = False,
+) -> "sqlalchemy.engine.base.Engine":
+    """Create connection, that can be used in another function to connect the database.
 
     Args:
-        server (string): Name of server.
+        server (str): Name of server.
         database (str): Name of database.
-        port ((str, int)): Used port. May work with None.
-        driver (str): Used driver. One can be downloaded on https://docs.microsoft.com/en-us/sql/connect/odbc/download-odbc-driver-for-sql-server?view=sql-server-ver15
+        port (Union[str, int, None], optional): Used port. May work with None. Defaults to None.
+        driver (str, optional): Used driver. One can be downloaded on https://docs.microsoft.com/en-us/sql/connect/odbc/download-odbc-driver-for-sql-server?view=sql-server-ver15
             Defaults to '{SQL Server}'.
-        username ((str, None)): Username. 'sa' for root on mssql.
-        password (str): Password.
-        trusted_connection (bool): If using windows authontification."""
+        username (Union[str, None], optional): Username. 'sa' for root on mssql. Defaults to None.
+        password (Union[str, None], optional): Password. Defaults to None.
+        trusted_connection (bool, optional): If using windows authentication. Defaults to False."""
 
     if not importlib.util.find_spec("sqlalchemy"):
-        raise ModuleNotFoundError(
-            mylogging.return_str("Using databases. Install with `pip install wfdb`")
-        )
+        raise ModuleNotFoundError(mylogging.return_str("Using databases. Install with `pip install wfdb`"))
 
     from sqlalchemy import create_engine
-    import urllib
+    import urllib.parse
 
     connection_string = f"DRIVER={driver};SERVER={server};DATABASE={database};"
     if port:

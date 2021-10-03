@@ -1,13 +1,13 @@
 # mydatapreprocessing
 
-[![Python versions](https://img.shields.io/pypi/pyversions/mydatapreprocessing.svg)](https://pypi.python.org/pypi/mydatapreprocessing/) [![PyPI version](https://badge.fury.io/py/mydatapreprocessing.svg)](https://badge.fury.io/py/mydatapreprocessing) [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/Malachov/mydatapreprocessing/HEAD?filepath=demo.ipynb) [![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/Malachov/mydatapreprocessing.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/Malachov/mydatapreprocessing/context:python)  [![Documentation Status](https://readthedocs.org/projects/mydatapreprocessing/badge/?version=latest)](https://mydatapreprocessing.readthedocs.io/?badge=latest) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![codecov](https://codecov.io/gh/Malachov/mydatapreprocessing/branch/master/graph/badge.svg)](https://codecov.io/gh/Malachov/mydatapreprocessing)
+[![Python versions](https://img.shields.io/pypi/pyversions/mydatapreprocessing.svg)](https://pypi.python.org/pypi/mydatapreprocessing/) [![PyPI version](https://badge.fury.io/py/mydatapreprocessing.svg)](https://badge.fury.io/py/mydatapreprocessing) [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/Malachov/mydatapreprocessing/HEAD?filepath=demo.ipynb) [![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/Malachov/mydatapreprocessing.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/Malachov/mydatapreprocessing/context:python) [![Documentation Status](https://readthedocs.org/projects/mydatapreprocessing/badge/?version=latest)](https://mydatapreprocessing.readthedocs.io/?badge=latest) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![codecov](https://codecov.io/gh/Malachov/mydatapreprocessing/branch/master/graph/badge.svg)](https://codecov.io/gh/Malachov/mydatapreprocessing)
 
-Load data from web link or local file (json, csv, excel file, parquet, h5...), consolidate it (resample data, clean NaN values, do string embedding) derive new featurs via columns derivation and do preprocessing like
+Load data from web link or local file (json, csv, Excel file, parquet, h5...), consolidate it (resample data, clean NaN values, do string embedding) derive new featurs via columns derivation and do preprocessing like
 standardization or smoothing. If you want to see how functions works, check it's docstrings - working examples with printed results are also in tests - visual.py.
 
 ## Links
 
-[Repo on github](https://github.com/Malachov/mydatapreprocessing)
+[Repo on GitHub](https://github.com/Malachov/mydatapreprocessing)
 
 [Official readthedocs documentation](https://mydatapreprocessing.readthedocs.io)
 
@@ -91,7 +91,7 @@ transformation, so unpack it with _
 data_preprocessed, _, _ = mdp.preprocessing.preprocess_data(
     data_extended,
     remove_outliers=True,
-    smoothit=False,
+    smoothit=None,
     correlation_threshold=False,
     data_transform=False,
     standardizeit="standardize",

@@ -3,7 +3,6 @@ import pandas as pd
 
 import mypythontools
 
-# Find paths and add to sys.path to be able to import local modules
 mypythontools.tests.setup_tests()
 
 

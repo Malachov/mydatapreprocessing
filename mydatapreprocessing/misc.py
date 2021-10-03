@@ -1,14 +1,15 @@
-import numpy as np
-import pandas as pd
 import json
 import textwrap
+from typing import Union
+
+import pandas as pd
+import numpy as np
 
 import mylogging
+from .preprocessing import remove_the_outliers
 
-from mydatapreprocessing.preprocessing import remove_the_outliers
 
-
-def rolling_windows(data, window):
+def rolling_windows(data: np.ndarray, window: int) -> np.ndarray:
     """Generate matrix of rolling windows.
 
     Example:
@@ -31,15 +32,20 @@ def rolling_windows(data, window):
     return np.lib.stride_tricks.as_strided(data, shape=shape, strides=strides)
 
 
-def split(data, predicts=7):
-    """Divide data set on train and test set. Predicted column is supposed to be 0.
+def split(
+    data: Union[pd.DataFrame, np.ndarray], predicts: int = 7
+) -> tuple[Union[pd.DataFrame, np.ndarray], Union[pd.Series, np.ndarray]]:
+    """Divide data set on train and test set. Predicted column is supposed to be 0. This is mostly for time series predictions,
+    so in test set there is only predicted column that can be directly used for error criterion evaluation. So this function is
+    different than usual train / test split.
 
     Args:
-        data (pd.DataFrame, np.ndarray): Time series data. ndim has to be 2, reshape if necessary.
+        data (Union[pd.DataFrame, np.ndarray]): Time series data. ndim has to be 2, reshape if necessary.
         predicts (int, optional): Number of predicted values. Defaults to 7.
 
     Returns:
-        pd.DataFrame, np.ndarray: Train set and test set. If input in numpy array, then also output in array, if dataframe input, then dataframe output.
+        tuple[Union[pd.DataFrame, np.ndarray], Union[pd.Series, np.ndarray]]: Train set and test set. If input in numpy array, then also output in array,
+        if dataframe input, then dataframe output.
 
     Example:
 
@@ -61,7 +67,7 @@ def split(data, predicts=7):
     return train, test
 
 
-def add_none_to_gaps(df):
+def add_none_to_gaps(df: pd.DataFrame) -> pd.DataFrame:
     """If empty windows in sampled signal, it will add None values (one row) to the empty window start.
     Reason is to correct plotting. Points are connected, but not between two gaps.
 
@@ -102,9 +108,7 @@ def add_none_to_gaps(df):
         2.0  0.0  1.0
     """
 
-    sampling = remove_the_outliers(
-        np.diff(df.index[:50]).reshape(-1, 1), threshold=1
-    ).mean()
+    sampling = remove_the_outliers(np.diff(df.index[:50]).reshape(-1, 1), threshold=1).mean()
     sampling_threshold = sampling * 3
     nons = []
     memory = None
@@ -124,23 +128,24 @@ def add_none_to_gaps(df):
         result = pd.concat([df.astype("float64"), *nons]).sort_index()
         return result
     except NotImplementedError:
-        mylogging.traceback(
-            "If object dtype in DataFrame, it will fail. Use only numeeric dtypes."
-        )
+        mylogging.traceback("If object dtype in DataFrame, it will fail. Use only numeeric dtypes.")
         raise
 
 
 def edit_table_to_printable(
-    df, line_length_limit=16, round_decimals=3, number_length_limit=10e8
-):
+    df: pd.DataFrame,
+    line_length_limit: int = 16,
+    round_decimals: int = 3,
+    number_length_limit: Union[int, float] = 10e8,
+) -> pd.DataFrame:
     """Edit dataframe to be able to use in tabulate (or somewhere else).
 
     Args:
         df (pd.DataFrame): Input data with numeric or text columns.
         line_length_limit (int, optional): Add line breaks if line too long. Defaults to 16.
         round_decimals (int, optional): Round numeric columns to defined decimals. Defaults to 3.
-        number_length_limit ((int, float), optional): If there is some very big or very small number,
-        convert format to scientific notation. Defaults to 10e8.
+        number_length_limit (Union[int, float], optional): If there is some very big or very small number,
+            convert format to scientific notation. Defaults to 10e8.
 
     Returns:
         pd.DataFrame: Dataframe with shorter and more readable to be printed (usually in table).
@@ -161,11 +166,7 @@ def edit_table_to_printable(
     """
 
     df.columns = [
-        (
-            textwrap.fill(i, line_length_limit)
-            if (isinstance(i, str) and len(i)) > line_length_limit
-            else i
-        )
+        (textwrap.fill(i, line_length_limit) if (isinstance(i, str) and len(i)) > line_length_limit else i)
         for i in df.columns
     ]
 

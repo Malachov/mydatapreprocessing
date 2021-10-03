@@ -7,6 +7,7 @@ In `add_frequency_columns` you can add fast fourier transform results maximums o
 """
 
 import itertools
+from typing import Union, cast
 
 import numpy as np
 import pandas as pd
@@ -17,26 +18,26 @@ from .misc import rolling_windows
 
 
 def add_derived_columns(
-    data,
-    differences=True,
-    second_differences=True,
-    multiplications=True,
-    rolling_means=10,
-    rolling_stds=10,
-    mean_distances=True,
-):
-    """This will create many columns that can be valuable for making predictions like difference, or
-    rolling mean or distance from average. Computed columns will be appened to original data. It will process all the columns,
-    so a lot of redundant data will be created. It is necessary do some feature extraction afterwards to remove noncorrelated columns.
+    data: pd.DataFrame,
+    differences: bool = True,
+    second_differences: bool = True,
+    multiplications: bool = True,
+    rolling_means: Union[int, None] = 10,
+    rolling_stds: Union[int, None] = 10,
+    mean_distances: bool = True,
+) -> pd.DataFrame:
+    """This will create many columns that can be valuable for making predictions like difference, or rolling mean or
+    distance from average. Computed columns will be appened to original data. It will process all the columns,
+    so a lot of redundant data will be created. It is necessary do some feature extraction afterwards to remove
+    noncorrelated columns.
 
     Args:
         data (pd.DataFrame): Data that we want to extract more information from.
         differences (bool, optional): Compute difference between n and n-1 sample. Defaults to True.
-        second_difference (bool, optional): Compute second difference. Defaults to True.
+        second_differences (bool, optional): Compute second difference. Defaults to True.
         multiplications (bool, optional): Column multiplicated with other column. Defaults to True.
-        rolling_means ((int, None), optional): Rolling mean with defined window. Defaults to 10.
-        rolling_stds ((int, None), optional): Rolling std with defined window. Defaults to 10.
-        window (int, optional): Window used for rolling_stds and rolling_means.
+        rolling_means (Union[int, None], None), optional): Rolling mean with defined window. Defaults to 10.
+        rolling_stds (Union[int, None], optional): Rolling std with defined window. Defaults to 10.
         mean_distances (bool, optional): Distance from average. Defaults to True.
 
     Returns:
@@ -102,24 +103,18 @@ def add_derived_columns(
 
         for i in range(data.shape[1]):
             mean_distanced[i] = data.values.T[i] - data.values.T[i].mean()
-        results.append(
-            pd.DataFrame(
-                mean_distanced.T, columns=[f"{i} - Mean distance" for i in data.columns]
-            )
-        )
+        results.append(pd.DataFrame(mean_distanced.T, columns=[f"{i} - Mean distance" for i in data.columns]))
 
     min_length = min(len(i) for i in results)
 
-    return pd.concat(
-        [i.iloc[-min_length:].reset_index(drop=True) for i in results], axis=1
-    )
+    return pd.concat([i.iloc[-min_length:].reset_index(drop=True) for i in results], axis=1)
 
 
-def add_frequency_columns(data, window):
+def add_frequency_columns(data: Union[pd.DataFrame, np.ndarray], window: int) -> pd.DataFrame:
     """Use fourier transform on running window and add it's maximum and std as new data column.
 
     Args:
-        data (pd.DataFrame): Data we want to use.
+        data (Union[pd.DataFrame, np.ndarray]): Data we want to use.
         window (int): length of running window.
 
     Returns:

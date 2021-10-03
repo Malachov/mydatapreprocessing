@@ -6,7 +6,6 @@ import numpy as np
 
 import mypythontools
 
-# Find paths and add to sys.path to be able to import local modules
 mypythontools.tests.setup_tests()
 
 
@@ -22,9 +21,7 @@ def test_visual(print_preprocessing=1, print_postprocessing=1):
     np.set_printoptions(suppress=True, precision=1)
 
     # Data must have 2 dimensions. If you have only one column, reshape(-1, 1)!!!
-    data = np.array(
-        [[1, 3, 5, 2, 3, 4, 5, 66, 3, 2, 4, 5, 6, 0, 0, 0, 0, 7, 3, 4, 55, 3, 2]]
-    ).T
+    data = np.array([[1, 3, 5, 2, 3, 4, 5, 66, 3, 2, 4, 5, 6, 0, 0, 0, 0, 7, 3, 4, 55, 3, 2]]).T
 
     data_multi_col = np.array(
         [
@@ -108,7 +105,6 @@ def test_visual(print_preprocessing=1, print_postprocessing=1):
 
         ### Standardize ### \n
         Original: \n {data_multi_col} \n\nStandardized: \n{normalized_multi} \n
-        Inverse standardization: \n {scaler_multi.inverse_transform(normalized_multi[:, 0])} \n
 
         ### Split ### \n
         Original: \n {data_multi_col} \n\nsplited train: \n{mdp.misc.split(data_multi_col, predicts=2)[0]} \n \n\nsplited test: \n{mdp.misc.split(data_multi_col, predicts=2)[1]} \n
@@ -135,3 +131,7 @@ def test_visual(print_preprocessing=1, print_postprocessing=1):
 
         """
         )
+
+
+if __name__ == "__main__":
+    test_visual()

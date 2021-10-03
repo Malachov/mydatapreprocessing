@@ -15,11 +15,13 @@ Main function is `load_data` where you can find working examples.
 There is also function `get_file_paths` which open an dialog window in your operation system and let you
 choose your files in convenient way. This tuple output you can then insert into `load_data`.
 """
+from __future__ import annotations
 import mylogging
 
 import importlib
 from pathlib import Path
 import io
+from typing import Union, Any, Literal
 
 import pandas as pd
 
@@ -32,24 +34,24 @@ from . import generate_data
 
 
 def get_file_paths(
-    filetypes=[
+    filetypes: Union[list[str], list[tuple[str, str]]] = [
         ("csv", ".csv"),
         ("Excel (xlsx, xls)", ".xlsx .xls"),
         ("h5", ".h5"),
         ("parquet", ".parquet"),
         ("json", ".json"),
     ],
-    title="Select files",
-):
+    title: str = "Select files",
+) -> Union[tuple[str, ...], Literal[""]]:
     """Open dialog window where you can choose files you want to use. It will return tuple with string paths.
 
     Args:
-        filetypes (list, optional): Accepted file types / suffixes. List of strings or list of tuples.
+        filetypes (Union[list[str], list[tuple[str, str]]], optional): Accepted file types / suffixes. List of strings or list of tuples.
             Defaults to [("csv", ".csv"), ("Excel (xlsx, xls)", ".xlsx .xls"), ("h5", ".h5"), ("parquet", ".parquet"), ("json", ".json")].
         title (str, optional): Just a name of dialog window. Defaults to 'Select file'.
 
     Returns:
-        tuple: Tuple with string paths.
+        Union[tuple[str, ...], Literal[""]]: Tuple with string paths.
     """
     import tkinter as tk
     from tkinter import filedialog
@@ -63,15 +65,15 @@ def get_file_paths(
 
 
 def load_data(
-    data,
-    header="infer",
-    csv_style="infer",
-    predicted_table="",
-    max_imported_length=0,
-    request_datatype_suffix="",
-    data_orientation="",
-    ssl_verification=None,
-):
+    data: Any,
+    header: Union[str, int] = "infer",
+    csv_style: Union[dict, str] = "infer",
+    predicted_table: str = "",
+    max_imported_length: int = 0,
+    request_datatype_suffix: str = "",
+    data_orientation: str = "",
+    ssl_verification: Union[None, bool, str] = None,
+) -> pd.DataFrame:
 
     """Load data from path or url or other python format (numpy array, list, dict) into dataframe.
     Available formats are csv, excel xlsx, parquet, json or h5. Allow multiple files loading at once - just put
@@ -82,8 +84,8 @@ def load_data(
 
     Args:
         data (Any): Path, url. For examples check examples section.
-        header ((str, int), optional): Row index used as column names. If 'infer', it will be automatically choosed. Defaults to 'infer'.
-        csv_style ((dict, str), optional): Define CSV separator and decimal. En locale usually use {'sep': ",", 'decimal': "."}
+        header (Union[str, int], optional): Row index used as column names. If 'infer', it will be automatically choosed. Defaults to 'infer'.
+        csv_style (Union[dict, str], optional): Define CSV separator and decimal. En locale usually use {'sep': ",", 'decimal': "."}
             some Europian country use {'sep': ";", 'decimal': ","}. If 'infer' one of those two locales is automatically used. Defaults to 'infer'.
         predicted_table (str, optional): If using excel (xlsx) - it means what sheet to use, if json,
             it means what key values, if SQL, then it mean what table. Else it have no impact. Defaults to ''.
@@ -94,8 +96,8 @@ def load_data(
         data_orientation(str, optional): 'columns' or 'index'. If using json or dictionary, it describe how data are
             oriented. Default is 'columns' if None used. If orientation is records (in pandas terminology), it's detected
             automatically (therefore empty by default). Defaults to "".
-        ssl_verification(bool, optional): If using data from web, it use requests and sometimes, there can be ssl verification
-            error, this skip verification, with adding verify param to requests call.
+        ssl_verification(Union[None, bool, str], optional): If using data from web, it use requests and sometimes, there can be ssl verification
+            error, this skip verification, with adding verify param to requests call. It!s param of requests get function. Defaults to None.
 
     Raises:
         FileNotFoundError, TypeError, ValueError, ModuleNotFoundError: If not existing file, or url, or if necessary
@@ -112,7 +114,7 @@ def load_data(
 
         Allowed data formats for load_data are examples::
 
-            myarray_or_dataframe # Numpy array or Pandas.DataFrame
+            myarray_or_dataframe # Numpy array or pandas.DataFrame
             r"/home/user/my.json" # Local file. The same with .parquet, .h5, .json or .xlsx.
             "https://yoururl/your.csv" # Web url (with suffix). Same with json.
             "https://www.ncdc.noaa.gov/cag/global/time-series/globe/land_ocean/ytd/12/1880-2016.json" # In this case you have to specify
@@ -168,8 +170,7 @@ def load_data(
 
             # If not suffix inferred, then maybe url that return as request - than suffix have to be configured
             if not data_type_suffix or (
-                data_type_suffix not in ["csv", "json", "xlsx", "xls"]
-                and request_datatype_suffix
+                data_type_suffix not in ["csv", "json", "xlsx", "xls"] and request_datatype_suffix
             ):
                 data_type_suffix = request_datatype_suffix.lower()
 
@@ -206,9 +207,7 @@ def load_data(
                 except Exception:
                     request = None
 
-                if not request or not (
-                    request.status_code >= 200 and request.status_code < 300
-                ):
+                if not request or not (200 <= request.status_code < 300):
 
                     raise FileNotFoundError(
                         mylogging.return_str(
@@ -231,7 +230,7 @@ def load_data(
                     # Skip some lines if comments there
                     if isinstance(iterated_data, io.BytesIO):
                         data_line = iterated_data.readline()
-                        for i in range(20):
+                        for _ in range(20):
                             new_line = iterated_data.readline()
                             if new_line:
                                 data_line = new_line
@@ -242,7 +241,7 @@ def load_data(
                     else:
                         with open(iterated_data, "r") as data_read:
                             data_line = data_read.readline()
-                            for i in range(20):
+                            for _ in range(20):
                                 new_line = data_read.readline()
                                 if new_line:
                                     data_line = new_line
@@ -250,10 +249,7 @@ def load_data(
                                     break
 
                     data_line = str(data_line)
-                    if (
-                        data_line.count(";")
-                        and data_line.count(";") >= data_line.count(",") - 1
-                    ):
+                    if data_line.count(";") and data_line.count(";") >= data_line.count(",") - 1:
                         sep = ";"
                         decimal = ","
                     else:
@@ -266,9 +262,9 @@ def load_data(
 
                 try:
                     list_of_dataframes.append(
-                        pd.read_csv(
-                            iterated_data, header=header, sep=sep, decimal=decimal
-                        ).iloc[-max_imported_length:, :]
+                        pd.read_csv(iterated_data, header=header, sep=sep, decimal=decimal).iloc[
+                            -max_imported_length:, :
+                        ]
                     )
                 except UnicodeDecodeError:
                     list_of_dataframes.append(
@@ -282,9 +278,7 @@ def load_data(
                     )
                 except Exception:
                     raise RuntimeError(
-                        mylogging.return_str(
-                            "CSV load failed. Try to set correct `header` and `csv_style`"
-                        )
+                        mylogging.return_str("CSV load failed. Try to set correct `header` and `csv_style`")
                     )
 
             elif data_type_suffix == "xls":
@@ -314,9 +308,9 @@ def load_data(
                 if not predicted_table:
                     predicted_table = 0
                 list_of_dataframes.append(
-                    pd.read_excel(
-                        iterated_data, sheet_name=predicted_table, engine="openpyxl"
-                    ).iloc[-max_imported_length:, :]
+                    pd.read_excel(iterated_data, sheet_name=predicted_table, engine="openpyxl").iloc[
+                        -max_imported_length:, :
+                    ]
                 )
 
             elif data_type_suffix == "json":
@@ -326,9 +320,7 @@ def load_data(
                 if is_file:
                     with open(iterated_data) as json_file:
                         list_of_dataframes.append(
-                            json.load(json_file)[predicted_table]
-                            if predicted_table
-                            else json.load(json_file)
+                            json.load(json_file)[predicted_table] if predicted_table else json.load(json_file)
                         )
 
                 else:
@@ -339,14 +331,10 @@ def load_data(
                     )
 
             elif data_type_suffix in ("h5", "hdf5"):
-                list_of_dataframes.append(
-                    pd.read_hdf(iterated_data).iloc[-max_imported_length:, :]
-                )
+                list_of_dataframes.append(pd.read_hdf(iterated_data).iloc[-max_imported_length:, :])
 
             elif data_type_suffix in ("parquet"):
-                list_of_dataframes.append(
-                    pd.read_parquet(iterated_data).iloc[-max_imported_length:, :]
-                )
+                list_of_dataframes.append(pd.read_parquet(iterated_data).iloc[-max_imported_length:, :])
 
             else:
                 raise TypeError(

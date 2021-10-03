@@ -4,6 +4,7 @@
 - Refactored (backward incompatible) - now data loading functions are in `load_data` module and feature engineering functions are in `feature_engineering` module. Various functions not related to used modules are in `misc`.
 - Database module updated and tests done
 - Clean dataframe to table print function
+- Type hints
 
 ## v1.1
 

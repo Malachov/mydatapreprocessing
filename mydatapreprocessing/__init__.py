@@ -104,7 +104,7 @@ Examples:
     >>> data_preprocessed, _, _ = mdp.preprocessing.preprocess_data(
     ...     data,
     ...     remove_outliers=True,
-    ...     smoothit=False,
+    ...     smoothit=None,
     ...     correlation_threshold=False,
     ...     data_transform=False,
     ...     standardizeit="standardize",
@@ -116,7 +116,23 @@ Examples:
     ... )
 
 """
-__version__ = "2.0.6"
+import sys
+import mylogging
+
+if sys.version_info.major < 3 or (sys.version_info.major == 3 and sys.version_info.minor < 7):
+    raise RuntimeError(mylogging.return_str("Python version >=3.7 necessary."))
+
+from . import (
+    create_model_inputs,
+    database,
+    feature_engineering,
+    generate_data,
+    load_data,
+    misc,
+    preprocessing,
+)
+
+__version__ = "2.0.7"
 __author__ = "Daniel Malachov"
 __license__ = "MIT"
 __email__ = "malachovd@seznam.cz"
@@ -130,13 +146,3 @@ __all__ = [
     "misc",
     "preprocessing",
 ]
-
-from . import (
-    create_model_inputs,
-    database,
-    feature_engineering,
-    generate_data,
-    load_data,
-    misc,
-    preprocessing,
-)
