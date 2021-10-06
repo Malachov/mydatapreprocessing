@@ -1,7 +1,8 @@
-mylogging>=3.0.10
+mylogging>=3.0.12
 numpy
 pandas
 requests
 scipy
 sklearn
 wfdb
+typing_extensions

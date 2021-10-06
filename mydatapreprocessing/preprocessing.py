@@ -9,10 +9,11 @@ call all the functions based on input params for you. For inverse preprocessing 
 """
 
 from __future__ import annotations
+from typing import Type, Union, NamedTuple, Any, TYPE_CHECKING, cast
 import warnings
 import importlib.util
-from typing import Type, Union, NamedTuple, Any, TYPE_CHECKING, cast
 
+from typing_extensions import Literal
 import numpy as np
 import pandas as pd
 
@@ -39,11 +40,11 @@ def data_consolidation(
     datetime_column: Union[str, int, None] = "",
     freq: Union[str, None] = None,
     resample_function: str = "sum",
-    embedding: str = "label",
+    embedding: Literal["label", "one-hot"] = "label",
     unique_threshold: float = 0.6,
     remove_nans_threshold: float = 0.85,
     remove_nans_or_replace: Union[str, float] = "interpolate",
-    dtype: str = "float32",
+    dtype: Union[str, np.dtype, pd.DataFrame, list] = "float32",
 ) -> pd.DataFrame:
     """Transform input data in various formats and shapes into data in defined shape optimal for machine learning models, that other functions rely on.
     If you have data in other format than dataframe, use `load_data` first.
@@ -61,7 +62,7 @@ def data_consolidation(
         datetime_column (Union[str, int, None], optional): Name or index of datetime column. Defaults to None.
         freq (Union[str, None], optional): Frequency of resampled data. Defaults to None.
         resample_function (str, optional): 'sum' or 'mean'. Whether sum resampled columns, or use average. Defaults to 'sum'.
-        embedding(str, optional): 'label' or 'one-hot'. Categorical encoding. Create numbers from strings. 'label' give each
+        embedding(Literal["label", "one-hot"], optional): 'label' or 'one-hot'. Categorical encoding. Create numbers from strings. 'label' give each
             category (unique string) concrete number. Result will have same number of columns. 'one-hot' create for every
             category new column. Only columns, where are strings repeating (unique_threshold) will be used. Defaults to 'label'.
         unique_threshold(float, optional): Remove string columns, that have to many categories. E.g 0.9 define, that if
@@ -73,7 +74,7 @@ def data_consolidation(
         remove_nans_or_replace (Union[str, float], optional): 'interpolate', 'remove', 'neighbor', 'mean' or value. Remove or replace
             rest nan values. If you want to keep nan, setup value to np.nan. If you want to use concrete value, use float or
             int type. Defaults to 'interpolate'.
-        dtype (str, optional): Output dtype. Defaults to 'float32'.
+        dtype (Union[str, np.dtype, pd.DataFrame, list], optional): Output dtype. For possible inputs check pandas function `astype`. Defaults to 'float32'.
 
     Raises:
         KeyError, TypeError: May happen if wrong params. E.g. if predicted column name not found in dataframe.
@@ -292,10 +293,10 @@ def preprocess_data(
     remove_outliers: bool = False,
     smoothit: Union[None, tuple[int, int]] = None,
     correlation_threshold: float = 0,
-    data_transform: Union[str, None] = None,
+    data_transform: Literal["difference", None] = None,
     standardizeit: Union[str, None] = "standardize",
     bins: Union[None, int] = False,
-    binning_type: str = "cut",
+    binning_type: Literal["cut", "qcut"] = "cut",
 ) -> PreprocessedData:
     """Main preprocessing function, that call other functions based on configuration. Mostly for preparing
     data to be optimal as input into machine learning models.
@@ -307,7 +308,7 @@ def preprocess_data(
             Insert tuple with (window, polynom_order) parameters as in `smooth` function e.g (11, 2). Defaults to False.
         correlation_threshold (float, optional): Whether remove columns that are corelated less than configured value
             Value must be between 0 and 1. But if 0, than None correlation threshold is applied. Defaults to 0.
-        data_transform (Union[str, None], optional): Whether transform data. 'difference' transform data into differences between
+        data_transform (Literal["difference", None], optional): Whether transform data. 'difference' transform data into differences between
             neighbor values. Defaults to None.
         standardizeit (Union[str, None], optional): How to standardize data. '01' and '-11' means scope from to for normalization.
             'robust' use RobustScaler and 'standard' use StandardScaler - mean is 0 and std is 1. If no standardization, use None.
@@ -357,7 +358,7 @@ def preprocess_data_inverse(
     data: np.ndarray,
     standardizeit: Union[str, None] = None,
     final_scaler: Union[None, "ScalerType"] = None,
-    data_transform: Union[str, None] = None,
+    data_transform: Literal["difference", None] = None,
     last_undiff_value: Union[None, Any] = None,
 ) -> np.ndarray:
     """Undo all data preprocessing to get real data. Not not inverse all the columns, but only predicted one.
@@ -367,7 +368,7 @@ def preprocess_data_inverse(
         data (np.ndarray): One dimension (one column) preprocessed data. Do not use ndim > 1.
         standardizeit (Union[str, None], optional): Whether use inverse standardization and what. Choices [None, 'standardize', '-11', '01', 'robust']. Defaults to False.
         final_scaler (sklearn.preprocessing.__x__scaler, optional): Scaler used in standardization. Defaults to None.
-        data_transform (Union[str, None], optional): Use data transformation. Choices [False, 'difference]. Defaults to False.
+        data_transform (Literal["difference", None], optional): Use data transformation. Choices [False, 'difference]. Defaults to False.
         last_undiff_value (Union[None, Any], optional): Last used value in difference transform. Defaults to None.
 
     Returns:
@@ -405,13 +406,13 @@ def preprocess_data_inverse(
 
 
 def categorical_embedding(
-    data: pd.DataFrame, embedding: str = "label", unique_threshold: float = 0.6
+    data: pd.DataFrame, embedding: Literal["label", "one-hot"] = "label", unique_threshold: float = 0.6
 ) -> pd.DataFrame:
     """Transform string categories such as 'US', 'FR' into numeric values, that can be used in machile learning model.
 
     Args:
         data (pd.DataFrame): Data with string (pandas Object dtype) columns.
-        embedding(str, optional): 'label' or 'one-hot'. Categorical encoding. Create numbers from strings. 'label'
+        embedding("label", "one-hot", optional): 'label' or 'one-hot'. Categorical encoding. Create numbers from strings. 'label'
             give each category (unique string) concrete number. Result will have same number of columns.
             'one-hot' create for every category new column. Only columns, where are strings repeating (unique_threshold)
             will be used. Defaults to "label".
@@ -584,12 +585,14 @@ def inverse_difference(differenced_predictions: np.ndarray, last_undiff_value: f
     return np.insert(differenced_predictions, 0, last_undiff_value).cumsum()[1:]
 
 
-def standardize(data: np.ndarray, used_scaler: str = "standardize") -> "tuple[np.ndarray, ScalerType]":
+def standardize(
+    data: np.ndarray, used_scaler: Literal["standardize", "01", "-11", "robust"] = "standardize"
+) -> "tuple[np.ndarray, ScalerType]":
     """Standardize or normalize data. More standardize methods available. Predicted column is supposed to be 0.
 
     Args:
         data (np.ndarray): Time series data.
-        used_scaler (str, optional): '01' and '-11' means scope from to for normalization.
+        used_scaler (Literal['standardize', '01', '-11', 'robust'], optional): '01' and '-11' means scope from to for normalization.
             'robust' use RobustScaler and 'standardize' use StandardScaler - mean is 0 and std is 1. Defaults to 'standardize'.
 
     Returns:
@@ -632,7 +635,11 @@ def standardize(data: np.ndarray, used_scaler: str = "standardize") -> "tuple[np
 
 
 def standardize_one_way(
-    data: Union[pd.DataFrame, np.ndarray], min: float, max: float, axis: int = 0, inplace: bool = False
+    data: Union[pd.DataFrame, np.ndarray],
+    min: float,
+    max: float,
+    axis: Literal[0, 1] = 0,
+    inplace: bool = False,
 ) -> Union[pd.DataFrame, np.ndarray]:
     """Own implementation of standardization. No inverse transformation available.
     Reason is for builded applications to do not carry sklearn with build.
@@ -641,7 +648,7 @@ def standardize_one_way(
         data (Union[pd.DataFrame, np.ndarray]): Data.
         min (float): Minimum in transformed axis.
         max (float): Max in transformed axis.
-        axis (int, optional): 0 to columns, 1 to rows. Defaults to 0.
+        axis (Literal[0, 1], optional): 0 to columns, 1 to rows. Defaults to 0.
         inplace (bool, optional): If true, no copy will be returned, but original object. Defaults to False.
 
     Returns:
@@ -670,7 +677,7 @@ def standardize_one_way(
 
 
 def binning(
-    data: Union[pd.DataFrame, np.ndarray], bins: int, binning_type: str = "cut"
+    data: Union[pd.DataFrame, np.ndarray], bins: int, binning_type: Literal["cut", "qcut"] = "cut"
 ) -> Union[pd.DataFrame, np.ndarray]:
     """Discretize value on defined number of bins. It will return the same shape of data, where middle
     (average) values of bins interval returned.
@@ -678,7 +685,7 @@ def binning(
     Args:
         data (Union[pd.DataFrame, np.ndarray]): Data for preprocessing. ndim = 2 (n_samples, n_features).
         bins (int): Number of bins - unique values.
-        binning_type (str, optional): "cut" for equal size of bins intervals (different number of members in bins)
+        binning_type (Literal["cut", "qcut"], optional): "cut" for equal size of bins intervals (different number of members in bins)
             or "qcut" for equal number of members in bins and various size of bins. It uses pandas cut
             or qcut function. Defaults to "cut".
 

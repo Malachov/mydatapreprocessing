@@ -130,6 +130,7 @@ def add_none_to_gaps(df: pd.DataFrame) -> pd.DataFrame:
         memory = i
 
     try:
+        # TODO astype True or false based on parameter
         result = pd.concat([df.astype("float64"), *nons]).sort_index()
         return result
     except NotImplementedError:

@@ -11,6 +11,7 @@ Functions are documented in it's docstrings.
 
 from __future__ import annotations
 from typing import NamedTuple, Union
+from typing_extensions import Literal
 
 import numpy as np
 
@@ -154,9 +155,16 @@ class Inputs(NamedTuple):
 
 def create_inputs(
     data: np.ndarray,
-    input_type_name: str,
+    input_type_name: Literal[
+        "data",
+        "data_one_column",
+        "one_in_one_out_constant",
+        "one_in_one_out",
+        "one_in_batch_out",
+        "sequentions",
+    ],
     input_type_params: dict,
-    mode: str = "validate",
+    mode: Literal["validate", "in_sample"] = "validate",
     predicts: int = 7,
     repeatit: int = 10,
     predicted_column_index: int = 0,
@@ -174,7 +182,7 @@ def create_inputs(
         input_type_params (dict): Dict of params used in make_sequences. E.g. {'n_steps_in': cls.default_n_steps_in,
             'n_steps_out': cls.predicts, 'default_other_columns_length': cls.default_other_columns_length, 'constant': 0}.
             Used only if `input_type_params` is 'sequentions'.
-        mode (str, optional): 'validate' or 'in_sample'. All data are used but if 'in_sample', 'repeatit' number of in-sample
+        mode (Literal["validate", "in_sample"], optional): 'validate' or 'in_sample'. All data are used but if 'in_sample', 'repeatit' number of in-sample
             inputs are used for test validation. If 'validate', just one last input (same like predict input is used). Test
             output is generated before this function in test / train split. Defaults to 'validate'.
         predicts (int, optional): Number of predicted values. Defaults to 7.

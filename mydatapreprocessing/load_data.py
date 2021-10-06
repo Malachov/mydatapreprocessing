@@ -22,7 +22,8 @@ import mylogging
 import importlib
 from pathlib import Path
 import io
-from typing import Union, Any, Literal
+from typing import Union, Any
+from typing_extensions import Literal
 
 import pandas as pd
 
