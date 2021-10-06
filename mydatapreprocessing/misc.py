@@ -1,3 +1,8 @@
+"""Miscellaneous functions that do not fit into other modules. You can find here for example functions for train / test split, 
+function for rolling windows, function that clean the dataframe for print in table or function that will add gaps to time series
+data where are no data so two remote points are not joined in plot."""
+
+from __future__ import annotations
 import json
 import textwrap
 from typing import Union

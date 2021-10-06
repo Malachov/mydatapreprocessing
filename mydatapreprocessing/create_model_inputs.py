@@ -8,6 +8,7 @@ that for defined inputs create outputs that we can compute error criterion like 
 
 Functions are documented in it's docstrings.
 """
+
 from __future__ import annotations
 from typing import NamedTuple, Union
 

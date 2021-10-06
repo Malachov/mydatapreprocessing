@@ -7,6 +7,7 @@ Then you can preprocess the data to be able to achieve even better results.
 There are many small functions that you can use separately, but there is main function `preprocess_data` that
 call all the functions based on input params for you. For inverse preprocessing use `preprocess_data_inverse`
 """
+
 from __future__ import annotations
 import warnings
 import importlib.util
@@ -355,7 +356,7 @@ def preprocess_data(
 def preprocess_data_inverse(
     data: np.ndarray,
     standardizeit: Union[str, None] = None,
-    final_scaler: "Union[None, ScalerType]" = None,
+    final_scaler: Union[None, "ScalerType"] = None,
     data_transform: Union[str, None] = None,
     last_undiff_value: Union[None, Any] = None,
 ) -> np.ndarray:

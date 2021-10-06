@@ -15,6 +15,7 @@ Main function is `load_data` where you can find working examples.
 There is also function `get_file_paths` which open an dialog window in your operation system and let you
 choose your files in convenient way. This tuple output you can then insert into `load_data`.
 """
+
 from __future__ import annotations
 import mylogging
 

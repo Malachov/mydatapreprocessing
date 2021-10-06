@@ -6,6 +6,7 @@ In `add_derived_columns` you add first and second derivations, multiplication of
 In `add_frequency_columns` you can add fast fourier transform results maximums on running window.
 """
 
+from __future__ import annotations
 import itertools
 from typing import Union, cast
 

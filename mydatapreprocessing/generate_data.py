@@ -3,6 +3,7 @@
 Only 'real' data are ECG heart signal returned with function get_ecg().
 """
 
+from __future__ import annotations
 import importlib.util
 from typing import cast
 
