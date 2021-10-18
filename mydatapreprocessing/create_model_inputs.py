@@ -10,7 +10,7 @@ Functions are documented in it's docstrings.
 """
 
 from __future__ import annotations
-from typing import NamedTuple, Union
+from typing import NamedTuple
 from typing_extensions import Literal
 
 import numpy as np
@@ -24,10 +24,10 @@ class Sequences(NamedTuple):
     returned from `make_sequences` function.
 
     Attributes:
-        X: Model inputs for learning. Shape is (n_samples, n_features).
-        y: Model outputs for learning. Shape is (n_prediction, n_member_of_predictions).
-        x_input: Input for model prediction. If serialized, shape is (1, n)
-        x_test_inputs: Small subset of model inputs that will be used for error criteria evaluation.
+        X (np.ndarray): Model inputs for learning. Shape is (n_samples, n_features).
+        y (np.ndarray): Model outputs for learning. Shape is (n_prediction, n_member_of_predictions).
+        x_input (np.ndarray): Input for model prediction. If serialized, shape is (1, n)
+        x_test_inputs (np.ndarray): Small subset of model inputs that will be used for error criteria evaluation.
     """
 
     X: np.ndarray
@@ -45,7 +45,7 @@ def make_sequences(
     repeatit: int = 10,
     predicted_column_index: int = 0,
     serialize_columns: bool = True,
-    default_other_columns_length: Union[None, int] = None,
+    default_other_columns_length: None | int = None,
 ) -> Sequences:
     """Function that create inputs and outputs to models like sklearn or tensorflow.
 
@@ -59,7 +59,7 @@ def make_sequences(
         predicted_column_index (int, optional): If multiavriate data, index of predicted column. Defaults to 0.
         serialize_columns(bool, optional): If multivariate data, serialize columns sequentions into one row.
             Defaults to True.
-        default_other_columns_length (Union[None, int], optional): Length of non-predicted columns that are evaluated in inputs.
+        default_other_columns_length (None | int, optional): Length of non-predicted columns that are evaluated in inputs.
             If None, than same length as predicted column. Defaults to None.
 
     Returns:
@@ -142,15 +142,15 @@ class Inputs(NamedTuple):
     """Inputs for machine learning applications returned from `create_inputs`.
 
     Attributes:
-        model_train_input: Data input for model - it can be timeseries like array([1, 2, 3, 4, 5...]) or it can be
+        model_train_input (np.ndarray | tuple[np.ndarray, np.ndarray]): Data input for model - it can be timeseries like array([1, 2, 3, 4, 5...]) or it can be
             the Sequences - tuple of X = array([[1, 2, 3], [2, 3, 4]...]) and y = ([[4], [5]...])
-        model_predict_input: Data inserting model to create prediction.
-        model_test_inputs: Subset of inputs that will be used for error criteria evaluation.
+        model_predict_input (np.ndarray): Data inserting model to create prediction.
+        model_test_inputs (list | np.ndarray): Subset of inputs that will be used for error criteria evaluation.
     """
 
-    model_train_input: Union[np.ndarray, tuple[np.ndarray, np.ndarray]]
+    model_train_input: np.ndarray | tuple[np.ndarray, np.ndarray]
     model_predict_input: np.ndarray
-    model_test_inputs: Union[list, np.ndarray]
+    model_test_inputs: list | np.ndarray
 
 
 def create_inputs(
@@ -276,7 +276,7 @@ def create_tests_outputs(data: np.ndarray, predicts: int = 7, repeatit: int = 10
         repeatit (int, optional): Number of created predictions that will be compared. Defaults to 10.
 
     Returns:
-        list: List of result arrays.
+        np.ndarray: Array of result outputs.
 
     Example:
         >>> create_tests_outputs(np.array(range(20)), predicts=3, repeatit=2)

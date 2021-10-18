@@ -9,7 +9,8 @@ call all the functions based on input params for you. For inverse preprocessing 
 """
 
 from __future__ import annotations
-from typing import Type, Union, NamedTuple, Any, TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Generic, Any, cast, Union
+from dataclasses import dataclass, astuple
 import warnings
 import importlib.util
 
@@ -18,7 +19,9 @@ import numpy as np
 import pandas as pd
 
 import mylogging
-from pandas.io.stata import StataReader
+
+from .custom_types import DataFrameOrArrayGeneric
+
 
 if TYPE_CHECKING:
     from sklearn.preprocessing import MinMaxScaler, RobustScaler, StandardScaler
@@ -33,18 +36,18 @@ if TYPE_CHECKING:
 
 
 def data_consolidation(
-    data: Union[pd.DataFrame, np.ndarray],
-    predicted_column: Union[int, str] = None,
+    data: pd.DataFrame | np.ndarray,
+    predicted_column: int | str = None,
     other_columns: int = 1,
     datalength: int = 0,
-    datetime_column: Union[str, int, None] = "",
-    freq: Union[str, None] = None,
+    datetime_column: str | int | None = "",
+    freq: str | None = None,
     resample_function: str = "sum",
     embedding: Literal["label", "one-hot"] = "label",
     unique_threshold: float = 0.6,
     remove_nans_threshold: float = 0.85,
-    remove_nans_or_replace: Union[str, float] = "interpolate",
-    dtype: Union[str, np.dtype, pd.DataFrame, list] = "float32",
+    remove_nans_or_replace: str | float = "interpolate",
+    dtype: str | np.dtype | pd.DataFrame | list = "float32",
 ) -> pd.DataFrame:
     """Transform input data in various formats and shapes into data in defined shape optimal for machine learning models, that other functions rely on.
     If you have data in other format than dataframe, use `load_data` first.
@@ -54,13 +57,13 @@ def data_consolidation(
         Predicted column is moved on index 0 !!!
 
     Args:
-        data (Union[pd.DataFrame, np.ndarray]): Input data in well standardized format.
-        predicted_column (Union[int, str], optional): Predicted column name or index. Move on first column and test if number.
+        data (pd.DataFrame | np.ndarray): Input data in well standardized format.
+        predicted_column (int | str, optional): Predicted column name or index. Move on first column and test if number.
             If None, it's ignored. Defaults to None.
         other_columns (int, optional): Whether use other columns or only predicted one. Defaults to 1.
         datalength (int, optional): Data length after resampling. Defaults to 0.
-        datetime_column (Union[str, int, None], optional): Name or index of datetime column. Defaults to None.
-        freq (Union[str, None], optional): Frequency of resampled data. Defaults to None.
+        datetime_column (str | int | None, optional): Name or index of datetime column. Defaults to None.
+        freq (str | None, optional): Frequency of resampled data. Defaults to None.
         resample_function (str, optional): 'sum' or 'mean'. Whether sum resampled columns, or use average. Defaults to 'sum'.
         embedding(Literal["label", "one-hot"], optional): 'label' or 'one-hot'. Categorical encoding. Create numbers from strings. 'label' give each
             category (unique string) concrete number. Result will have same number of columns. 'one-hot' create for every
@@ -71,10 +74,10 @@ def data_consolidation(
         remove_nans_threshold (float, optional): From 0 to 1. Require that many non-nan numeric values to not be deleted.
             E.G if value is 0.9 with column with 10 values, 90% must be numeric that implies max 1 np.nan can be presented,
             otherwise column will be deleted. Defaults to 0.85.
-        remove_nans_or_replace (Union[str, float], optional): 'interpolate', 'remove', 'neighbor', 'mean' or value. Remove or replace
+        remove_nans_or_replace (str | float, optional): 'interpolate', 'remove', 'neighbor', 'mean' or value. Remove or replace
             rest nan values. If you want to keep nan, setup value to np.nan. If you want to use concrete value, use float or
             int type. Defaults to 'interpolate'.
-        dtype (Union[str, np.dtype, pd.DataFrame, list], optional): Output dtype. For possible inputs check pandas function `astype`. Defaults to 'float32'.
+        dtype (str | np.dtype | pd.DataFrame | list, optional): Output dtype. For possible inputs check pandas function `astype`. Defaults to 'float32'.
 
     Raises:
         KeyError, TypeError: May happen if wrong params. E.g. if predicted column name not found in dataframe.
@@ -273,47 +276,53 @@ def data_consolidation(
     return data_for_predictions_df
 
 
-class PreprocessedData(NamedTuple):
+@dataclass
+class PreprocessedData(Generic[DataFrameOrArrayGeneric]):
     """To be able to do inverse preprocessing (function preprocess_data_inverse), there are some values
     going with preprocessed data.
 
     Attributes:
-        preprocessed: Preprocessed data.
-        last_undiff_value: Last value from predicted column. This is necessary for inverse diff transformation.
-        final_scaler: For inverse standardization.
+        preprocessed (DataFrameOrArrayGeneric): Preprocessed data.
+        last_undiff_value (Any): Last value from predicted column. This is necessary for inverse diff transformation.
+        final_scaler("ScalerType" | None): For inverse standardization.
     """
 
-    preprocessed: Union[pd.DataFrame, np.ndarray]
+    __slots__ = ("preprocessed", "last_undiff_value", "final_scaler")
+
+    preprocessed: DataFrameOrArrayGeneric
     last_undiff_value: Any
-    final_scaler: "ScalerType"
+    final_scaler: "ScalerType" | None
+
+    def __iter__(self):
+        yield from astuple(self)
 
 
 def preprocess_data(
-    data: Union[pd.DataFrame, np.ndarray],
+    data: DataFrameOrArrayGeneric,
     remove_outliers: bool = False,
-    smoothit: Union[None, tuple[int, int]] = None,
+    smoothit: None | tuple[int, int] = None,
     correlation_threshold: float = 0,
     data_transform: Literal["difference", None] = None,
-    standardizeit: Union[str, None] = "standardize",
-    bins: Union[None, int] = False,
+    standardizeit: Literal[None, "standardize", "01", "-11", "robust"] = "standardize",
+    bins: None | int = False,
     binning_type: Literal["cut", "qcut"] = "cut",
-) -> PreprocessedData:
+) -> PreprocessedData[DataFrameOrArrayGeneric]:
     """Main preprocessing function, that call other functions based on configuration. Mostly for preparing
     data to be optimal as input into machine learning models.
 
     Args:
-        data (Union[pd.DataFrame, np.ndarray]): Input data that we want to preprocess.
+        data (DataFrameOrArrayGeneric): Input data that we want to preprocess.
         remove_outliers (bool, optional): Whether remove unusual values far from average. Defaults to False.
-        smoothit (Union[None, tuple[int, int]], optional): Whether smooth the data with Savitzky-Golay filter.
+        smoothit (None | tuple[int, int], optional): Whether smooth the data with Savitzky-Golay filter.
             Insert tuple with (window, polynom_order) parameters as in `smooth` function e.g (11, 2). Defaults to False.
         correlation_threshold (float, optional): Whether remove columns that are corelated less than configured value
             Value must be between 0 and 1. But if 0, than None correlation threshold is applied. Defaults to 0.
         data_transform (Literal["difference", None], optional): Whether transform data. 'difference' transform data into differences between
             neighbor values. Defaults to None.
-        standardizeit (Union[str, None], optional): How to standardize data. '01' and '-11' means scope from to for normalization.
+        standardizeit (str | None, optional): How to standardize data. '01' and '-11' means scope from to for normalization.
             'robust' use RobustScaler and 'standard' use StandardScaler - mean is 0 and std is 1. If no standardization, use None.
             Defaults to 'standardize'.
-        bins (Union[None, int], optional): Whether to discretize value into defined number of bins (their average). None make no discretization,
+        bins (None | int, optional): Whether to discretize value into defined number of bins (their average). None make no discretization,
             int define number of bins. Defaults to False.
         binning_type (str, optional): "cut" for equal size of bins intervals (different number of members in bins)
             or "qcut" for equal number of members in bins and various size of bins. It uses pandas cut
@@ -351,25 +360,27 @@ def preprocess_data(
     if bins:
         preprocessed = binning(preprocessed, bins, binning_type)
 
-    return preprocessed, last_undiff_value, final_scaler
+    preprocessed = cast(DataFrameOrArrayGeneric, preprocessed)
+
+    return PreprocessedData[DataFrameOrArrayGeneric](preprocessed, last_undiff_value, final_scaler)
 
 
 def preprocess_data_inverse(
     data: np.ndarray,
-    standardizeit: Union[str, None] = None,
-    final_scaler: Union[None, "ScalerType"] = None,
+    standardizeit: str | None = None,
+    final_scaler: "ScalerType" | None = None,
     data_transform: Literal["difference", None] = None,
-    last_undiff_value: Union[None, Any] = None,
+    last_undiff_value: None | Any = None,
 ) -> np.ndarray:
     """Undo all data preprocessing to get real data. Not not inverse all the columns, but only predicted one.
     Only predicted column is also returned. Order is reverse than preprocessing. Output is in numpy array.
 
     Args:
         data (np.ndarray): One dimension (one column) preprocessed data. Do not use ndim > 1.
-        standardizeit (Union[str, None], optional): Whether use inverse standardization and what. Choices [None, 'standardize', '-11', '01', 'robust']. Defaults to False.
-        final_scaler (sklearn.preprocessing.__x__scaler, optional): Scaler used in standardization. Defaults to None.
+        standardizeit (str | None, optional): Whether use inverse standardization and what. Choices [None, 'standardize', '-11', '01', 'robust']. Defaults to False.
+        final_scaler ("ScalerType" | None, optional): Scaler used in standardization. Defaults to None.
         data_transform (Literal["difference", None], optional): Use data transformation. Choices [False, 'difference]. Defaults to False.
-        last_undiff_value (Union[None, Any], optional): Last used value in difference transform. Defaults to None.
+        last_undiff_value (None | Any, optional): Last used value in difference transform. Defaults to None.
 
     Returns:
         np.ndarray: Inverse preprocessed data
@@ -455,18 +466,16 @@ def categorical_embedding(
 ### Data preprocessing functions...
 
 
-def keep_corelated_data(
-    data: Union[pd.DataFrame, np.ndarray], threshold: float = 0.5
-) -> Union[pd.DataFrame, np.ndarray]:
+def keep_corelated_data(data: DataFrameOrArrayGeneric, threshold: float = 0.5) -> DataFrameOrArrayGeneric:
     """Remove columns that are not corelated enough to predicted columns. Predicted column is supposed to be 0.
 
     Args:
-        data (Union[pd.DataFrame, np.ndarray]): Time series data.
+        data (DataFrameOrArrayGeneric): Time series data.
         threshold (float, optional): After correlation matrix is evaluated, all columns that are correlated less
             than threshold are deleted. Defaults to 0.5.
 
     Returns:
-        Union[pd.DataFrame, np.ndarray]: Data with no columns that are not corelated with predicted column.
+        DataFrameOrArrayGeneric: Data with no columns that are not corelated with predicted column.
         If input in numpy array, then also output in array, if dataframe input, then dataframe output.
     """
     if data.ndim == 1 or data.shape[1] == 1:
@@ -495,18 +504,18 @@ def keep_corelated_data(
 
 
 def remove_the_outliers(
-    data: Union[pd.DataFrame, np.ndarray], threshold: int = 3, main_column: Union[int, str] = 0
-) -> Union[pd.DataFrame, np.ndarray]:
+    data: DataFrameOrArrayGeneric, threshold: int = 3, main_column: int | str = 0
+) -> DataFrameOrArrayGeneric:
     """Remove values far from mean - probably errors. If more columns, then only rows that have outlier on
     predicted column will be deleted. Predicted column is supposed to be 0.
 
     Args:
-        data (Union[pd.DataFrame, np.ndarray]): Time series data. Must have ndim = 2, if univariate, reshape...
+        data (DataFrameOrArrayGeneric): Time series data. Must have ndim = 2, if univariate, reshape...
         threshold (int, optional): How many times must be standard deviation from mean to be ignored. Defaults to 3.
-        main_column (Union[int, str], optional): Main column that we relate outliers to. Defaults to 0.
+        main_column (int | str, optional): Main column that we relate outliers to. Defaults to 0.
 
     Returns:
-        np.ndarray: Cleaned data.
+        DataFrameOrArrayGeneric: Cleaned data.
 
     Examples:
 
@@ -535,16 +544,14 @@ def remove_the_outliers(
     return data
 
 
-def do_difference(
-    data: Union[np.ndarray, pd.DataFrame, pd.Series]
-) -> Union[np.ndarray, pd.DataFrame, pd.Series]:
+def do_difference(data: DataFrameOrArrayGeneric) -> DataFrameOrArrayGeneric:
     """Transform data into neighbor difference. For example from [1, 2, 4] into [1, 2].
 
     Args:
-        data (Union[np.ndarray, pd.DataFrame, pd.Series]): Data.
+        data (DataFrameOrArrayGeneric): Data.
 
     Returns:
-        Union[np.ndarray, pd.DataFrame, pd.Series]: Differenced data in same format as inserted.
+        DataFrameOrArrayGeneric: Differenced data in same format as inserted.
 
     Examples:
 
@@ -586,17 +593,17 @@ def inverse_difference(differenced_predictions: np.ndarray, last_undiff_value: f
 
 
 def standardize(
-    data: np.ndarray, used_scaler: Literal["standardize", "01", "-11", "robust"] = "standardize"
-) -> "tuple[np.ndarray, ScalerType]":
+    data: DataFrameOrArrayGeneric, used_scaler: Literal["standardize", "01", "-11", "robust"] = "standardize"
+) -> tuple[DataFrameOrArrayGeneric, "ScalerType"]:
     """Standardize or normalize data. More standardize methods available. Predicted column is supposed to be 0.
 
     Args:
-        data (np.ndarray): Time series data.
+        data (DataFrameOrArrayGeneric): Time series data.
         used_scaler (Literal['standardize', '01', '-11', 'robust'], optional): '01' and '-11' means scope from to for normalization.
             'robust' use RobustScaler and 'standardize' use StandardScaler - mean is 0 and std is 1. Defaults to 'standardize'.
 
     Returns:
-        tuple[np.ndarray, ScalerType]: Standardized data and scaler for inverse transformation.
+        tuple[DataFrameOrArrayGeneric, ScalerType]: Standardized data and scaler for inverse transformation.
     """
     if not importlib.util.find_spec("sklearn"):
         raise ImportError(
@@ -635,24 +642,24 @@ def standardize(
 
 
 def standardize_one_way(
-    data: Union[pd.DataFrame, np.ndarray],
+    data: DataFrameOrArrayGeneric,
     min: float,
     max: float,
     axis: Literal[0, 1] = 0,
     inplace: bool = False,
-) -> Union[pd.DataFrame, np.ndarray]:
+) -> DataFrameOrArrayGeneric:
     """Own implementation of standardization. No inverse transformation available.
     Reason is for builded applications to do not carry sklearn with build.
 
     Args:
-        data (Union[pd.DataFrame, np.ndarray]): Data.
+        data (DataFrameOrArrayGeneric): Data.
         min (float): Minimum in transformed axis.
         max (float): Max in transformed axis.
         axis (Literal[0, 1], optional): 0 to columns, 1 to rows. Defaults to 0.
         inplace (bool, optional): If true, no copy will be returned, but original object. Defaults to False.
 
     Returns:
-        Union[pd.DataFrame, np.ndarray]: Standardized data. If numpy inserted, numpy returned, same for dataframe.
+        DataFrameOrArrayGeneric: Standardized data. If numpy inserted, numpy returned, same for dataframe.
         If input in numpy array, then also output in array, if dataframe input, then dataframe output.
     """
     if not inplace:
@@ -677,20 +684,20 @@ def standardize_one_way(
 
 
 def binning(
-    data: Union[pd.DataFrame, np.ndarray], bins: int, binning_type: Literal["cut", "qcut"] = "cut"
-) -> Union[pd.DataFrame, np.ndarray]:
+    data: DataFrameOrArrayGeneric, bins: int, binning_type: Literal["cut", "qcut"] = "cut"
+) -> DataFrameOrArrayGeneric:
     """Discretize value on defined number of bins. It will return the same shape of data, where middle
     (average) values of bins interval returned.
 
     Args:
-        data (Union[pd.DataFrame, np.ndarray]): Data for preprocessing. ndim = 2 (n_samples, n_features).
+        data (DataFrameOrArrayGeneric): Data for preprocessing. ndim = 2 (n_samples, n_features).
         bins (int): Number of bins - unique values.
         binning_type (Literal["cut", "qcut"], optional): "cut" for equal size of bins intervals (different number of members in bins)
             or "qcut" for equal number of members in bins and various size of bins. It uses pandas cut
             or qcut function. Defaults to "cut".
 
     Returns:
-        Union[pd.DataFrame, np.ndarray]: Discretized data of same type as input. If input in numpy
+        DataFrameOrArrayGeneric: Discretized data of same type as input. If input in numpy
         array, then also output in array, if dataframe input, then dataframe output.
 
     Example:
@@ -732,18 +739,16 @@ def binning(
         return data
 
 
-def smooth(
-    data: Union[pd.DataFrame, np.ndarray], window=101, polynom_order=2
-) -> Union[pd.DataFrame, np.ndarray]:
+def smooth(data: DataFrameOrArrayGeneric, window=101, polynom_order=2) -> DataFrameOrArrayGeneric:
     """Smooth data (reduce noise) with Savitzky-Golay filter. For more info on filter check scipy docs.
 
     Args:
-        data (Union[pd.DataFrame, np.ndarray]): Input data.
+        data (DataFrameOrArrayGeneric): Input data.
         window (int, optional): Length of sliding window. Must be odd. Defaults to 101.
         polynom_order (int, optional) - Must be smaller than window. Defaults to 2.
 
     Returns:
-        Union[pd.DataFrame, np.ndarray]: Cleaned data with less noise.
+        DataFrameOrArrayGeneric: Cleaned data with less noise.
     """
     if not importlib.util.find_spec("scipy"):
         raise ImportError("scipy library is necessary for smooth function. Install via `pip install scipy`")
@@ -764,7 +769,7 @@ def smooth(
 def fitted_power_transform(
     data: np.ndarray,
     fitted_stdev: float,
-    mean: Union[float, None] = None,
+    mean: float | None = None,
     fragments: int = 10,
     iterations: int = 5,
 ) -> np.ndarray:
@@ -774,7 +779,7 @@ def fitted_power_transform(
     Args:
         data (np.ndarray): Array of data that should be transformed (one column => ndim = 1).
         fitted_stdev (float): Standard deviation that we want to have.
-        mean (Union[float, None], optional): Mean of transformed data. Defaults to None.
+        mean (float | None, optional): Mean of transformed data. Defaults to None.
         fragments (int, optional): How many lambdas will be used in one iteration. Defaults to 10.
         iterations (int, optional): How many iterations will be used to find best transform. Defaults to 5.
 
@@ -813,6 +818,8 @@ def fitted_power_transform(
         lmbd_arr = np.linspace(lmbda_low, lmbda_high, fragments)
 
     transformed_results = scipy.stats.yeojohnson(data, lmbda=lmbd_arr[j])
+
+    transformed_results = cast(np.ndarray, transformed_results)
 
     if mean is not None:
         mean_difference = np.mean(transformed_results) - mean

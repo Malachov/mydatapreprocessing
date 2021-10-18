@@ -13,7 +13,6 @@ mypythontools.tests.setup_tests()
 
 import mydatapreprocessing as mdp
 
-mylogging.config.COLORIZE = 0
 np.random.seed(2)
 
 

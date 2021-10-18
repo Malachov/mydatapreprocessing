@@ -5,7 +5,6 @@ data where are no data so two remote points are not joined in plot."""
 from __future__ import annotations
 import json
 import textwrap
-from typing import Union
 
 import pandas as pd
 import numpy as np
@@ -38,18 +37,18 @@ def rolling_windows(data: np.ndarray, window: int) -> np.ndarray:
 
 
 def split(
-    data: Union[pd.DataFrame, np.ndarray], predicts: int = 7
-) -> tuple[Union[pd.DataFrame, np.ndarray], Union[pd.Series, np.ndarray]]:
+    data: pd.DataFrame | np.ndarray, predicts: int = 7
+) -> tuple[pd.DataFrame | np.ndarray, pd.Series | np.ndarray]:
     """Divide data set on train and test set. Predicted column is supposed to be 0. This is mostly for time series predictions,
     so in test set there is only predicted column that can be directly used for error criterion evaluation. So this function is
     different than usual train / test split.
 
     Args:
-        data (Union[pd.DataFrame, np.ndarray]): Time series data. ndim has to be 2, reshape if necessary.
+        data (pd.DataFrame | np.ndarray): Time series data. ndim has to be 2, reshape if necessary.
         predicts (int, optional): Number of predicted values. Defaults to 7.
 
     Returns:
-        tuple[Union[pd.DataFrame, np.ndarray], Union[pd.Series, np.ndarray]]: Train set and test set. If input in numpy array, then also output in array,
+        tuple[pd.DataFrame | np.ndarray, pd.Series | np.ndarray]: Train set and test set. If input in numpy array, then also output in array,
         if dataframe input, then dataframe output.
 
     Example:
@@ -142,7 +141,7 @@ def edit_table_to_printable(
     df: pd.DataFrame,
     line_length_limit: int = 16,
     round_decimals: int = 3,
-    number_length_limit: Union[int, float] = 10e8,
+    number_length_limit: int | float = 10e8,
 ) -> pd.DataFrame:
     """Edit dataframe to be able to use in tabulate (or somewhere else).
 
@@ -150,7 +149,7 @@ def edit_table_to_printable(
         df (pd.DataFrame): Input data with numeric or text columns.
         line_length_limit (int, optional): Add line breaks if line too long. Defaults to 16.
         round_decimals (int, optional): Round numeric columns to defined decimals. Defaults to 3.
-        number_length_limit (Union[int, float], optional): If there is some very big or very small number,
+        number_length_limit (int | float, optional): If there is some very big or very small number,
             convert format to scientific notation. Defaults to 10e8.
 
     Returns:

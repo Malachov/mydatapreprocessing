@@ -1,9 +1,9 @@
 # List of what could be done
 
 
+- [ ] Add examples to functions docstrings
 - [ ] Add pd.Series to preprocessing as input. 
 - [ ] Generate sequentions even if bigger output than input.
-- [ ] Add examples to functions docstrings
 - [ ] Remove create_inputs. Do one column input and data type in predictit.
 - [ ] Add shape and dtype to numpy array type hints.
 - [ ] Add features

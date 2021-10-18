@@ -8,6 +8,7 @@ Submodules
    :maxdepth: 4
 
    mydatapreprocessing.create_model_inputs
+   mydatapreprocessing.custom_types
    mydatapreprocessing.database
    mydatapreprocessing.feature_engineering
    mydatapreprocessing.generate_data

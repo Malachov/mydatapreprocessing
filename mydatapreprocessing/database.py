@@ -21,7 +21,7 @@ Example:
 
 from __future__ import annotations
 import importlib.util
-from typing import Union, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 import pandas as pd
 
@@ -37,10 +37,10 @@ def database_load(
     query: str,
     server: str,
     database: str,
-    port: Union[str, int, None] = None,
+    port: str | int | None = None,
     driver: str = "{SQL Server}",
-    username: Union[str, None] = None,
-    password: Union[str, None] = None,
+    username: str | None = None,
+    password: str | None = None,
     trusted_connection: bool = False,
 ) -> pd.DataFrame:
     """Load database into dataframe and create datetime index. !!! This function have to be change for every
@@ -50,11 +50,11 @@ def database_load(
         query (str): Used query.
         server (str): Name of server.
         database (str): Name of database.
-        port (Union[str, int, None], optional): Used port. May work with None. Defaults to None.
+        port (str | int | None, optional): Used port. May work with None. Defaults to None.
         driver (str, optional): Used driver. One can be downloaded on https://docs.microsoft.com/en-us/sql/connect/odbc/download-odbc-driver-for-sql-server?view=sql-server-ver15
             Defaults to '{SQL Server}'.
-        username (Union[str, None], optional): Username. 'sa' for root on mssql.
-        password (Union[str, None], optional): Password.
+        username (str | None, optional): Username. 'sa' for root on mssql.
+        password (str | None, optional): Password.
         trusted_connection (bool, optional): If using windows authentication.
 
     Returns:
@@ -106,10 +106,10 @@ def database_write(
     database: str,
     table: str,
     index: bool = False,
-    port: Union[str, int, None] = None,
+    port: str | int | None = None,
     driver: str = "{SQL Server}",
-    username: Union[str, None] = None,
-    password: Union[str, None] = None,
+    username: str | None = None,
+    password: str | None = None,
     trusted_connection: bool = False,
     schema: str = None,
     if_exists: str = "append",
@@ -122,11 +122,11 @@ def database_write(
         database (str): Name of database.
         table (str): Used table.
         index (bool, optional): Whether use index as a column Defaults to False.
-        port (Union[str, int, None], optional): Used port. May work with None. Defaults to None.
+        port (str | int | None, optional): Used port. May work with None. Defaults to None.
         driver (str, optional): Used driver. One can be downloaded on https://docs.microsoft.com/en-us/sql/connect/odbc/download-odbc-driver-for-sql-server?view=sql-server-ver15
             Defaults to '{SQL Server}'.
-        username (Union[str, None], optional): Username. 'sa' for root on mssql. Defaults to None.
-        password (Union[str, None], optional): Password. Defaults to None.
+        username (str | None, optional): Username. 'sa' for root on mssql. Defaults to None.
+        password (str | None, optional): Password. Defaults to None.
         trusted_connection (bool): If using windows authentication. You dont need username and password then. Defaults to False.
         schema (str): Used schema. Defaults to None.
         if_exists (str): 'fail', 'replace', 'append'. Define whether append new
@@ -149,10 +149,10 @@ def database_write(
 def create_connection(
     server: str,
     database: str,
-    port: Union[str, int, None] = None,
+    port: str | int | None = None,
     driver: str = "{SQL Server}",
-    username: Union[str, None] = None,
-    password: Union[str, None] = None,
+    username: str | None = None,
+    password: str | None = None,
     trusted_connection: bool = False,
 ) -> "sqlalchemy.engine.base.Engine":
     """Create connection, that can be used in another function to connect the database.
@@ -160,11 +160,11 @@ def create_connection(
     Args:
         server (str): Name of server.
         database (str): Name of database.
-        port (Union[str, int, None], optional): Used port. May work with None. Defaults to None.
+        port (str | int | None, optional): Used port. May work with None. Defaults to None.
         driver (str, optional): Used driver. One can be downloaded on https://docs.microsoft.com/en-us/sql/connect/odbc/download-odbc-driver-for-sql-server?view=sql-server-ver15
             Defaults to '{SQL Server}'.
-        username (Union[str, None], optional): Username. 'sa' for root on mssql. Defaults to None.
-        password (Union[str, None], optional): Password. Defaults to None.
+        username (str | None, optional): Username. 'sa' for root on mssql. Defaults to None.
+        password (str | None, optional): Password. Defaults to None.
         trusted_connection (bool, optional): If using windows authentication. Defaults to False."""
 
     if not importlib.util.find_spec("sqlalchemy"):

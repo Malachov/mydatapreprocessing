@@ -8,7 +8,7 @@ In `add_frequency_columns` you can add fast fourier transform results maximums o
 
 from __future__ import annotations
 import itertools
-from typing import Union, cast
+from typing import cast
 
 import numpy as np
 import pandas as pd
@@ -23,8 +23,8 @@ def add_derived_columns(
     differences: bool = True,
     second_differences: bool = True,
     multiplications: bool = True,
-    rolling_means: Union[int, None] = 10,
-    rolling_stds: Union[int, None] = 10,
+    rolling_means: int | None = 10,
+    rolling_stds: int | None = 10,
     mean_distances: bool = True,
 ) -> pd.DataFrame:
     """This will create many columns that can be valuable for making predictions like difference, or rolling mean or
@@ -37,8 +37,8 @@ def add_derived_columns(
         differences (bool, optional): Compute difference between n and n-1 sample. Defaults to True.
         second_differences (bool, optional): Compute second difference. Defaults to True.
         multiplications (bool, optional): Column multiplicated with other column. Defaults to True.
-        rolling_means (Union[int, None], None), optional): Rolling mean with defined window. Defaults to 10.
-        rolling_stds (Union[int, None], optional): Rolling std with defined window. Defaults to 10.
+        rolling_means (int | None, None), optional): Rolling mean with defined window. Defaults to 10.
+        rolling_stds (int | None, optional): Rolling std with defined window. Defaults to 10.
         mean_distances (bool, optional): Distance from average. Defaults to True.
 
     Returns:
@@ -111,11 +111,11 @@ def add_derived_columns(
     return pd.concat([i.iloc[-min_length:].reset_index(drop=True) for i in results], axis=1)
 
 
-def add_frequency_columns(data: Union[pd.DataFrame, np.ndarray], window: int) -> pd.DataFrame:
+def add_frequency_columns(data: pd.DataFrame | np.ndarray, window: int) -> pd.DataFrame:
     """Use fourier transform on running window and add it's maximum and std as new data column.
 
     Args:
-        data (Union[pd.DataFrame, np.ndarray]): Data we want to use.
+        data (pd.DataFrame | np.ndarray): Data we want to use.
         window (int): length of running window.
 
     Returns:
@@ -130,7 +130,6 @@ def add_frequency_columns(data: Union[pd.DataFrame, np.ndarray], window: int) ->
         >>> extended = add_frequency_columns(data, window=32)
     """
     data = pd.DataFrame(data)
-
     if window > len(data.values):
         mylogging.warn(
             "Length of data much be much bigger than window used for generating new data columns",
@@ -145,6 +144,7 @@ def add_frequency_columns(data: Union[pd.DataFrame, np.ndarray], window: int) ->
     angle = np.angle(ffted)[:, :, 1:]
 
     data = data[-ffted.shape[1] :]
+    data = cast(pd.DataFrame, data)
 
     for i, j in enumerate(data):
         data[f"{j} - FFT windowed abs max index"] = np.nanargmax(absolute, axis=2)[i]

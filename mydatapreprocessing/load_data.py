@@ -19,10 +19,10 @@ choose your files in convenient way. This tuple output you can then insert into 
 from __future__ import annotations
 import mylogging
 
-import importlib
+import importlib.util
 from pathlib import Path
 import io
-from typing import Union, Any
+from typing import Any
 from typing_extensions import Literal
 
 import pandas as pd
@@ -36,7 +36,8 @@ from . import generate_data
 
 
 def get_file_paths(
-    filetypes: Union[list[str], list[tuple[str, str]]] = [
+    filetypes: list[str]
+    | list[tuple[str, str]] = [
         ("csv", ".csv"),
         ("Excel (xlsx, xls)", ".xlsx .xls"),
         ("h5", ".h5"),
@@ -44,16 +45,16 @@ def get_file_paths(
         ("json", ".json"),
     ],
     title: str = "Select files",
-) -> Union[tuple[str, ...], Literal[""]]:
+) -> tuple[str, ...] | Literal[""]:
     """Open dialog window where you can choose files you want to use. It will return tuple with string paths.
 
     Args:
-        filetypes (Union[list[str], list[tuple[str, str]]], optional): Accepted file types / suffixes. List of strings or list of tuples.
+        filetypes (list[str] | list[tuple[str, str]], optional): Accepted file types / suffixes. List of strings or list of tuples.
             Defaults to [("csv", ".csv"), ("Excel (xlsx, xls)", ".xlsx .xls"), ("h5", ".h5"), ("parquet", ".parquet"), ("json", ".json")].
         title (str, optional): Just a name of dialog window. Defaults to 'Select file'.
 
     Returns:
-        Union[tuple[str, ...], Literal[""]]: Tuple with string paths.
+        tuple[str, ...] | Literal[""]: Tuple with string paths. If dialog window is closed, it will return empty string.
     """
     import tkinter as tk
     from tkinter import filedialog
@@ -68,13 +69,13 @@ def get_file_paths(
 
 def load_data(
     data: Any,
-    header: Union[str, int] = "infer",
-    csv_style: Union[dict, str] = "infer",
-    predicted_table: str = "",
+    header: str | int = "infer",
+    csv_style: dict | Literal["infer"] = "infer",
+    predicted_table: str | int = "",
     max_imported_length: int = 0,
     request_datatype_suffix: str = "",
     data_orientation: str = "",
-    ssl_verification: Union[None, bool, str] = None,
+    ssl_verification: None | bool | str = None,
 ) -> pd.DataFrame:
 
     """Load data from path or url or other python format (numpy array, list, dict) into dataframe.
@@ -86,10 +87,10 @@ def load_data(
 
     Args:
         data (Any): Path, url. For examples check examples section.
-        header (Union[str, int], optional): Row index used as column names. If 'infer', it will be automatically choosed. Defaults to 'infer'.
-        csv_style (Union[dict, str], optional): Define CSV separator and decimal. En locale usually use {'sep': ",", 'decimal': "."}
+        header (str | int, optional): Row index used as column names. If 'infer', it will be automatically choosed. Defaults to 'infer'.
+        csv_style (dict | Literal["infer"], optional): Define CSV separator and decimal. En locale usually use {'sep': ",", 'decimal': "."}
             some Europian country use {'sep': ";", 'decimal': ","}. If 'infer' one of those two locales is automatically used. Defaults to 'infer'.
-        predicted_table (str, optional): If using excel (xlsx) - it means what sheet to use, if json,
+        predicted_table (str | int, optional): If using excel (xlsx) - it means what sheet to use, if json,
             it means what key values, if SQL, then it mean what table. Else it have no impact. Defaults to ''.
         max_imported_length (int, optional): Max length of imported samples (before resampling). If 0, than full length.
             Defaults to 0.
@@ -98,7 +99,7 @@ def load_data(
         data_orientation(str, optional): 'columns' or 'index'. If using json or dictionary, it describe how data are
             oriented. Default is 'columns' if None used. If orientation is records (in pandas terminology), it's detected
             automatically (therefore empty by default). Defaults to "".
-        ssl_verification(Union[None, bool, str], optional): If using data from web, it use requests and sometimes, there can be ssl verification
+        ssl_verification(None | bool | str, optional): If using data from web, it use requests and sometimes, there can be ssl verification
             error, this skip verification, with adding verify param to requests call. It!s param of requests get function. Defaults to None.
 
     Raises:
@@ -140,16 +141,16 @@ def load_data(
     """
     if isinstance(data, str):
         if data == "test_ramp":
-            return generate_data.ramp()
+            return pd.DataFrame(generate_data.ramp())
 
         elif data == "test_sin":
-            return generate_data.sin()
+            return pd.DataFrame(generate_data.sin())
 
         elif data == "test_random":
-            return generate_data.random()
+            return pd.DataFrame(generate_data.random())
 
         elif data == "test_ecg":
-            return generate_data.get_ecg()
+            return pd.DataFrame(generate_data.get_ecg())
 
     list_of_dataframes = []
 
@@ -223,7 +224,7 @@ def load_data(
                 if data_type_suffix == "json":
                     iterated_data = request.content
 
-                if data_type_suffix == "csv":
+                elif data_type_suffix == "csv":
                     iterated_data = io.BytesIO(request.content)
 
             if data_type_suffix == "csv":
