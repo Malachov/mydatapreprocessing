@@ -9,6 +9,10 @@
     :target: https://badge.fury.io/py/mydatapreprocessing
     :alt: PyPI package
 
+.. image:: https://pepy.tech/badge/mydatapreprocessing
+    :target: https://pepy.tech/project/mydatapreprocessing
+    :alt: Downloads
+
 .. image:: https://mybinder.org/badge_logo.svg
     :target: https://mybinder.org/v2/gh/Malachov/mydatapreprocessing/HEAD?filepath=demo.ipynb
     :alt: Jupyter mybinder

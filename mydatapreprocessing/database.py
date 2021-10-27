@@ -86,7 +86,7 @@ def database_load(
                     {col_desc}
             '''
     """
-    connection = create_connection(
+    connection = _create_connection(
         server=server,
         database=database,
         port=port,
@@ -133,7 +133,7 @@ def database_write(
             data on the end, remove and replace or fail if table exists. Defaults to 'append'.
     """
 
-    connection = create_connection(
+    connection = _create_connection(
         server=server,
         database=database,
         driver=driver,
@@ -146,7 +146,7 @@ def database_write(
     df.to_sql(name=table, con=connection, if_exists=if_exists, index=index, schema=schema)
 
 
-def create_connection(
+def _create_connection(
     server: str,
     database: str,
     port: str | int | None = None,
