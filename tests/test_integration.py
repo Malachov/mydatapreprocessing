@@ -31,7 +31,7 @@ def test_integration():
     # transformation, so unpack it with _
     data_preprocessed_df, _, _ = mdp.preprocessing.preprocess_data(
         data_consolidated,
-        remove_outliers=True,
+        remove_outliers=3,
         smoothit=(11, 2),
         correlation_threshold=False,
         data_transform=True,
@@ -40,7 +40,7 @@ def test_integration():
 
     data_preprocessed, _, _ = mdp.preprocessing.preprocess_data(
         data_consolidated.values,
-        remove_outliers=True,
+        remove_outliers=3,
         smoothit=(11, 2),
         correlation_threshold=0.9,
         data_transform="difference",

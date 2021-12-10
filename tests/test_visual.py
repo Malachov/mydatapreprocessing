@@ -34,10 +34,10 @@ def test_visual(print_preprocessing=1, print_postprocessing=1):
     # Some calculations, that are to long to do in f-strings - Just ignore...
 
     seqs, Y, x_input, test_inputs = mdi.make_sequences(
-        data, predicts=7, repeatit=3, n_steps_in=6, n_steps_out=1, constant=1
+        data, predicts=7, repeatit=3, n_steps_in=6, n_steps_out=1, constant=True
     )
     seqs_2, Y_2, x_input2, test_inputs2 = mdi.make_sequences(
-        data, predicts=7, repeatit=3, n_steps_in=4, n_steps_out=2, constant=0
+        data, predicts=7, repeatit=3, n_steps_in=4, n_steps_out=2, constant=False
     )
     seqs_m, Y_m, x_input_m, test_inputs_m = mdi.make_sequences(
         data_multi_col,

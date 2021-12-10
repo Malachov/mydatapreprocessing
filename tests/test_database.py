@@ -22,7 +22,19 @@ def test_databases():
     except docker.errors.DockerException:
         raise RuntimeError(mylogging.return_str("Docker error, check if Docker is running."))
 
-    container = client.containers.run("mssql:latest", ports={1433: 1433}, detach=True, auto_remove=True)
+    try:
+        container = client.containers.run(
+            "mssql:latest",
+            ports={1433: 1433},
+            detach=True,
+            auto_remove=True,
+            environment={"ACCEPT_EULA": "Y"},
+        )
+    except docker.errors.ImageNotFound:
+        mylogging.error("mssql docker image not made. First build Dockerfile here in tests.")
+        raise
+    except Exception:
+        raise
 
     time.sleep(50)
 

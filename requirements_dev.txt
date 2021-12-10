@@ -1,2 +1,2 @@
 mypythontools>=0.0.72
-docker
+docker==4.2.2

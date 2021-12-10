@@ -69,12 +69,12 @@ def get_file_paths(
 
 def load_data(
     data: Any,
-    header: str | int = "infer",
+    header: str | int | None = "infer",
     csv_style: dict | Literal["infer"] = "infer",
-    predicted_table: str | int = "",
+    predicted_table: str | int | None = "",
     max_imported_length: int = 0,
-    request_datatype_suffix: str = "",
-    data_orientation: str = "",
+    request_datatype_suffix: str | None = "",
+    data_orientation: Literal["columns", "index"] = "columns",
     ssl_verification: None | bool | str = None,
 ) -> pd.DataFrame:
 
@@ -87,18 +87,17 @@ def load_data(
 
     Args:
         data (Any): Path, url. For examples check examples section.
-        header (str | int, optional): Row index used as column names. If 'infer', it will be automatically choosed. Defaults to 'infer'.
+        header (str | int | None, optional): Row index used as column names. If 'infer', it will be automatically chosen. Defaults to 'infer'.
         csv_style (dict | Literal["infer"], optional): Define CSV separator and decimal. En locale usually use {'sep': ",", 'decimal': "."}
-            some Europian country use {'sep': ";", 'decimal': ","}. If 'infer' one of those two locales is automatically used. Defaults to 'infer'.
-        predicted_table (str | int, optional): If using excel (xlsx) - it means what sheet to use, if json,
+            some European country use {'sep': ";", 'decimal': ","}. If 'infer' one of those two locales is automatically used. Defaults to 'infer'.
+        predicted_table (str | int | None, optional): If using excel (xlsx) - it means what sheet to use, if json,
             it means what key values, if SQL, then it mean what table. Else it have no impact. Defaults to ''.
         max_imported_length (int, optional): Max length of imported samples (before resampling). If 0, than full length.
             Defaults to 0.
-        request_datatype_suffix(str, optional): 'json' for example. If using url with no extension,
+        request_datatype_suffix(str | None, optional): 'json' for example. If using url with no extension,
             define whichdatatype is on this url with GET request. Defaults to "".
-        data_orientation(str, optional): 'columns' or 'index'. If using json or dictionary, it describe how data are
-            oriented. Default is 'columns' if None used. If orientation is records (in pandas terminology), it's detected
-            automatically (therefore empty by default). Defaults to "".
+        data_orientation(Literal["columns", "index"], optional): 'columns' or 'index'. If using json or dictionary, it describe how data are
+            oriented. Defaults to "columns".
         ssl_verification(None | bool | str, optional): If using data from web, it use requests and sometimes, there can be ssl verification
             error, this skip verification, with adding verify param to requests call. It!s param of requests get function. Defaults to None.
 
@@ -350,15 +349,13 @@ def load_data(
     else:
         list_of_dataframes = data
 
-    orientation = "columns" if not data_orientation else data_orientation
-
     for i, j in enumerate(list_of_dataframes):
         if isinstance(j, dict):
             # If just one column, put in list to have same syntax further
             if not isinstance(next(iter(j.values())), list):
                 list_of_dataframes[i] = {k: [l] for (k, l) in j.items()}
 
-            list_of_dataframes[i] = pd.DataFrame.from_dict(j, orient=orientation)
+            list_of_dataframes[i] = pd.DataFrame.from_dict(j, orient=data_orientation)
 
         elif isinstance(j, list):
             list_of_dataframes[i] = pd.DataFrame.from_records(j)
@@ -373,7 +370,7 @@ def load_data(
             mylogging.return_str(
                 "Input data must be in pd.dataframe, pd.series, numpy array or in a path (str or pathlib) with supported formats"
                 " - csv, xlsx, txt or parquet. It also can be a list of paths, files etc. If you want to generate list of file paths, "
-                "you can use get_file_paths(). Check config comments for more informations...",
+                "you can use get_file_paths(). Check config comments for more information...",
                 "Data format error",
             )
         )

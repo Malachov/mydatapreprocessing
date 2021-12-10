@@ -25,6 +25,7 @@ setup(
     packages=find_packages(exclude=("tests",)),
     include_package_data=True,
     platforms="any",
+    python_requires=">=3.7",
     classifiers=[
         "Programming Language :: Python",
         "Development Status :: 3 - Alpha",

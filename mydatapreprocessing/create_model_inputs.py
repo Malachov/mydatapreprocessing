@@ -50,13 +50,13 @@ def make_sequences(
     """Function that create inputs and outputs to models like sklearn or tensorflow.
 
     Args:
-        data (np.ndarray): Time series data. Shape is (n_samples, n_feature)
+        data (np.ndarray): Time series data. Shape is (n_samples, n_feature) or (n_samples).
         n_steps_in (int): Number of input members.
         n_steps_out (int, optional): Number of output members. For one-step models use 1. Defaults to 1.
         constant (bool, optional): If use bias (add 1 to first place to every member). Defaults to False.
         predicts (int, optional): How many values are predicted. Define output length for batch models. Defaults to 7.
         repeatit (int, optional): How many inputs will be tested. Defaults to 10.
-        predicted_column_index (int, optional): If multiavriate data, index of predicted column. Defaults to 0.
+        predicted_column_index (int, optional): If multivariate data, index of predicted column. Defaults to 0.
         serialize_columns(bool, optional): If multivariate data, serialize columns sequentions into one row.
             Defaults to True.
         default_other_columns_length (None | int, optional): Length of non-predicted columns that are evaluated in inputs.
@@ -97,6 +97,9 @@ def make_sequences(
     if n_steps_out > n_steps_in:
         n_steps_in = n_steps_out + 1
         mylogging.warn("n_steps_out was bigger than n_steps_in - n_steps_in changed during prediction!")
+
+    if data.ndim == 1:
+        data = data.reshape(-1, 1)
 
     if default_other_columns_length == 0:
         data = data[:, 0].reshape(1, -1)

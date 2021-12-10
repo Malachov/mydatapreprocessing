@@ -2,27 +2,13 @@
 necessary to set up connect credentials. The database_deploy than deploy data to the database server.
 
 It is working only for mssql server so far.
-
-Example:
-
-    ::
-
-        data = mdp.database.database_load(
-            server=".",
-            database="DemoData",
-            query='''
-                SELECT TOP (1000) [ID] ,[ProductName]
-                FROM [DemoData].[dbo].[Products]
-            '''
-            username="sa",
-            password="Ahojdatadata123",
-        )
 """
 
 from __future__ import annotations
 import importlib.util
 from typing import TYPE_CHECKING
 
+from typing_extensions import Literal
 import pandas as pd
 
 import mylogging
@@ -62,29 +48,18 @@ def database_load(
 
     Example:
 
-        This is how the query could look like in python::
+        ::
 
-            query_example = f'''
-
-                SELECT TOP ({data_limit})
-                    {col},
-                    sum([Number]) SumNumber,
-                    sum([Duration]) SumDuration
-
-                FROM [dbo].[Table] F
-                    INNER JOIN dbo.DimDateTime D
-                    ON F.DimDateTimeId = D.DimDateTimeId
-
-                WHERE      condition = 1
-                    and    condition2 = 1
-                    and    DimOperationOutId = 69
-
-                GROUP BY
-                    {col}
-
-                ORDER BY
-                    {col_desc}
-            '''
+            data = mdp.database.database_load(
+                server=".",
+                database="DemoData",
+                query='''
+                    SELECT TOP (1000) [ID] ,[ProductName]
+                    FROM [DemoData].[dbo].[Products]
+                ''',
+                username="sa",
+                password="Ahojdatadata123",
+            )
     """
     connection = _create_connection(
         server=server,
@@ -112,7 +87,7 @@ def database_write(
     password: str | None = None,
     trusted_connection: bool = False,
     schema: str = None,
-    if_exists: str = "append",
+    if_exists: Literal["fail", "replace", "append"] = "append",
 ) -> None:
     """Deploy dataframe to SQL server.
 
@@ -127,10 +102,27 @@ def database_write(
             Defaults to '{SQL Server}'.
         username (str | None, optional): Username. 'sa' for root on mssql. Defaults to None.
         password (str | None, optional): Password. Defaults to None.
-        trusted_connection (bool): If using windows authentication. You dont need username and password then. Defaults to False.
-        schema (str): Used schema. Defaults to None.
-        if_exists (str): 'fail', 'replace', 'append'. Define whether append new
-            data on the end, remove and replace or fail if table exists. Defaults to 'append'.
+        trusted_connection (bool, optional): If using windows authentication. You don't need username and password then. Defaults to False.
+        schema (str, optional): Used schema. Defaults to None.
+        if_exists (Literal['fail', 'replace', 'append'], optional): Define whether append new data on the end, remove and replace
+            or fail if table exists. Defaults to 'append'.
+
+    Example:
+
+        ::
+            import pandas as pd
+
+            df = pd.DataFrame([[1, 2, 3], [4, 5, 6]])
+
+            mdp.database.database_write(
+                df,
+                server=".",
+                database="DemoData",
+                table="Products",
+                username="sa",
+                password="Ahojdatadata123",
+                if_exists="replace",
+            )
     """
 
     connection = _create_connection(
@@ -168,7 +160,9 @@ def _create_connection(
         trusted_connection (bool, optional): If using windows authentication. Defaults to False."""
 
     if not importlib.util.find_spec("sqlalchemy"):
-        raise ModuleNotFoundError(mylogging.return_str("Using databases. Install with `pip install wfdb`"))
+        raise ModuleNotFoundError(
+            mylogging.return_str("Using databases. Install with `pip install sqlalchemy`")
+        )
 
     from sqlalchemy import create_engine
     import urllib.parse
