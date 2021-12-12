@@ -1,8 +1,5 @@
 {
   "python.analysis.extraPaths": ["mydatapreprocessing"],
-  "python.testing.pytestArgs": ["."],
-  "python.testing.unittestEnabled": false,
-  "python.testing.nosetestsEnabled": false,
-  "python.testing.pytestEnabled": true,
+  "cSpell.words": ["openpyxl", "repeatit", "xlrd", "yeojohnson"],
   "restructuredtext.confPath": "${workspaceFolder}\\docs\\source"
 }

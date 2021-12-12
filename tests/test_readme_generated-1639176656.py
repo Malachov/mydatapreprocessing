@@ -1,4 +1,4 @@
-"""pytest file built from C:\\Users\\Malac\\ownCloud\\Github\\mydatapreprocessing\\README.md"""
+"""pytest file built from C:/Users/Turtor/ownCloud/Github/mydatapreprocessing/README.md"""
 import pytest
 
 from phmdoctest.fixture import managenamespace
@@ -53,7 +53,7 @@ def test_feature_engineering(managenamespace):
 def test_preprocess_data(managenamespace):
     data_preprocessed, _, _ = mdp.preprocessing.preprocess_data(
         data_extended,
-        remove_outliers=True,
+        remove_outliers=3,
         smoothit=None,
         correlation_threshold=False,
         data_transform=False,

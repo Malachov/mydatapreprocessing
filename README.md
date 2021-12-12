@@ -90,7 +90,7 @@ transformation, so unpack it with _
 ```python
 data_preprocessed, _, _ = mdp.preprocessing.preprocess_data(
     data_extended,
-    remove_outliers=True,
+    remove_outliers=3,
     smoothit=None,
     correlation_threshold=False,
     data_transform=False,

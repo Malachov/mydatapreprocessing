@@ -128,10 +128,7 @@ def test_local_files():
         df_csv = mdpd.load_data(csv_path)
         df_csv_joined = mdpd.load_data([csv_path, csv_path2])
         df_json = mdpd.load_data(
-            json_path,
-            request_datatype_suffix=".json",
-            predicted_table="data",
-            data_orientation="index",
+            json_path, request_datatype_suffix=".json", predicted_table="data", data_orientation="index",
         )
         df_parquet = mdpd.load_data(parquet_path)
         # df_hdf = mdpd.load_data(hdf_path)

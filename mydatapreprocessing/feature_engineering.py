@@ -58,17 +58,13 @@ def add_derived_columns(
 
     if differences:
         results.append(
-            pd.DataFrame(
-                np.diff(data.values, axis=0),
-                columns=[f"{i} - Difference" for i in data.columns],
-            )
+            pd.DataFrame(np.diff(data.values, axis=0), columns=[f"{i} - Difference" for i in data.columns],)
         )
 
     if second_differences:
         results.append(
             pd.DataFrame(
-                np.diff(data.values, axis=0, n=2),
-                columns=[f"{i} - Second difference" for i in data.columns],
+                np.diff(data.values, axis=0, n=2), columns=[f"{i} - Second difference" for i in data.columns],
             )
         )
 

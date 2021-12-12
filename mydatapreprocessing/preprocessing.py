@@ -41,9 +41,9 @@ def data_consolidation(
     other_columns: int = 1,
     datalength: int = 0,
     datetime_column: str | int | None = "",
-    freq: str | None = None,
-    resample_function: str = "sum",
-    embedding: Literal["label", "one-hot"] = "label",
+    resample_freq: str | None = None,
+    resample_function: Literal[None, "sum", "mean"] = "sum",
+    embedding: Literal[None, "label", "one-hot"] = "label",
     unique_threshold: float = 0.6,
     remove_nans_threshold: float = 0.85,
     remove_nans_or_replace: str | float = "interpolate",
@@ -63,9 +63,9 @@ def data_consolidation(
         other_columns (int, optional): Whether use other columns or only predicted one. Defaults to 1.
         datalength (int, optional): Data length after resampling. Defaults to 0.
         datetime_column (str | int | None, optional): Name or index of datetime column. Defaults to None.
-        freq (str | None, optional): Frequency of resampled data. Defaults to None.
-        resample_function (str, optional): 'sum' or 'mean'. Whether sum resampled columns, or use average. Defaults to 'sum'.
-        embedding(Literal["label", "one-hot"], optional): 'label' or 'one-hot'. Categorical encoding. Create numbers from strings. 'label' give each
+        resample_freq (str | None, optional): Frequency of resampled data. Defaults to None.
+        resample_function (Literal[None, 'sum', 'mean'], optional): 'sum' or 'mean'. Whether sum resampled columns, or use average. Defaults to 'sum'.
+        embedding(Literal[None, "label", "one-hot"], optional): 'label' or 'one-hot'. Categorical encoding. Create numbers from strings. 'label' give each
             category (unique string) concrete number. Result will have same number of columns. 'one-hot' create for every
             category new column. Only columns, where are strings repeating (unique_threshold) will be used. Defaults to 'label'.
         unique_threshold(float, optional): Remove string columns, that have to many categories. E.g 0.9 define, that if
@@ -160,9 +160,7 @@ def data_consolidation(
 
             else:
                 data_for_predictions_df.set_index(
-                    data_for_predictions_df.columns[datetime_column],
-                    drop=True,
-                    inplace=True,
+                    data_for_predictions_df.columns[datetime_column], drop=True, inplace=True,
                 )
 
             data_for_predictions_df.index = pd.to_datetime(data_for_predictions_df.index)
@@ -180,16 +178,14 @@ def data_consolidation(
 
     if embedding:
         data_for_predictions_df = categorical_embedding(
-            data_for_predictions_df,
-            embedding=embedding,
-            unique_threshold=unique_threshold,
+            data_for_predictions_df, embedding=embedding, unique_threshold=unique_threshold,
         )
 
     # Keep only numeric columns
     data_for_predictions_df = data_for_predictions_df.select_dtypes(include="number")
 
     if predicted_column_name:
-        # TODO setup other columns in define input so every model can choose and simplier config input types
+        # TODO [predictit] setup other columns in define input so every model can choose and simplier config input types
         if not other_columns:
             data_for_predictions_df = pd.DataFrame(data_for_predictions_df[predicted_column_name])
 
@@ -203,13 +199,13 @@ def data_consolidation(
             )
 
     if datetime_column not in [None, False, ""]:
-        if freq:
+        if resample_freq:
             data_for_predictions_df.sort_index(inplace=True)
             if resample_function == "mean":
-                data_for_predictions_df = data_for_predictions_df.resample(freq).mean()
+                data_for_predictions_df = data_for_predictions_df.resample(resample_freq).mean()
             elif resample_function == "sum":
-                data_for_predictions_df = data_for_predictions_df.resample(freq).sum()
-            data_for_predictions_df = data_for_predictions_df.asfreq(freq, fill_value=0)
+                data_for_predictions_df = data_for_predictions_df.resample(resample_freq).sum()
+            data_for_predictions_df = data_for_predictions_df.asfreq(resample_freq, fill_value=0)
 
         else:
             data_for_predictions_df.index.freq = pd.infer_freq(data_for_predictions_df.index)
@@ -218,7 +214,7 @@ def data_consolidation(
                 reset_index = True
                 mylogging.warn(
                     "Datetime index was provided from config, but frequency guess failed. "
-                    "Specify 'freq' in config to resample and have equal sampling if you want "
+                    "Specify 'resample_freq' in config to resample and have equal sampling if you want "
                     "to have date in plot or if you want to have equal sampling. Otherwise index will "
                     "be reset because cannot generate date indexes of predicted values.",
                     caption="Datetime frequency not inferred",
@@ -240,7 +236,6 @@ def data_consolidation(
 
     data_for_predictions_df = pd.DataFrame(data_for_predictions_df)
 
-    # TODO fix error after option - no predicted value - iter from 0...
     # Remove columns that have to much nan values
     if remove_nans_threshold:
         data_for_predictions_df = data_for_predictions_df.iloc[:, 0:1].join(
@@ -299,9 +294,9 @@ class PreprocessedData(Generic[DataFrameOrArrayGeneric]):
 
 def preprocess_data(
     data: DataFrameOrArrayGeneric,
-    remove_outliers: bool = False,
+    remove_outliers: int | float | None = False,
     smoothit: None | tuple[int, int] = None,
-    correlation_threshold: float = 0,
+    correlation_threshold: float | int | None = None,
     data_transform: Literal["difference", None] = None,
     standardizeit: Literal[None, "standardize", "01", "-11", "robust"] = "standardize",
     bins: None | int = False,
@@ -312,17 +307,17 @@ def preprocess_data(
 
     Args:
         data (DataFrameOrArrayGeneric): Input data that we want to preprocess.
-        remove_outliers (bool, optional): Whether remove unusual values far from average. Defaults to False.
+        remove_outliers (int | float | None, optional): Whether remove unusual values far from average. Defaults to False.
         smoothit (None | tuple[int, int], optional): Whether smooth the data with Savitzky-Golay filter.
             Insert tuple with (window, polynom_order) parameters as in `smooth` function e.g (11, 2). Defaults to False.
-        correlation_threshold (float, optional): Whether remove columns that are corelated less than configured value
+        correlation_threshold (float | None, optional): Whether remove columns that are corelated less than configured value
             Value must be between 0 and 1. But if 0, than None correlation threshold is applied. Defaults to 0.
         data_transform (Literal["difference", None], optional): Whether transform data. 'difference' transform data into differences between
             neighbor values. Defaults to None.
-        standardizeit (str | None, optional): How to standardize data. '01' and '-11' means scope from to for normalization.
+        standardizeit (Literal[None, "standardize", "-11", "01", "robust"], optional): How to standardize data. '01' and '-11' means scope from to for normalization.
             'robust' use RobustScaler and 'standard' use StandardScaler - mean is 0 and std is 1. If no standardization, use None.
             Defaults to 'standardize'.
-        bins (None | int, optional): Whether to discretize value into defined number of bins (their average). None make no discretization,
+        bins (None | int, optional): Whether to discretize values into defined number of bins (their average). None make no discretization,
             int define number of bins. Defaults to False.
         binning_type (str, optional): "cut" for equal size of bins intervals (different number of members in bins)
             or "qcut" for equal number of members in bins and various size of bins. It uses pandas cut
@@ -419,7 +414,7 @@ def preprocess_data_inverse(
 def categorical_embedding(
     data: pd.DataFrame, embedding: Literal["label", "one-hot"] = "label", unique_threshold: float = 0.6
 ) -> pd.DataFrame:
-    """Transform string categories such as 'US', 'FR' into numeric values, that can be used in machile learning model.
+    """Transform string categories such as 'US', 'FR' into numeric values, that can be used in machine learning model.
 
     Args:
         data (pd.DataFrame): Data with string (pandas Object dtype) columns.
@@ -457,7 +452,7 @@ def categorical_embedding(
         except Exception:
             to_drop.append(i)
 
-    # Drop columns with too few caterogies - drop all columns at once to better performance
+    # Drop columns with too few categories - drop all columns at once to better performance
     data_for_embedding.drop(to_drop, axis=1, inplace=True)
 
     return data_for_embedding
@@ -504,7 +499,7 @@ def keep_corelated_data(data: DataFrameOrArrayGeneric, threshold: float = 0.5) -
 
 
 def remove_the_outliers(
-    data: DataFrameOrArrayGeneric, threshold: int = 3, main_column: int | str = 0
+    data: DataFrameOrArrayGeneric, threshold: int | float = 3, main_column: int | str = 0
 ) -> DataFrameOrArrayGeneric:
     """Remove values far from mean - probably errors. If more columns, then only rows that have outlier on
     predicted column will be deleted. Predicted column is supposed to be 0.
@@ -642,11 +637,7 @@ def standardize(
 
 
 def standardize_one_way(
-    data: DataFrameOrArrayGeneric,
-    min: float,
-    max: float,
-    axis: Literal[0, 1] = 0,
-    inplace: bool = False,
+    data: DataFrameOrArrayGeneric, min: float, max: float, axis: Literal[0, 1] = 0, inplace: bool = False,
 ) -> DataFrameOrArrayGeneric:
     """Own implementation of standardization. No inverse transformation available.
     Reason is for builded applications to do not carry sklearn with build.
@@ -774,7 +765,7 @@ def fitted_power_transform(
     iterations: int = 5,
 ) -> np.ndarray:
     """Function mostly for data postprocessing. Function transforms data, so it will have
-    similiar standar deviation, similiar mean if specified. It use Box-Cox power transform in SciPy lib.
+    similar standar deviation, similar mean if specified. It use Box-Cox power transform in SciPy lib.
 
     Args:
         data (np.ndarray): Array of data that should be transformed (one column => ndim = 1).

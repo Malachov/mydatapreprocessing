@@ -24,20 +24,16 @@ def test_visual(print_preprocessing=1, print_postprocessing=1):
     data = np.array([[1, 3, 5, 2, 3, 4, 5, 66, 3, 2, 4, 5, 6, 0, 0, 0, 0, 7, 3, 4, 55, 3, 2]]).T
 
     data_multi_col = np.array(
-        [
-            [1, 22, 3, 3, 5, 8, 3, 3, 5, 8],
-            [5, 6, 7, 6, 7, 8, 3, 9, 5, 8],
-            [8, 9, 10, 6, 8, 8, 3, 3, 7, 8],
-        ]
+        [[1, 22, 3, 3, 5, 8, 3, 3, 5, 8], [5, 6, 7, 6, 7, 8, 3, 9, 5, 8], [8, 9, 10, 6, 8, 8, 3, 3, 7, 8],]
     ).T
 
     # Some calculations, that are to long to do in f-strings - Just ignore...
 
     seqs, Y, x_input, test_inputs = mdi.make_sequences(
-        data, predicts=7, repeatit=3, n_steps_in=6, n_steps_out=1, constant=1
+        data, predicts=7, repeatit=3, n_steps_in=6, n_steps_out=1, constant=True
     )
     seqs_2, Y_2, x_input2, test_inputs2 = mdi.make_sequences(
-        data, predicts=7, repeatit=3, n_steps_in=4, n_steps_out=2, constant=0
+        data, predicts=7, repeatit=3, n_steps_in=4, n_steps_out=2, constant=False
     )
     seqs_m, Y_m, x_input_m, test_inputs_m = mdi.make_sequences(
         data_multi_col,

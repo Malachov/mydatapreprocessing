@@ -1,15 +1,17 @@
-"""Miscellaneous functions that do not fit into other modules. You can find here for example functions for train / test split, 
+"""Miscellaneous functions that do not fit into other modules. You can find here for example functions for train / test split,
 function for rolling windows, function that clean the dataframe for print in table or function that will add gaps to time series
 data where are no data so two remote points are not joined in plot."""
 
 from __future__ import annotations
 import json
 import textwrap
+from typing import overload
 
 import pandas as pd
 import numpy as np
 
 import mylogging
+
 from .preprocessing import remove_the_outliers
 
 
@@ -36,9 +38,17 @@ def rolling_windows(data: np.ndarray, window: int) -> np.ndarray:
     return np.lib.stride_tricks.as_strided(data, shape=shape, strides=strides)
 
 
-def split(
-    data: pd.DataFrame | np.ndarray, predicts: int = 7
-) -> tuple[pd.DataFrame | np.ndarray, pd.Series | np.ndarray]:
+@overload
+def split(data: pd.DataFrame, predicts: int = 7) -> tuple[pd.DataFrame, pd.Series]:
+    ...
+
+
+@overload
+def split(data: np.ndarray, predicts: int = 7) -> tuple[np.ndarray, np.ndarray]:
+    ...
+
+
+def split(data, predicts=7):
     """Divide data set on train and test set. Predicted column is supposed to be 0. This is mostly for time series predictions,
     so in test set there is only predicted column that can be directly used for error criterion evaluation. So this function is
     different than usual train / test split.
@@ -120,20 +130,15 @@ def add_none_to_gaps(df: pd.DataFrame) -> pd.DataFrame:
     for i in df.index:
         if memory and i - memory > sampling_threshold:
             nons.append(
-                pd.DataFrame(
-                    [[np.nan] * df.shape[1]],
-                    index=[memory + sampling],
-                    columns=df.columns,
-                )
+                pd.DataFrame([[np.nan] * df.shape[1]], index=[memory + sampling], columns=df.columns,)
             )
         memory = i
 
     try:
-        # TODO astype True or false based on parameter
-        result = pd.concat([df.astype("float64"), *nons]).sort_index()
+        result = pd.concat([df, *nons]).sort_index()
         return result
     except NotImplementedError:
-        mylogging.traceback("If object dtype in DataFrame, it will fail. Use only numeeric dtypes.")
+        mylogging.traceback("If object dtype in DataFrame, it will fail. Use only numeric dtypes.")
         raise
 
 

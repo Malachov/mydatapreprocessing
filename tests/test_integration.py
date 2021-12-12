@@ -21,17 +21,14 @@ def test_integration():
     # Transform various data into defined format - pandas dataframe - convert to numeric if possible, keep
     # only numeric data and resample ifg configured. It return array, dataframe
     data_consolidated = mdp.preprocessing.data_consolidation(
-        data_loaded,
-        predicted_column=0,
-        remove_nans_threshold=0.9,
-        remove_nans_or_replace="interpolate",
+        data_loaded, predicted_column=0, remove_nans_threshold=0.9, remove_nans_or_replace="interpolate",
     )
 
     # Preprocess data. It return preprocessed data, but also last undifferenced value and scaler for inverse
     # transformation, so unpack it with _
     data_preprocessed_df, _, _ = mdp.preprocessing.preprocess_data(
         data_consolidated,
-        remove_outliers=True,
+        remove_outliers=3,
         smoothit=(11, 2),
         correlation_threshold=False,
         data_transform=True,
@@ -40,7 +37,7 @@ def test_integration():
 
     data_preprocessed, _, _ = mdp.preprocessing.preprocess_data(
         data_consolidated.values,
-        remove_outliers=True,
+        remove_outliers=3,
         smoothit=(11, 2),
         correlation_threshold=0.9,
         data_transform="difference",

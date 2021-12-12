@@ -27,18 +27,14 @@ def test_preprocessing():
     test_df.iloc[2, 2] = np.nan
 
     df_df = mdpp.data_consolidation(
-        test_df,
-        predicted_column=1,
-        other_columns=1,
-        datetime_column=None,
-        remove_nans_threshold=0.9,
+        test_df, predicted_column=1, other_columns=1, datetime_column=None, remove_nans_threshold=0.9,
     )
     data_df = df_df.values.copy()
 
     # Predicted column moved to index 0, but for test reason test, use different one
     processed_df, _, final_scaler_df = mdpp.preprocess_data(
         df_df,
-        remove_outliers=True,
+        remove_outliers=1,
         correlation_threshold=0.9,
         data_transform="difference",
         standardizeit="standardize",
@@ -54,7 +50,7 @@ def test_preprocessing():
 
     processed_df_2, _, final_scaler_df_2 = mdpp.preprocess_data(
         data_df,
-        remove_outliers=True,
+        remove_outliers=1,
         correlation_threshold=0.9,
         data_transform="difference",
         standardizeit="standardize",
@@ -130,7 +126,7 @@ def test_resample():
         "https://raw.githubusercontent.com/jbrownlee/Datasets/master/daily-min-temperatures.csv",
         csv_style={"sep": ",", "decimal": "."},
     )
-    resampled = mdpp.data_consolidation(data, datetime_column="Date", freq="M")
+    resampled = mdpp.data_consolidation(data, datetime_column="Date", resample_freq="M")
     assert len(data) > len(resampled) > 1
 
 

@@ -107,7 +107,7 @@ Examples:
 
     >>> data_preprocessed, _, _ = mdp.preprocessing.preprocess_data(
     ...     data,
-    ...     remove_outliers=True,
+    ...     remove_outliers=3,
     ...     smoothit=None,
     ...     correlation_threshold=False,
     ...     data_transform=False,
@@ -136,7 +136,7 @@ from . import (
     preprocessing,
 )
 
-__version__ = "2.0.10"
+__version__ = "2.0.11"
 __author__ = "Daniel Malachov"
 __license__ = "MIT"
 __email__ = "malachovd@seznam.cz"

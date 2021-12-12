@@ -10,11 +10,7 @@ import mydatapreprocessing.create_model_inputs as mdpi
 
 def test_make_sequences():
     data = np.array(
-        [
-            [1, 2, 3, 4, 5, 6, 7, 8],
-            [9, 10, 11, 12, 13, 14, 15, 16],
-            [17, 18, 19, 20, 21, 22, 23, 24],
-        ]
+        [[1, 2, 3, 4, 5, 6, 7, 8], [9, 10, 11, 12, 13, 14, 15, 16], [17, 18, 19, 20, 21, 22, 23, 24],]
     ).T
     X, y, x_input, _ = mdpi.make_sequences(data, n_steps_in=2, n_steps_out=3, constant=1)
 
