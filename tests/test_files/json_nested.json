@@ -1,0 +1,19 @@
+{
+    "main_field_1": {
+        "sub_field_1": {
+            "sub_sub_field_1": {
+                "key1": "value1",
+                "key2": "value2"
+            }
+        },
+        "sub_field_2": {
+            "sub_sub_field_2": {
+                "key3": "value3",
+                "key4": "value4"
+            }
+        }
+    },
+    "main_field_2": {
+        "key": "description"
+    }
+}
