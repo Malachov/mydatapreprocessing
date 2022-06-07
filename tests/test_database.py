@@ -1,26 +1,25 @@
-import pandas as pd
-import docker
+"""Tests for database package."""
+
 import time
 
-import mylogging
+import pandas as pd
+import docker
+import docker.errors
 
-import numpy as np
+from mypythontools_cicd import tests
 
-import mypythontools
-
-mypythontools.tests.setup_tests()
-
+tests.setup_tests()
 
 import mydatapreprocessing as mdp
 
-np.random.seed(2)
+# pylint: disable=missing-function-docstring
 
 
 def test_databases():
     try:
         client = docker.from_env()
-    except docker.errors.DockerException:
-        raise RuntimeError(mylogging.return_str("Docker error, check if Docker is running."))
+    except docker.errors.DockerException as err:
+        raise RuntimeError("Docker error, check if Docker is running.") from err
 
     try:
         container = client.containers.run(
@@ -30,11 +29,10 @@ def test_databases():
             auto_remove=True,
             environment={"ACCEPT_EULA": "Y"},
         )
-    except docker.errors.ImageNotFound:
-        mylogging.error("mssql docker image not made. First build Dockerfile here in tests.")
-        raise
-    except Exception:
-        raise
+    except docker.errors.ImageNotFound as err:
+        raise docker.errors.ImageNotFound(
+            "mssql docker image not made. First build Dockerfile here in tests."
+        ) from err
 
     time.sleep(50)
 
@@ -48,7 +46,7 @@ def test_databases():
             database="DemoData",
             table="Products",
             username="sa",
-            password="Ahojdatadata123",
+            password="HelloPassword123",
             if_exists="replace",
         )
 
@@ -60,11 +58,11 @@ def test_databases():
                 FROM [DemoData].[dbo].[Products]
             """,
             username="sa",
-            password="Ahojdatadata123",
+            password="HelloPassword123",
         )
 
-    except Exception:
-        mylogging.traceback()
+    except Exception:  # pylint: disable=try-except-raise
+        raise
 
     finally:
         container.stop()

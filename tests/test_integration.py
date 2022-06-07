@@ -1,47 +1,54 @@
+"""Tests for integration package."""
+
 import numpy as np
 
-import mypythontools
+from mypythontools_cicd import tests
 
-mypythontools.tests.setup_tests()
+tests.setup_tests()
 
 import mydatapreprocessing as mdp
 
-np.random.seed(2)
+# pylint: disable=missing-function-docstring
 
 
 def test_integration():
     # Load data from file or URL
     data_loaded = mdp.load_data.load_data(
         "https://www.ncdc.noaa.gov/cag/global/time-series/globe/land_ocean/ytd/12/1880-2016.json",
-        request_datatype_suffix=".json",
-        predicted_table="data",
+        field="data",
         data_orientation="index",
     )
 
-    # Transform various data into defined format - pandas dataframe - convert to numeric if possible, keep
-    # only numeric data and resample ifg configured. It return array, dataframe
-    data_consolidated = mdp.preprocessing.data_consolidation(
-        data_loaded, predicted_column=0, remove_nans_threshold=0.9, remove_nans_or_replace="interpolate",
+    # Transform various data into defined format - pandas DataFrame - convert to numeric if possible, keep
+    # only numeric data and resample ifg configured. It return array, DataFrame
+    config = mdp.consolidation.consolidation_config.default_consolidation_config
+    config.update(
+        {"first_column": 0, "remove_all_column_with_nans_threshold": 0.7, "remove_nans_type": "interpolate"}
     )
+    data_consolidated = mdp.consolidation.consolidate_data(data_loaded, config)
 
     # Preprocess data. It return preprocessed data, but also last undifferenced value and scaler for inverse
     # transformation, so unpack it with _
-    data_preprocessed_df, _, _ = mdp.preprocessing.preprocess_data(
-        data_consolidated,
-        remove_outliers=3,
-        smoothit=(11, 2),
-        correlation_threshold=False,
-        data_transform=True,
-        standardizeit="standardize",
+    config = mdp.preprocessing.preprocessing_config.default_preprocessing_config
+    config.update(
+        {
+            "remove_outliers": 3,
+            "smooth": (11, 2),
+            "difference_transform": True,
+            "standardize": "standardize",
+        }
+    )
+    data_preprocessed, inverse_config = mdp.preprocessing.preprocess_data(data_consolidated, config)
+
+    inverse_preprocessed_prediction = mdp.preprocessing.preprocess_data_inverse(
+        data_preprocessed.values, inverse_config
     )
 
-    data_preprocessed, _, _ = mdp.preprocessing.preprocess_data(
-        data_consolidated.values,
-        remove_outliers=3,
-        smoothit=(11, 2),
-        correlation_threshold=0.9,
-        data_transform="difference",
-        standardizeit="01",
-    )
+    # TODO test results not only no error
+    assert not np.any(np.isnan(np.min(inverse_preprocessed_prediction)))
 
-    assert not np.isnan(np.min(data_preprocessed_df.values)) and not np.isnan(np.min(data_preprocessed))
+
+if __name__ == "__main__":
+    # test_integration()
+
+    pass

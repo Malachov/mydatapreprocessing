@@ -1,8 +1,12 @@
 [tool.pytest.ini_options]
 addopts = "--doctest-modules -x --nbmake"
 python_files = ["test*.py", "demo.ipynb"]
-doctest_optionflags = "NORMALIZE_WHITESPACE NUMBER ELLIPSIS"
-
+doctest_optionflags = "NORMALIZE_WHITESPACE NUMBER ELLIPSIS IGNORE_EXCEPTION_DETAIL"
+norecursedirs = [
+    "dist",
+    "build",
+    "venv"
+]
 
 [tool.black]
 line-length = 110

@@ -1,5 +1,5 @@
-mydatapreprocessing.misc module
-===============================
+mydatapreprocessing.misc package
+================================
 
 .. automodule:: mydatapreprocessing.misc
    :members:

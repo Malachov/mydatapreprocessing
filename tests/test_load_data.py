@@ -1,153 +1,170 @@
-import json
+"""Tests for load_data package."""
+
+from __future__ import annotations
+
 from pathlib import Path
 
-import requests
 import numpy as np
 import pandas as pd
 
-import mypythontools
+from mypythontools_cicd import tests
 
-mypythontools.tests.setup_tests()
-
+tests.setup_tests()
 
 import mydatapreprocessing.load_data as mdpd
 
-np.random.seed(2)
+from tests.helpers import compare_values
+
+test_files_path = Path(__file__).parent / "test_files"
+
+# pylint: disable=missing-function-docstring
 
 
 def test_exceptions():
 
-    exceptions = []
-
     try:
         mdpd.load_data("testfile")
-    except Exception as e:
-        exceptions.append(isinstance(e, TypeError))
+    except TypeError as err:
+        assert isinstance(err, TypeError)
 
     try:
         mdpd.load_data("testfile.csv")
-    except Exception as e:
-        exceptions.append(isinstance(e, FileNotFoundError))
+    except FileNotFoundError as err:
+        assert isinstance(err, FileNotFoundError)
 
     try:
         mdpd.load_data("https://www.ncgdfgddc.noaa.gov/")
-    except Exception as e:
-        exceptions.append(isinstance(e, FileNotFoundError))
-
-    assert all(exceptions)
+    except FileNotFoundError as err:
+        assert isinstance(err, FileNotFoundError)
 
 
-def test_numpy_and_dataframe():
-    assert (
-        mdpd.load_data(np.random.randn(100, 3)).ndim
-        and mdpd.load_data(pd.DataFrame(np.random.randn(100, 3))).ndim
-    )
+def test_test_data():
+    for i in ["test_ramp", "test_sin", "test_random", "test_ecg"]:
+        assert mdpd.load_data(i).ndim
 
 
-def test_numpys_and_pandas():
-    assert (
-        mdpd.load_data([np.random.randn(20, 3), np.random.randn(25, 3)]).ndim
-        and mdpd.load_data((pd.DataFrame(np.random.randn(20, 3)), pd.DataFrame(np.random.randn(25, 3)))).ndim
-    )
+def test_ndarray_and_df():
+    assert mdpd.load_data(np.random.randn(100, 3)).shape == (100, 3)
+    assert mdpd.load_data(pd.DataFrame(np.random.randn(100, 3))).shape == (100, 3)
 
 
-def test_dict():
-    assert mdpd.load_data({"col_1": [3, 2, 1, 0], "col_2": [3, 2, 1, 0]}, data_orientation="index").ndim
-
-
-def test_list_of_dicts():
+def test_csv():
     assert mdpd.load_data(
-        [
-            {"col_1": [3, 2, 1, 0], "col_2": [3, 2, 1, 0]},
-            {"col_1": [4, 2, 1, 0], "col_2": [3, 2, 1, 0]},
-            {"col_1": [5, 2, 1, 0], "col_2": [3, 2, 1, 0]},
-        ],
-        data_orientation="columns",
+        "https://raw.githubusercontent.com/jbrownlee/Datasets/master/daily-min-temperatures.csv"
     ).ndim
 
 
+def test_dicts():
+
+    assert compare_values(
+        mdpd.load_data({"col_1": [3, 2, 1, 0], "col_2": [3, 2, 1, 0]}, data_orientation="index"),
+        np.array([[3, 2, 1, 0], [3, 2, 1, 0]]),
+    )
+
+    assert compare_values(
+        mdpd.load_data(
+            [
+                {"col_1": [3, 2, 1], "col_2": [3, 2, 1]},
+                {"col_1": [4, 2, 1], "col_2": [3, 2, 1]},
+            ],
+            data_orientation="columns",
+        ),
+        np.array([[3, 3], [2, 2], [1, 1], [4, 3], [2, 2], [1, 1]]),
+    )
+
+    assert compare_values(
+        mdpd.load_data(
+            [
+                {"col_1": 3, "col_2": 3},
+                {"col_1": 4, "col_2": 6},
+            ],
+            data_orientation="columns",
+        ),
+        np.array([[3, 3], [4, 6]]),
+    )
+
+    assert compare_values(
+        mdpd.load_data(
+            [
+                {"row1": [3, 2, 1, 0]},
+                {"row2": [4, 2, 1, 0]},
+            ],
+            data_orientation="index",
+        ),
+        np.array([[3, 2, 1, 0], [4, 2, 1, 0]]),
+    )
+
+
 def test_list():
-    assert mdpd.load_data([["Jon", "Smith", 21], ["Mark", "Brown", 38], ["Maria", "Lee", 42]]).ndim
+    assert compare_values(
+        mdpd.load_data([["Jon", "Smith", 21], ["Mark", "Brown", 38], ["Maria", "Lee", 42]]),
+        pd.DataFrame([["Jon", "Smith", 21], ["Mark", "Brown", 38], ["Maria", "Lee", 42]]),
+    )
 
 
 def test_tuple():
-    assert mdpd.load_data((("Jon", "Smith", 21), ("Mark", "Brown", 38), ("Maria", "Lee", 42))).ndim
+    assert compare_values(
+        mdpd.load_data((("Jon", "Smith", 21), ("Mark", "Brown", 38), ("Maria", "Lee", 42))),
+        pd.DataFrame([["Jon", "Smith", 21], ["Mark", "Brown", 38], ["Maria", "Lee", 42]]),
+    )
+
+
+def test_json():
+    assert compare_values(
+        mdpd.load_data(
+            test_files_path / "json_nested.json", field="main_field_1.sub_field_1.sub_sub_field_1"
+        ),
+        np.array([["value1", "value2"]]),
+    )
+
+    assert compare_values(
+        mdpd.load_data(test_files_path / "json_flat.json", field=""),
+        np.array([["value1", "value3"], ["value2", "value4"]]),
+    )
+
+    assert mdpd.load_data(
+        "https://www.ncdc.noaa.gov/cag/global/time-series/globe/land_ocean/ytd/12/1880-2016.json",
+        field="data",
+        data_orientation="index",
+    ).ndim
 
 
 def test_more_files():
 
-    data_loaded = mdpd.load_data(
-        "https://raw.githubusercontent.com/jbrownlee/Datasets/master/daily-min-temperatures.csv",
-        request_datatype_suffix=".json",
-        predicted_table="txs",
-        data_orientation="index",
-    )
-    data_loaded2 = mdpd.load_data(
-        [
-            "https://raw.githubusercontent.com/jbrownlee/Datasets/master/daily-min-temperatures.csv",
-            "https://raw.githubusercontent.com/jbrownlee/Datasets/master/daily-min-temperatures.csv",
-        ],
-        request_datatype_suffix=".json",
-        predicted_table="txs",
-        data_orientation="index",
-    )
+    assert mdpd.load_data([test_files_path / "csv.csv", test_files_path / "csv.csv"]).shape == (6, 3)
 
-    assert len(data_loaded2) == 2 * len(data_loaded)
+    assert mdpd.load_data([np.random.randn(20, 3), np.random.randn(25, 3)]).shape == (45, 3)
+    assert mdpd.load_data(
+        (pd.DataFrame(np.random.randn(20, 3)), pd.DataFrame(np.random.randn(25, 3)))
+    ).shape == (45, 3)
 
 
-def test_local_files():
+def test_files():
+    expected = pd.DataFrame([[1, 1.0, "One"], [2, 2.0, "Two"], [3, 3.0, "Three"]])
 
-    test_files = Path(__file__).parent / "test_files"
-    xls = mdpd.load_data(test_files / "file_example_xls.xls")
-    xlsx = mdpd.load_data(test_files / "file_example_xlsx.xlsx")
+    # json test aside as its works in different way
 
-    df_imported = pd.read_csv(
-        "https://raw.githubusercontent.com/jbrownlee/Datasets/master/daily-min-temperatures.csv"
-    )
-    df_part = df_imported.iloc[:10, :]
+    file_types = ["xls", "xlsx", "csv", "parquet"]
 
-    csv_path = Path(__file__).parent / "tested.csv"
-    csv_path2 = Path(__file__).parent / "tested2.csv"
-    json_path = Path(__file__).parent / "tested.json"
-    parquet_path = Path(__file__).parent / "tested.parquet"
-    # hdf_path = Path(__file__).parent / "tested.h5"
+    for i in file_types:
+        loaded_local = mdpd.load_data(test_files_path / f"{i}.{i}")
+        assert compare_values(loaded_local, expected), f"Load of {i} failed."
 
-    df_imported.to_csv(csv_path.as_posix())
-    df_part.to_csv(csv_path2.as_posix())
-    df_imported.to_parquet(parquet_path.as_posix(), compression="gzip")
-    # df_imported.to_hdf(hdf_path.as_posix(), key="df")
-
-    loaded_data = requests.get(
-        "https://www.ncdc.noaa.gov/cag/global/time-series/globe/land_ocean/ytd/12/1880-2016.json"
-    ).content
-
-    with open(json_path, "w") as outfile:
-        json.dump(json.loads(loaded_data), outfile)
-
-    try:
-        df_csv = mdpd.load_data(csv_path)
-        df_csv_joined = mdpd.load_data([csv_path, csv_path2])
-        df_json = mdpd.load_data(
-            json_path, request_datatype_suffix=".json", predicted_table="data", data_orientation="index",
+        loaded_web = mdpd.load_data(
+            f"https://github.com/Malachov/mydatapreprocessing/blob/master/tests/test_files/{i}.{i}?raw=true",
+            request_datatype_suffix=i,
         )
-        df_parquet = mdpd.load_data(parquet_path)
-        # df_hdf = mdpd.load_data(hdf_path)
+        assert compare_values(loaded_web, expected), f"Load of {i} failed."
 
-    except Exception:
-        pass
+    # H5 not supported from url and need kwargs
+    assert compare_values(
+        mdpd.load_data(test_files_path / "h5.h5", sheet="h5"), expected
+    ), "Load of 'h5.h5' failed."
 
-    finally:
-        for i in [csv_path, csv_path2, json_path, parquet_path]:  # , hdf_path
-            i.unlink()
+    # Replace h5 and parquet with new data with
+    # loaded["csv"].to_parquet((test_files_path / "parquet.parquet").as_posix(), compression="gzip")
+    # loaded["csv"].to_hdf((test_files_path / "h5.h5").as_posix(), key="h5")
 
-    assert all(
-        [
-            xls.ndim,
-            xlsx.ndim,
-            df_csv.ndim,
-            df_json.ndim,
-            df_parquet.ndim,
-            # df_hdf.ndim,
-            len(df_csv_joined) == len(df_csv) + 10,
-        ]
-    )
+
+if __name__ == "__main__":
+    test_files()

@@ -1,138 +1,104 @@
+"""Tests for preprocessing package."""
+
 import numpy as np
 import pandas as pd
 
-import mypythontools
+from mypythontools_cicd import tests
 
-mypythontools.tests.setup_tests()
+tests.setup_tests()
 
 
 import mydatapreprocessing.preprocessing as mdpp
-import mydatapreprocessing as mdp
+import mydatapreprocessing.preprocessing.preprocessing_functions as mdppf
 
-np.random.seed(2)
+# pylint: disable=missing-function-docstring
 
 
 def test_preprocessing():
 
-    ### Column with nan should be removed, row with outlier big value should be removed.
-    ### Preprocessing and inverse will be made and than just compare with good results
-    np.random.seed(2)
-
-    test_df = pd.DataFrame(
-        np.array([range(5), range(20, 25), range(25, 30), np.random.randn(5)]).T,
-        columns=["First", "Predicted", "Ignored", "Ignored 2"],
+    df = pd.DataFrame(
+        np.array([range(5), range(20, 25), np.random.randn(5)]).astype("float32").T,
     )
 
-    test_df.iloc[2, 1] = 500
-    test_df.iloc[2, 2] = np.nan
+    df.iloc[2, 0] = 500
 
-    df_df = mdpp.data_consolidation(
-        test_df, predicted_column=1, other_columns=1, datetime_column=None, remove_nans_threshold=0.9,
-    )
-    data_df = df_df.values.copy()
+    array = df.values.copy()
+
+    config = mdpp.preprocessing_config.default_preprocessing_config
+    config.remove_outliers = 1
+    config.difference_transform = True
+    config.standardize = "standardize"
 
     # Predicted column moved to index 0, but for test reason test, use different one
-    processed_df, _, final_scaler_df = mdpp.preprocess_data(
-        df_df,
-        remove_outliers=1,
-        correlation_threshold=0.9,
-        data_transform="difference",
-        standardizeit="standardize",
-    )
+    processed_df, inverse_preprocessing_config_df = mdpp.preprocess_data(df, config)
+
+    processed_array, inverse_preprocessing_config_arr = mdpp.preprocess_data(array, config)
+
+    inverse_preprocessing_config_df.difference_transform = df.iloc[0, 0]
+    inverse_preprocessing_config_arr.difference_transform = df.iloc[0, 0]
 
     inverse_processed_df = mdpp.preprocess_data_inverse(
-        processed_df["Predicted"].iloc[1:].values,
-        data_transform="difference",
-        last_undiff_value=test_df["Predicted"][0],
-        standardizeit="standardize",
-        final_scaler=final_scaler_df,
+        processed_df.iloc[:, 0].values, inverse_preprocessing_config_df
     )
 
-    processed_df_2, _, final_scaler_df_2 = mdpp.preprocess_data(
-        data_df,
-        remove_outliers=1,
-        correlation_threshold=0.9,
-        data_transform="difference",
-        standardizeit="standardize",
+    inverse_processed_array = mdpp.preprocess_data_inverse(
+        processed_array[:, 0], inverse_preprocessing_config_arr
     )
 
-    inverse_processed_df_2 = mdpp.preprocess_data_inverse(
-        processed_df_2[1:, 0],
-        final_scaler=final_scaler_df_2,
-        last_undiff_value=test_df["Predicted"][0],
-        standardizeit="standardize",
-        data_transform="difference",
+    correct_preprocessing = np.array(
+        [
+            [-0.7071068, -0.7071068, 0.37706152],
+            [1.4142137, 1.4142137, 0.99187946],
+            [-0.7071068, -0.7071068, -1.3689411],
+        ]
     )
-
-    correct_preprocessing = np.array([[-0.707107, -0.707107], [1.414214, 1.414214], [-0.707107, -0.707107]])
 
     check_1 = np.allclose(processed_df.values, correct_preprocessing)
-    check_2 = np.allclose(processed_df_2, correct_preprocessing)
+    check_2 = np.allclose(processed_array, correct_preprocessing)
 
-    correct_inverse_preprocessing = np.array([22.0, 23.0])
+    correct_inverse_preprocessing = np.array([1, 3, 4])
 
     check_3 = np.allclose(inverse_processed_df, correct_inverse_preprocessing)
-    check_4 = np.allclose(inverse_processed_df_2, correct_inverse_preprocessing)
+    check_4 = np.allclose(inverse_processed_array, correct_inverse_preprocessing)
 
     assert all([check_1, check_2, check_3, check_4])
 
 
-# NOTE Consolidation
-def test_remove_nans():
-    data = np.random.randn(50, 10)
-    data[0, :] = np.nan
-    data[data < 0] = np.nan
-
-    for i in ["mean", "neighbor", "remove", 0]:
-        removed = mdpp.data_consolidation(data, remove_nans_or_replace=i)
-        if np.isnan(removed.values).any():
-            raise ValueError("Nan in results")
-
-    not_removed = mdpp.data_consolidation(data, remove_nans_or_replace=np.nan)
-
-    assert (
-        np.isnan(not_removed.values).any()
-        and mdpp.data_consolidation(data, remove_nans_threshold=0.5).shape[1]
-        > mdpp.data_consolidation(data, remove_nans_threshold=0.8).shape[1]
-    )
-
-
-def test_binnig():
-    mdpp.binning(np.array(range(10)), bins=3, binning_type="cut")
-
-
-def test_embedding():
-    data = pd.DataFrame([[1, "e", "e"], [2, "e", "l"], [3, "r", "v"], [4, "e", "r"], [5, "r", "r"]])
-
-    embedded_one_hot = mdpp.categorical_embedding(data, embedding="one-hot", unique_threshold=0.5)
-    embedded_label = mdpp.categorical_embedding(data, embedding="label", unique_threshold=0.5)
-
-    label_supposed_result = np.array([[1, 0], [2, 0], [3, 1], [4, 0], [5, 1]])
-    one_hot_supposed_result = np.array([[1, 1, 0], [2, 1, 0], [3, 0, 1], [4, 1, 0], [5, 0, 1]])
-
-    embedded_label_shorter = mdpp.categorical_embedding(data, embedding="label", unique_threshold=0.99)
-
-    assert all(
+def test_removing_outliers():
+    data = pd.DataFrame(
         [
-            np.array_equal(embedded_label.values, label_supposed_result),
-            np.array_equal(embedded_one_hot.values, one_hot_supposed_result),
-            embedded_label_shorter.shape[1] == 1,
+            [1, 7],
+            [66, 3],
+            [5, 5],
+            [2, 3],
+            [2, 3],
+            [3, 9],
+        ]
+    )
+    processed = mdppf.remove_the_outliers(data, threshold=2)
+    should_be = pd.DataFrame(
+        [
+            [1, 7],
+            [5, 5],
+            [2, 3],
+            [2, 3],
+            [3, 9],
         ]
     )
 
+    assert np.allclose(processed.values, should_be), "Outliers not removed."
 
-def test_resample():
-    data = mdp.load_data.load_data(
-        "https://raw.githubusercontent.com/jbrownlee/Datasets/master/daily-min-temperatures.csv",
-        csv_style={"sep": ",", "decimal": "."},
-    )
-    resampled = mdpp.data_consolidation(data, datetime_column="Date", resample_freq="M")
-    assert len(data) > len(resampled) > 1
+
+def test_binning():
+    mdppf.binning(np.array(range(10)), bins=3, binning_type="cut")
 
 
 def test_fit_power_transform():
-    mdpp.fitted_power_transform(np.array(range(100)), fitted_stdev=2, mean=9)
+    mdppf.fitted_power_transform(np.array(range(100)), fitted_stdev=2, mean=9)
 
 
 if __name__ == "__main__":
+
+    # test_preprocessing()
+
     pass

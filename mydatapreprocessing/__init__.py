@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
-"""
+"""Load, consolidate and preprocess data in simplest possible way.
+
 .. image:: https://img.shields.io/pypi/pyversions/mydatapreprocessing.svg
     :target: https://pypi.python.org/pypi/mydatapreprocessing/
     :alt: Py versions
@@ -15,7 +16,7 @@
 
 .. image:: https://mybinder.org/badge_logo.svg
     :target: https://mybinder.org/v2/gh/Malachov/mydatapreprocessing/HEAD?filepath=demo.ipynb
-    :alt: Jupyter mybinder
+    :alt: Jupyter MyBinder
 
 .. image:: https://img.shields.io/lgtm/grade/python/github/Malachov/mydatapreprocessing.svg
     :target: https://lgtm.com/projects/g/Malachov/mydatapreprocessing/context:python
@@ -34,7 +35,7 @@
     :alt: Codecov
 
 Load data from web link or local file (json, csv, excel file, parquet, h5...), consolidate it (resample data,
-clean NaN values, do string embedding) derive new featurs via columns derivation and do preprocessing like
+clean NaN values, do string embedding) derive new features via columns derivation and do preprocessing like
 standardization or smoothing. If you want to see how functions works, check it's docstrings - working examples
 with printed results are also in tests - visual.py.
 
@@ -72,68 +73,130 @@ Examples:
         - local files
         - web urls
 
+    Supported path formats are:
+
+        - csv
+        - xlsx and xls
+        - json
+        - parquet
+        - h5
+
     You can load more data at once in list.
 
     Syntax is always the same.
 
     >>> data = mdp.load_data.load_data(
-    ...     "https://www.ncdc.noaa.gov/cag/global/time-series/globe/land_ocean/ytd/12/1880-2016.json",
-    ...     request_datatype_suffix=".json",
-    ...     data_orientation="index",
-    ...     predicted_table="data",
+    ...     "https://raw.githubusercontent.com/jbrownlee/Datasets/master/daily-min-temperatures.csv",
     ... )
     >>> # data2 = mdp.load_data.load_data([PATH_TO_FILE.csv, PATH_TO_FILE2.csv])
 
     **Consolidation**
 
-    If you want to use data for some machine learning models, you will probably want to remove Nan values, convert
-    string columns to numeric if possible, do encoding or keep only numeric data and resample.
+    If you want to use data for some machine learning models, you will probably want to remove Nan values,
+    convert string columns to numeric if possible, do encoding or keep only numeric data and resample.
 
-    >>> data = mdp.preprocessing.data_consolidation(
-    ...     data, predicted_column=0, remove_nans_threshold=0.9, remove_nans_or_replace="interpolate"
-    ... )
+    Consolidation is working with pandas DataFrame as column names matters here.
+
+    There are many functions, but there is main function pipelining other functions `consolidate_data`
+
+    >>> data = mdp.load_data.load_data(r"https://raw.githubusercontent.com/jbrownlee/Datasets/master/daily-min-temperatures.csv")
+    ...
+    >>> consolidation_config = mdp.consolidation.consolidation_config.default_consolidation_config
+    >>> consolidation_config.datetime.datetime_column = 'Date'
+    >>> consolidation_config.resample.resample = 'M'
+    >>> consolidation_config.resample.resample_function = "mean"
+    >>> consolidation_config.dtype = 'float32'
+    ...
+    >>> consolidated = mdp.consolidation.consolidate_data(data, consolidation_config)
+    >>> consolidated.head()
+                     Temp
+    Date                 
+    1981-01-31  17.712904
+    1981-02-28  17.678572
+    1981-03-31  13.500000
+    1981-04-30  12.356667
+    1981-05-31   9.490322
+
+    In config, you can use shorter update dict syntax as all values names are unique.
 
     **Feature engineering**
+    
+    Create new columns that can be for example used as another machine learning model input.
 
-    Functions in `feature_engineering` and `preprocessing` expects that data are in form (n_samples, n_features).
-    n_samples are ususally much bigger and therefore transformed in `data_consolidation` if necessary.
+    >>> import mydatapreprocessing as mdp
+    >>> import mydatapreprocessing.feature_engineering as mdpf
+    >>> import pandas as pd
+    ...
+    >>> data = pd.DataFrame(
+    ...     [mdp.datasets.sin(n=30), mdp.datasets.ramp(n=30)]
+    ... ).T
+    ...
+    >>> extended = mdpf.add_derived_columns(data, differences=True, rolling_means=10)
+    >>> extended.columns
+    Index([                      0,                       1,
+                  '0 - Difference',        '1 - Difference',
+           '0 - Second difference', '1 - Second difference',
+            'Multiplicated (0, 1)',      '0 - Rolling mean',
+                '1 - Rolling mean',       '0 - Rolling std',
+                 '1 - Rolling std',     '0 - Mean distance',
+               '1 - Mean distance'],
+          dtype='object')
+    >>> len(extended)
+    21
 
-    >>> data = mdp.feature_engineering.add_derived_columns(data, differences=True, rolling_means=32)
-
+    Functions in `feature_engineering` and `preprocessing` expects that data are in form
+    (n_samples, n_features). n_samples are usually much bigger and therefore transformed in `consolidate_data`
+    if necessary.
+    
     **Preprocessing**
 
-    ``preprocess_data`` returns preprocessed data, but also last undifferenced value and scaler for inverse
-    transformation, so unpack it with `_`
+    Preprocessing can be used on pandas DataFrame as well as on numpy array. Column names are not important
+    as it's just matrix with defined dtype.
 
-    >>> data_preprocessed, _, _ = mdp.preprocessing.preprocess_data(
-    ...     data,
-    ...     remove_outliers=3,
-    ...     smoothit=None,
-    ...     correlation_threshold=False,
-    ...     data_transform=False,
-    ...     standardizeit="standardize",
+    There is many functions, but there is main function pipelining other functions `preprocess_data`
+    Preprocessed data can be converted back with `preprocess_data_inverse`
+
+    >>> import numpy as np
+    >>> import pandas as pd
+    ...
+    >>> from mydatapreprocessing import preprocessing as mdpp
+    ...
+    >>> df = pd.DataFrame(np.array([range(5), range(20, 25), np.random.randn(5)]).astype("float32").T)
+    >>> df.iloc[2, 0] = 500
+    ...
+    >>> config = mdpp.preprocessing_config.default_preprocessing_config
+    >>> config.update({"remove_outliers": None, "difference_transform": True, "standardize": "standardize"})
+    ...
+    >>> data_preprocessed, inverse_config = mdpp.preprocess_data(df.values, config)
+    >>> data_preprocessed
+    array([[ 0.       ,  0.       ,  0.2571587],
+           [ 1.4142135,  0.       , -0.633448 ],
+           [-1.4142135,  0.       ,  1.5037845],
+           [ 0.       ,  0.       , -1.1274952]], dtype=float32)
+    
+    
+    If using for prediction, default last value is used for inverse transform. Here for test using first value
+    is used to check whether original data will be restored.    
+
+    >>> inverse_config.difference_transform = df.iloc[0, 0]
+    >>> data_preprocessed_inverse = mdpp.preprocess_data_inverse(
+    ...     data_preprocessed[:, 0], inverse_config
     ... )
-
-    **Creating inputs**
-    >>> seqs, Y, x_input, test_inputs = mdp.create_model_inputs.make_sequences(
-    ...     data_preprocessed.values, predicts=7, repeatit=3, n_steps_in=6, n_steps_out=1, constant=1
-    ... )
-
+    >>> data_preprocessed_inverse
+    array([  1., 500.,   3.,   4.], dtype=float32)
+    >>> np.allclose(df.values[1:, 0], data_preprocessed_inverse, atol=1.0e-5)
+    True
 """
-import sys
-import mylogging
-
-if sys.version_info.major < 3 or (sys.version_info.major == 3 and sys.version_info.minor < 7):
-    raise RuntimeError(mylogging.return_str("Python version >=3.7 necessary."))
-
 from . import (
-    create_model_inputs,
+    consolidation,
     database,
+    datasets,
     feature_engineering,
-    generate_data,
+    helpers,
     load_data,
     misc,
     preprocessing,
+    types,
 )
 
 __version__ = "2.0.11"
@@ -142,11 +205,13 @@ __license__ = "MIT"
 __email__ = "malachovd@seznam.cz"
 
 __all__ = [
-    "create_model_inputs",
+    "consolidation",
     "database",
+    "datasets",
     "feature_engineering",
-    "generate_data",
+    "helpers",
     "load_data",
     "misc",
     "preprocessing",
+    "types",
 ]

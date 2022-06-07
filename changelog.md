@@ -1,9 +1,13 @@
 # List of what have been done in new versions
 
+## v3.0
+- Refactored (backward incompatible). Divided into several subpackages. Mainly new 'consolidation'. There are new main pipelining functions and functions are implemented aside (also can be used separately). 
+- All functions moved to consolidation subpackage now supports inplace parameter which may result in better performance. 
+
 ## v2.0
 - Refactored (backward incompatible) - now data loading functions are in `load_data` module and feature engineering functions are in `feature_engineering` module. Various functions not related to used modules are in `misc`.
 - Database module updated and tests done
-- Clean dataframe to table print function
+- Clean DataFrame to table print function
 - Type hints
 
 ## v1.1

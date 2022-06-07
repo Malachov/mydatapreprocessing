@@ -1,5 +1,5 @@
-mydatapreprocessing.database module
-===================================
+mydatapreprocessing.database package
+====================================
 
 .. automodule:: mydatapreprocessing.database
    :members:

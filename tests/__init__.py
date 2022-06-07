@@ -6,7 +6,6 @@ in terminal in tests folder.
 """
 
 from . import (
-    test_create_model_inputs,
     test_database,
     test_feature_engineering,
     test_integration,
@@ -16,7 +15,6 @@ from . import (
 )
 
 __all__ = [
-    "test_create_model_inputs",
     "test_database",
     "test_feature_engineering",
     "test_integration",

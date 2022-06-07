@@ -1,25 +1,23 @@
 mydatapreprocessing package
 ===========================
 
-Submodules
-----------
-
-.. toctree::
-   :maxdepth: 4
-
-   mydatapreprocessing.create_model_inputs
-   mydatapreprocessing.custom_types
-   mydatapreprocessing.database
-   mydatapreprocessing.feature_engineering
-   mydatapreprocessing.generate_data
-   mydatapreprocessing.load_data
-   mydatapreprocessing.misc
-   mydatapreprocessing.preprocessing
-
-Module contents
----------------
-
 .. automodule:: mydatapreprocessing
    :members:
    :undoc-members:
    :show-inheritance:
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   mydatapreprocessing.consolidation
+   mydatapreprocessing.database
+   mydatapreprocessing.datasets
+   mydatapreprocessing.feature_engineering
+   mydatapreprocessing.helpers
+   mydatapreprocessing.load_data
+   mydatapreprocessing.misc
+   mydatapreprocessing.preprocessing
+   mydatapreprocessing.types

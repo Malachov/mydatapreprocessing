@@ -1,5 +1,5 @@
-mydatapreprocessing.feature\_engineering module
-===============================================
+mydatapreprocessing.feature\_engineering package
+================================================
 
 .. automodule:: mydatapreprocessing.feature_engineering
    :members:

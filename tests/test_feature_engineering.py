@@ -1,14 +1,15 @@
+"""Tests for feature_engineering package."""
+
 import numpy as np
 import pandas as pd
 
-import mypythontools
+from mypythontools_cicd import tests
 
-mypythontools.tests.setup_tests()
-
+tests.setup_tests()
 
 import mydatapreprocessing.feature_engineering as mdpf
 
-np.random.seed(2)
+# pylint: disable=missing-function-docstring
 
 
 def test_add_frequency_columns():

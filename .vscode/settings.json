@@ -1,5 +1,34 @@
 {
   "python.analysis.extraPaths": ["mydatapreprocessing"],
-  "cSpell.words": ["openpyxl", "repeatit", "xlrd", "yeojohnson"],
-  "restructuredtext.confPath": "${workspaceFolder}\\docs\\source"
+  "cSpell.words": [
+    "arange",
+    "bfill",
+    "corrcoef",
+    "Discretize",
+    "Discretized",
+    "ffill",
+    "ffted",
+    "Golay",
+    "lmbda",
+    "mdpc",
+    "mdpf",
+    "mdppf",
+    "nunique",
+    "openpyxl",
+    "printoptions",
+    "pyarrow",
+    "rdrecord",
+    "repeatit",
+    "sampto",
+    "savgol",
+    "Savitzky",
+    "subconfigs",
+    "tseries",
+    "wfdb",
+    "xlrd",
+    "yeojohnson"
+  ],
+  "python.testing.pytestArgs": ["."],
+  "python.testing.unittestEnabled": false,
+  "python.testing.pytestEnabled": true
 }

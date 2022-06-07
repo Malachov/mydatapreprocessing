@@ -1,2 +1,2 @@
-mypythontools>=0.0.84
+mypythontools_cicd>=0.0.20
 docker==4.2.2

@@ -10,16 +10,19 @@ mydatapreprocessing
 Submodules
 ==========
 
-
-`create_model_inputs </page/mydatapreprocessing.create_model_inputs.html>`_
----------------------------------------------------------------------------
-.. automodule:: mydatapreprocessing.create_model_inputs
+`consolidation </page/mydatapreprocessing.consolidation.html>`_
+---------------------------------------------------------------
+.. automodule:: mydatapreprocessing.consolidation
     :noindex:
-
 
 `database </page/mydatapreprocessing.database.html>`_
 -----------------------------------------------------
 .. automodule:: mydatapreprocessing.database
+    :noindex:
+
+`datasets </page/mydatapreprocessing.datasets.html>`_
+-----------------------------------------------------
+.. automodule:: mydatapreprocessing.datasets
     :noindex:
 
 
@@ -29,9 +32,9 @@ Submodules
     :noindex:
 
 
-`generate_data </page/mydatapreprocessing.generate_data.html>`_
+`helpers </page/mydatapreprocessing.helpers.html>`_
 ---------------------------------------------------------------
-.. automodule:: mydatapreprocessing.generate_data
+.. automodule:: mydatapreprocessing.helpers
     :noindex:
 
 
@@ -50,6 +53,12 @@ Submodules
 `preprocessing </page/mydatapreprocessing.preprocessing.html>`_
 ---------------------------------------------------------------
 .. automodule:: mydatapreprocessing.preprocessing
+    :noindex:
+
+
+`types </page/mydatapreprocessing.types.html>`_
+---------------------------------------------------------------
+.. automodule:: mydatapreprocessing.types
     :noindex:
 
 

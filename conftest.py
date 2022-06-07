@@ -1,3 +1,5 @@
-import mypythontools
+"""Runs before every pytest test. Used automatically (at least at VS Code)."""
 
-mypythontools.tests.setup_tests()
+from mypythontools_cicd import tests
+
+tests.setup_tests()
