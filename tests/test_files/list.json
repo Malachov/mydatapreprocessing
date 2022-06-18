@@ -1,0 +1,147 @@
+[
+    {
+        "Date": "1881-03-06",
+        "Mean": 0.01,
+        "Source": "GISTEMP"
+    },
+    {
+        "Date": "1881-02-06",
+        "Mean": -0.0296,
+        "Source": "GCAG"
+    },
+    {
+        "Date": "1881-02-06",
+        "Mean": -0.14,
+        "Source": "GISTEMP"
+    },
+    {
+        "Date": "1881-01-06",
+        "Mean": -0.0205,
+        "Source": "GCAG"
+    },
+    {
+        "Date": "1881-01-06",
+        "Mean": -0.1,
+        "Source": "GISTEMP"
+    },
+    {
+        "Date": "1880-12-06",
+        "Mean": -0.0775,
+        "Source": "GCAG"
+    },
+    {
+        "Date": "1880-12-06",
+        "Mean": -0.22,
+        "Source": "GISTEMP"
+    },
+    {
+        "Date": "1880-11-06",
+        "Mean": -0.2672,
+        "Source": "GCAG"
+    },
+    {
+        "Date": "1880-11-06",
+        "Mean": -0.19,
+        "Source": "GISTEMP"
+    },
+    {
+        "Date": "1880-10-06",
+        "Mean": -0.1786,
+        "Source": "GCAG"
+    },
+    {
+        "Date": "1880-10-06",
+        "Mean": -0.16,
+        "Source": "GISTEMP"
+    },
+    {
+        "Date": "1880-09-06",
+        "Mean": -0.0817,
+        "Source": "GCAG"
+    },
+    {
+        "Date": "1880-09-06",
+        "Mean": -0.17,
+        "Source": "GISTEMP"
+    },
+    {
+        "Date": "1880-08-06",
+        "Mean": -0.0725,
+        "Source": "GCAG"
+    },
+    {
+        "Date": "1880-08-06",
+        "Mean": -0.08,
+        "Source": "GISTEMP"
+    },
+    {
+        "Date": "1880-07-06",
+        "Mean": -0.1491,
+        "Source": "GCAG"
+    },
+    {
+        "Date": "1880-07-06",
+        "Mean": -0.24,
+        "Source": "GISTEMP"
+    },
+    {
+        "Date": "1880-06-06",
+        "Mean": -0.1692,
+        "Source": "GCAG"
+    },
+    {
+        "Date": "1880-06-06",
+        "Mean": -0.29,
+        "Source": "GISTEMP"
+    },
+    {
+        "Date": "1880-05-06",
+        "Mean": -0.0738,
+        "Source": "GCAG"
+    },
+    {
+        "Date": "1880-05-06",
+        "Mean": -0.14,
+        "Source": "GISTEMP"
+    },
+    {
+        "Date": "1880-04-06",
+        "Mean": -0.0499,
+        "Source": "GCAG"
+    },
+    {
+        "Date": "1880-04-06",
+        "Mean": -0.27,
+        "Source": "GISTEMP"
+    },
+    {
+        "Date": "1880-03-06",
+        "Mean": -0.1357,
+        "Source": "GCAG"
+    },
+    {
+        "Date": "1880-03-06",
+        "Mean": -0.18,
+        "Source": "GISTEMP"
+    },
+    {
+        "Date": "1880-02-06",
+        "Mean": -0.1229,
+        "Source": "GCAG"
+    },
+    {
+        "Date": "1880-02-06",
+        "Mean": -0.21,
+        "Source": "GISTEMP"
+    },
+    {
+        "Date": "1880-01-06",
+        "Mean": 0.0009,
+        "Source": "GCAG"
+    },
+    {
+        "Date": "1880-01-06",
+        "Mean": -0.3,
+        "Source": "GISTEMP"
+    }
+]
