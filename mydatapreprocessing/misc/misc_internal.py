@@ -3,7 +3,7 @@
 from __future__ import annotations
 import json
 import textwrap
-from typing import overload, cast
+from typing import overload, cast, Union
 
 import pandas as pd
 from pandas.api.types import is_numeric_dtype
@@ -212,7 +212,7 @@ def edit_table_to_printable(
 
         else:
             for k, l in df_i.iteritems():
-                k = cast(str | int, k)
+                k = cast(Union[str, int], k)
                 # Add line breaks to long strings
                 if isinstance(l, str) and len(l) > line_length_limit:
                     df_i[k] = textwrap.fill(df_i[k], line_length_limit)

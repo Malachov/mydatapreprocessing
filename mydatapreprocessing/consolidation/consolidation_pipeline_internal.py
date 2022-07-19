@@ -46,6 +46,7 @@ def consolidate_data(
         >>> import mydatapreprocessing.consolidation as mdpc
         >>> import pandas as pd
         >>> import numpy as np
+        >>> np.random.seed(2)
         ...
         >>> df = pd.DataFrame(
         ...    np.array([range(4), range(20, 24), np.random.randn(4)]).T,
@@ -60,7 +61,7 @@ def consolidate_data(
         2     NaN   22.0 -2.136196
         3     3.0   23.0  1.640271
 
-        >>> config = mdpc.consolidation_config.default_consolidation_config
+        >>> config = mdpc.consolidation_config.default_consolidation_config.copy()
         >>> config.first_column = "First"
         >>> config.datetime.datetime_column = None
         >>> config.remove_missing_values.remove_all_column_with_nans_threshold = 0.6

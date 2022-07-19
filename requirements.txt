@@ -1,9 +1,0 @@
-mylogging>=4.0.4
-mypythontools>=2.0.2
-numpy
-pandas
-requests
-scipy
-sklearn
-wfdb
-typing_extensions

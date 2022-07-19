@@ -64,7 +64,7 @@ def return_test_data(data: Literal["test_ramp", "test_sin", "test_random", "test
         1      1
         2      2
         ...
-        
+
     """
     if data == "test_ramp":
         return pd.DataFrame(datasets.ramp())
@@ -95,21 +95,22 @@ def get_file_type(data_path: Path, request_datatype_suffix: None | str = None):
     Returns:
         str: Extension lowered like for example 'csv'.
     """
-    # For example csv or json. On url, take everything after last dot
-    file_type = data_path.suffix[1:].lower()
+    if request_datatype_suffix:
+        file_type = request_datatype_suffix.lower()
+
+        if file_type.startswith("."):
+            file_type = file_type[1:]
 
     # If not suffix inferred, then maybe url that return as request - than suffix have to be configured
-    if not file_type:
-        if request_datatype_suffix:
-            file_type = request_datatype_suffix.lower()
+    else:
+        # For example csv or json. On url, take everything after last dot
+        file_type = data_path.suffix[1:].lower()
 
-            if file_type.startswith("."):
-                file_type = file_type[1:]
-        else:
-            raise TypeError(
-                "Data has no suffix (e.g. csv). If using url with no suffix, setup"
-                "'request_datatype_suffix' or insert data with local path or insert data for example in"
-                f"DataFrame or numpy array. \n\nParsed data are '{data_path}'",
-            )
+    if not file_type:
+        raise TypeError(
+            "Data has no suffix (e.g. csv). If using url with no suffix, setup"
+            "'request_datatype_suffix' or insert data with local path or insert data for example in"
+            f"DataFrame or numpy array. \n\nParsed data are '{data_path}'",
+        )
 
     return file_type

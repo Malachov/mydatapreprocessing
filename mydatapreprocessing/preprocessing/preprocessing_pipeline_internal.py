@@ -2,9 +2,7 @@
 
 from __future__ import annotations
 from typing import TYPE_CHECKING, Generic, cast, Union
-from dataclasses import dataclass, astuple
 
-from typing_extensions import Literal
 import numpy as np
 import pandas as pd
 
@@ -46,12 +44,13 @@ def preprocess_data(
     Example:
         >>> import pandas as pd
         >>> import mydatapreprocessing.preprocessing as mdpp
+
         >>> df = pd.DataFrame(
         ...     np.array([range(5), range(20, 25), np.random.randn(5)]).astype("float32").T,
         ... )
         >>> df.iloc[2, 0] = 500
         ...
-        >>> config = mdpp.preprocessing_config.default_preprocessing_config
+        >>> config = mdpp.preprocessing_config.default_preprocessing_config.copy()
         >>> config.update({"remove_outliers": 1, "difference_transform": True, "standardize": "standardize"})
 
         Predicted column moved to index 0, but for test reason test, use different one
@@ -129,12 +128,21 @@ def preprocess_data_inverse(
 
     Example:
         >>> import pandas as pd
+        >>> import numpy as np
         >>> import mydatapreprocessing.preprocessing as mdpp
+        ...
         >>> df = pd.DataFrame(
         ...     np.array([range(5), range(20, 25), np.random.randn(5)]).astype("float32").T,
         ... )
-        >>> preprocessed, inverse_config = mdpp.preprocess_data(df)
-        >>> preprocess_data_inverse(preprocessed, inverse_config)
+        >>> preprocessed, inverse_config = mdpp.preprocess_data(df.values)
+        >>> preprocessed
+        array([[-1.4142135 , -1.4142135 ,  0.1004863 ],
+               [-0.70710677, -0.70710677,  0.36739323],
+               [ 0.        ,  0.        , -1.1725829 ],
+               [ 0.70710677,  0.70710677,  1.6235067 ],
+               [ 1.4142135 ,  1.4142135 , -0.9188035 ]], dtype=float32)
+        >>> preprocess_data_inverse(preprocessed[:, 0], inverse_config)
+        array([0., 1., 2., 3., 4.], dtype=float32)
     """
     inverse = data.values if isinstance(data, pd.DataFrame) else data
 

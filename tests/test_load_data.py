@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import sys
 
 import numpy as np
 import pandas as pd
@@ -34,8 +35,8 @@ def test_exceptions():
 
     try:
         mdpd.load_data("https://www.ncgdfgddc.noaa.gov/")
-    except FileNotFoundError as err:
-        assert isinstance(err, FileNotFoundError)
+    except NotImplementedError as err:
+        assert isinstance(err, NotImplementedError)
 
 
 def test_test_data():
@@ -57,7 +58,7 @@ def test_csv():
 def test_dicts():
 
     assert compare_values(
-        mdpd.load_data({"col_1": [3, 2, 1, 0], "col_2": [3, 2, 1, 0]}, data_orientation="index"),
+        mdpd.load_data({"row_1": [3, 2, 1, 0], "row_2": [3, 2, 1, 0]}, data_orientation="index"),
         np.array([[3, 2, 1, 0], [3, 2, 1, 0]]),
     )
 
@@ -123,9 +124,7 @@ def test_json():
     )
 
     assert mdpd.load_data(
-        "https://www.ncdc.noaa.gov/cag/global/time-series/globe/land_ocean/ytd/12/1880-2016.json",
-        field="data",
-        data_orientation="index",
+        "https://raw.githubusercontent.com/Malachov/mydatapreprocessing/master/tests/test_files/list.json",
     ).ndim
 
 
@@ -156,10 +155,11 @@ def test_files():
         )
         assert compare_values(loaded_web, expected), f"Load of {i} failed."
 
-    # H5 not supported from url and need kwargs
-    assert compare_values(
-        mdpd.load_data(test_files_path / "h5.h5", sheet="h5"), expected
-    ), "Load of 'h5.h5' failed."
+    if sys.version_info.minor > 7:
+        # H5 not supported from url and need kwargs
+        assert compare_values(
+            mdpd.load_data(test_files_path / "h5.h5", sheet="h5"), expected
+        ), "Load of 'h5.h5' failed."
 
     # Replace h5 and parquet with new data with
     # loaded["csv"].to_parquet((test_files_path / "parquet.parquet").as_posix(), compression="gzip")
@@ -167,4 +167,5 @@ def test_files():
 
 
 if __name__ == "__main__":
-    test_files()
+    # test_files()
+    pass

@@ -1,11 +1,14 @@
 """Module with config  for consolidation pipeline."""
 from __future__ import annotations
-from typing import TYPE_CHECKING, Union, TypeAlias
+from typing import TYPE_CHECKING, Union, Any
+
+from typing_extensions import TypeAlias
+
 from mypythontools.config import Config, MyProperty
 
 from ...types import Numeric
 
-ScalerTypeVar = None
+ScalerTypeVar = Any
 
 if TYPE_CHECKING:
     from sklearn.preprocessing import MinMaxScaler, RobustScaler, StandardScaler

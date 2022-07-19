@@ -1,0 +1,5 @@
+-r requirements.txt
+-r extras_datatypes.txt
+-r extras_datasets.txt
+
+docker==4.2.2

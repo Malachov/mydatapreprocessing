@@ -10,6 +10,8 @@ import pandas as pd
 
 import mylogging
 
+from ...load_data_internal import load_data
+
 
 def csv_load(
     data: io.BytesIO | str | Path,
@@ -121,22 +123,26 @@ def json_load(
     import json
 
     if isinstance(data, io.BytesIO):
-        data_dict = json.loads(data.read())
+        data_loaded = json.loads(data.read())
 
     else:
         with open(data) as json_file:
-            data_dict = json.load(json_file)
+            data_loaded = json.load(json_file)
 
     if field:
         for i in field.split("."):
             try:
-                data_dict = data_dict[i]
+                data_loaded = data_loaded[i]
             except KeyError as err:
                 raise KeyError(
                     mylogging.format_str(f"Data load error. Defined field '{field}' not found in data.")
                 ) from err
 
-    return load_dict(data_dict, data_orientation)
+    if isinstance(data_loaded, list):
+
+        return load_data(data_loaded)
+    else:
+        return load_dict(data_loaded, data_orientation)
 
 
 def _get_further_data_line(data) -> str:

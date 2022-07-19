@@ -24,7 +24,7 @@ def test_preprocessing():
 
     array = df.values.copy()
 
-    config = mdpp.preprocessing_config.default_preprocessing_config
+    config = mdpp.preprocessing_config.default_preprocessing_config.copy()
     config.remove_outliers = 1
     config.difference_transform = True
     config.standardize = "standardize"

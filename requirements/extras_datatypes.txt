@@ -1,0 +1,6 @@
+openpyxl
+pyarrow
+pyodbc
+sqlalchemy
+tables
+xlrd

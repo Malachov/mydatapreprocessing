@@ -14,14 +14,12 @@ import mydatapreprocessing as mdp
 def test_integration():
     # Load data from file or URL
     data_loaded = mdp.load_data.load_data(
-        "https://www.ncdc.noaa.gov/cag/global/time-series/globe/land_ocean/ytd/12/1880-2016.json",
-        field="data",
-        data_orientation="index",
+        "https://raw.githubusercontent.com/Malachov/mydatapreprocessing/master/tests/test_files/list.json"
     )
 
     # Transform various data into defined format - pandas DataFrame - convert to numeric if possible, keep
     # only numeric data and resample ifg configured. It return array, DataFrame
-    config = mdp.consolidation.consolidation_config.default_consolidation_config
+    config = mdp.consolidation.consolidation_config.default_consolidation_config.copy()
     config.update(
         {"first_column": 0, "remove_all_column_with_nans_threshold": 0.7, "remove_nans_type": "interpolate"}
     )
@@ -29,7 +27,7 @@ def test_integration():
 
     # Preprocess data. It return preprocessed data, but also last undifferenced value and scaler for inverse
     # transformation, so unpack it with _
-    config = mdp.preprocessing.preprocessing_config.default_preprocessing_config
+    config = mdp.preprocessing.preprocessing_config.default_preprocessing_config.copy()
     config.update(
         {
             "remove_outliers": 3,

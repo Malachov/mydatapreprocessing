@@ -109,4 +109,3 @@ class ConsolidationConfig(Config):
 
 
 default_consolidation_config = ConsolidationConfig()
-"""Default config you can use."""

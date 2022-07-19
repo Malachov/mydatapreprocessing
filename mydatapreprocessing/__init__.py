@@ -55,9 +55,9 @@ Install just with::
 
     pip install mydatapreprocessing
 
-There are some libraries that not every user will be using (for some data inputs). If you want to be sure to
-have all libraries, you can download ``requirements_advanced.txt`` and then install advanced requirements with
-``pip install -r requirements_advanced.txt``.
+There are some libraries that not every user will be using (for some specific data inputs for example). If you
+want to be sure to have all libraries, you can download ``requirements_advanced.txt`` and then install
+advanced requirements with ``pip install -r requirements_advanced.txt``.
 
 
 Examples:
@@ -101,7 +101,7 @@ Examples:
 
     >>> data = mdp.load_data.load_data(r"https://raw.githubusercontent.com/jbrownlee/Datasets/master/daily-min-temperatures.csv")
     ...
-    >>> consolidation_config = mdp.consolidation.consolidation_config.default_consolidation_config
+    >>> consolidation_config = mdp.consolidation.consolidation_config.default_consolidation_config.copy()
     >>> consolidation_config.datetime.datetime_column = 'Date'
     >>> consolidation_config.resample.resample = 'M'
     >>> consolidation_config.resample.resample_function = "mean"
@@ -164,7 +164,7 @@ Examples:
     >>> df = pd.DataFrame(np.array([range(5), range(20, 25), np.random.randn(5)]).astype("float32").T)
     >>> df.iloc[2, 0] = 500
     ...
-    >>> config = mdpp.preprocessing_config.default_preprocessing_config
+    >>> config = mdpp.preprocessing_config.default_preprocessing_config.copy()
     >>> config.update({"remove_outliers": None, "difference_transform": True, "standardize": "standardize"})
     ...
     >>> data_preprocessed, inverse_config = mdpp.preprocess_data(df.values, config)
@@ -199,7 +199,7 @@ from . import (
     types,
 )
 
-__version__ = "2.0.11"
+__version__ = "3.0.0"
 __author__ = "Daniel Malachov"
 __license__ = "MIT"
 __email__ = "malachovd@seznam.cz"

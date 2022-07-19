@@ -87,4 +87,3 @@ class PreprocessingConfig(Config):
 
 
 default_preprocessing_config = PreprocessingConfig()
-"""Default config you can use."""

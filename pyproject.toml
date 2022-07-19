@@ -1,12 +1,23 @@
 [tool.pytest.ini_options]
 addopts = "--doctest-modules -x --nbmake"
-python_files = ["test*.py", "demo.ipynb"]
+
+# TODO add profiling norecurse to other projects
+# TODO add requirements to dev.txt
+
+python_files = ["tests/test_*.py"]
 doctest_optionflags = "NORMALIZE_WHITESPACE NUMBER ELLIPSIS IGNORE_EXCEPTION_DETAIL"
 norecursedirs = [
     "dist",
     "build",
-    "venv"
+    "profiling",
+    "venv",
+    ".ipynb_checkpoints",
+    "tests/venv"
 ]
+usefixtures = "setup_tests"
 
 [tool.black]
 line-length = 110
+
+[build-system]
+requires = ["mypythontools_cicd[packages]"]

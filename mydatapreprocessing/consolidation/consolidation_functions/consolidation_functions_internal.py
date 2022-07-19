@@ -214,7 +214,7 @@ def infer_frequency(
     """
     df = get_copy_or_view(df, inplace)
 
-    if isinstance(df.index, pd.DatetimeIndex | pd.TimedeltaIndex):
+    if isinstance(df.index, (pd.DatetimeIndex, pd.TimedeltaIndex)):
         if df.index.freq is None:
             freq = pd.infer_freq(df.index)
             if freq:

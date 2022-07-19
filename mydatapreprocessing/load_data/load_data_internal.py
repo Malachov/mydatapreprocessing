@@ -132,7 +132,7 @@ def load_data(
         'field': 'data' which define in what field data are stored (it can be nested with dots like
         'dataset_1.data.summer').
 
-        >>> url = "https://www.ncdc.noaa.gov/cag/global/time-series/globe/land_ocean/ytd/12/1880-2016.json"
+        >>> url = "https://raw.githubusercontent.com/Malachov/mydatapreprocessing/master/tests/test_files/list.json"
 
         You can use more files in list and data will be concatenated. It can be list of paths or list of python objects. For example::
 
@@ -163,8 +163,12 @@ def load_data(
 
     datas = data if isinstance(data, (list, tuple)) else [data]
 
-    if all((isinstance(i, (list, tuple)) for i in datas)):
-        return pd.DataFrame.from_records(data)
+    if isinstance(datas[0], (list, tuple)) and isinstance(datas[-1], (list, tuple)):
+        try:
+            result = pd.DataFrame.from_records(data)
+            return result
+        except Exception:
+            pass
 
     list_of_DataFrames: list[pd.DataFrame] = []
 
@@ -186,14 +190,21 @@ def load_data(
 
             file_type = get_file_type(data_path, request_datatype_suffix)
 
-            supported_formats = ["csv", "json", "xlsx", "xls"]
-            
+            supported_formats = ["csv", "json", "xlsx", "xls", "h5", "hdf5", "parquet"]
+
             if file_type not in supported_formats:
                 raise NotImplementedError(
                     f"File extension not implemented. Supported file formats are {supported_formats}. Used "
-                    f"format is '{file_type}'.")
-                
-            if data_path.exists():
+                    f"format is '{file_type}'. If it's URL or has no extension in name, setup format "
+                    "with 'request_datatype_suffix'."
+                )
+
+            try:
+                path_exists = data_path.exists()
+            except OSError:
+                path_exists = False
+
+            if path_exists:
                 data_content = data_path.as_posix()
             else:
                 try:
