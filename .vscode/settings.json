@@ -30,5 +30,7 @@
   ],
   "python.testing.pytestArgs": ["."],
   "python.testing.unittestEnabled": false,
-  "python.testing.pytestEnabled": true
+"python.testing.pytestEnabled": true,
+"restructuredtext.preview.name": "sphinx",
+"esbonio.sphinx.confDir": "${workspaceFolder}\\docs\\source\\conf.py"
 }
