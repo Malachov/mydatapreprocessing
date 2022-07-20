@@ -3,8 +3,8 @@ version: 2
 python:
   version: "3.7"
   install:
-    - requirements: requirements.txt
-    - requirements: requirements_dev.txt
+    - requirements: requirements/requirements.txt
+    - requirements: requirements/extras_all.txt
 
 # Build documentation in the source/ directory with Sphinx
 sphinx:

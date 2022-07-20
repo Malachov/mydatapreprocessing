@@ -3,7 +3,7 @@ from mypythontools_cicd import packages
 
 if __name__ == "__main__":
     extras_requirements = {
-        i: packages.get_requirements(f"requirements/extras_{i}.txt") for i in ["datasets", "datatypes"]
+        i: packages.get_requirements(f"requirements/extras_{i}.txt") for i in ["all", "datasets", "datatypes"]
     }
 
     setup(

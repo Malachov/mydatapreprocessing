@@ -22,8 +22,13 @@ Install just with
 pip install mydatapreprocessing
 ```
 
-There are some libraries that not every user will be using (for some specific data inputs for example). If you want to be sure to have all libraries, you can download `requirements_advanced.txt` and then install
-advanced requirements with `pip install -r requirements_advanced.txt`.
+There are some libraries that not every user will be using (for some specific data inputs for example). If you want to be sure to have all libraries, you can provide extras requirements like.
+
+```console
+pip install mydatapreprocessing[datatypes]
+```
+
+Available extras are ["all", "datasets", "datatypes"]
 
 
 ## Examples
