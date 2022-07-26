@@ -28,6 +28,15 @@ def remove_the_outliers(
     data: DataFrameOrArrayGeneric,
     threshold: Numeric = 3,
 ) -> DataFrameOrArrayGeneric:
+    """Deprecated function. Historically, remove_outliers was parameter in pipeline and in the same module,
+    function needed different name. Use `remove_outliers` if possible. This will be removed in new major."""
+    return remove_outliers(data, threshold)
+
+
+def remove_outliers(
+    data: DataFrameOrArrayGeneric,
+    threshold: Numeric = 3,
+) -> DataFrameOrArrayGeneric:
     """Remove values far from mean - probably errors.
 
     If more columns, then only rows that have outlier on predicted column will be deleted. Predicted column
@@ -52,7 +61,7 @@ def remove_the_outliers(
         ...         [3, 9],
         ...     ]
         ... )
-        >>> remove_the_outliers(data, threshold=2)
+        >>> remove_outliers(data, threshold=2)
         array([[1, 7],
                [5, 5],
                [2, 3],

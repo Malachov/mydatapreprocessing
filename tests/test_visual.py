@@ -48,7 +48,7 @@ def test_visual(print_preprocessing=1, print_postprocessing=1):
 
         ### Remove outliers ### \n
 
-        With outliers: \n {data} \n\nWith no outliers: \n{mdpp.preprocessing_functions.remove_the_outliers(data, threshold = 3)} \n
+        With outliers: \n {data} \n\nWith no outliers: \n{mdpp.preprocessing_functions.remove_outliers(data, threshold = 3)} \n
 
         ### Difference transform ### \n
         Original data: \n {data} \n\nDifferenced data: \n{mdpp.preprocessing_functions.do_difference(data[:, 0])} \n\n
@@ -67,7 +67,7 @@ def test_visual(print_preprocessing=1, print_postprocessing=1):
             ####################\n
 
         ### Remove outliers ### \n
-        With outliers: \n {data_multi_col} \n\nWith no outliers: \n{mdpp.preprocessing_functions.remove_the_outliers(data_multi_col, threshold = 1)} \n
+        With outliers: \n {data_multi_col} \n\nWith no outliers: \n{mdpp.preprocessing_functions.remove_outliers(data_multi_col, threshold = 1)} \n
 
         ### Standardize ### \n
         Original: \n {data_multi_col} \n\nStandardized: \n{normalized_multi} \n

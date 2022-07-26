@@ -9,6 +9,8 @@ import pandas as pd
 
 from mypythontools.paths import PathLike
 
+# TODO add docs here (and remove from init), so it's removed from overview...
+
 DataFrameOrArrayGeneric = TypeVar("DataFrameOrArrayGeneric", pd.DataFrame, np.ndarray)
 Numeric = Union[float, int, np.number]
 PandasIndex = Union[str, int, pd.Index, np.integer]

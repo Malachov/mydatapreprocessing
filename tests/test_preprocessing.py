@@ -75,7 +75,7 @@ def test_removing_outliers():
             [3, 9],
         ]
     )
-    processed = mdppf.remove_the_outliers(data, threshold=2)
+    processed = mdppf.remove_outliers(data, threshold=2)
     should_be = pd.DataFrame(
         [
             [1, 7],

@@ -56,7 +56,7 @@ Install just with::
     pip install mydatapreprocessing
 
 There are some libraries that not every user will be using (for some specific data inputs for example). If you
-want to be sure to have all libraries, you can provide extras requirements like.
+want to be sure to have all libraries, you can provide extras requirements like::
 
     pip install mydatapreprocessing[datatypes]
 
@@ -201,7 +201,7 @@ from . import (
     types,
 )
 
-__version__ = "3.0.0"
+__version__ = "3.0.1"
 __author__ = "Daniel Malachov"
 __license__ = "MIT"
 __email__ = "malachovd@seznam.cz"

@@ -75,7 +75,7 @@ def preprocess_data(
     preprocessed = data.copy()
 
     if config.remove_outliers:
-        preprocessed = pf.remove_the_outliers(preprocessed, threshold=config.remove_outliers)
+        preprocessed = pf.remove_outliers(preprocessed, threshold=config.remove_outliers)
 
     if config.smooth:
         preprocessed = pf.smooth(preprocessed, config.smooth[0], config.smooth[1])

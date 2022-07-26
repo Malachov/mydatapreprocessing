@@ -1,3 +1,4 @@
+-r requirements.txt
 -r extras_all.txt
 
 docker==4.2.2

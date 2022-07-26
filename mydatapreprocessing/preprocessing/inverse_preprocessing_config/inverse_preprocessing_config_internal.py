@@ -26,8 +26,7 @@ class InversePreprocessingConfig(Config):
     """
 
     @MyProperty
-    @staticmethod
-    def standardize() -> None | ScalerType:
+    def standardize(self) -> None | ScalerType:
         """Define whether use inverse standardization and what type.
 
         Type:
@@ -41,8 +40,7 @@ class InversePreprocessingConfig(Config):
         return None
 
     @MyProperty
-    @staticmethod
-    def difference_transform() -> None | Numeric:
+    def difference_transform(self) -> None | Numeric:
         """Define whether use inverse difference transform and first starting value.
 
         Type:

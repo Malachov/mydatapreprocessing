@@ -11,8 +11,7 @@ class Discretization(Config):
     """Define whether to discretize values."""
 
     @MyProperty
-    @staticmethod
-    def discretize() -> None | int:
+    def discretize(self) -> None | int:
         """Define whether discretize values into defined number of bins (their average).
 
         Type:
@@ -24,8 +23,7 @@ class Discretization(Config):
         return None
 
     @MyProperty
-    @staticmethod
-    def binning_type() -> Literal["cut", "qcut"]:
+    def binning_type(self) -> Literal["cut", "qcut"]:
         """Define how the bins will be defined.
 
         Type:

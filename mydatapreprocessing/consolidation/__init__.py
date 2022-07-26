@@ -1,6 +1,4 @@
-"""Module for data consolidation.
-
-Consolidation means that output is somehow standardized and you know that it will be working in your
+"""Consolidate data. Consolidation means that output is somehow standardized and you know that it will be working in your
 algorithms even when data are not known beforehand. It includes for example shape
 verification, string embedding, setting datetime index, resampling or NaN cleaning.
 

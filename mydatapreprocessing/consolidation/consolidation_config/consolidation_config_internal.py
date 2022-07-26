@@ -32,8 +32,7 @@ class ConsolidationConfig(Config):
         """Remove or replace string values with numbers."""
 
     @MyProperty
-    @staticmethod
-    def inplace() -> bool:
+    def inplace(self) -> bool:
         """Define whether work on inserted data itself, or on a copy.
 
         Type:
@@ -49,8 +48,7 @@ class ConsolidationConfig(Config):
         return False
 
     @MyProperty
-    @staticmethod
-    def check_shape_and_transform() -> bool:
+    def check_shape_and_transform(self) -> bool:
         """Check whether correct shape is used and eventually transpose.
 
         Type:
@@ -65,8 +63,7 @@ class ConsolidationConfig(Config):
         return True
 
     @MyProperty
-    @staticmethod
-    def first_column() -> None | PandasIndex:
+    def first_column(self) -> None | PandasIndex:
         """Move defined column on index 0.
 
         Type:
@@ -78,8 +75,7 @@ class ConsolidationConfig(Config):
         return None
 
     @MyProperty
-    @staticmethod
-    def data_length() -> int:
+    def data_length(self) -> int:
         """Limit the data length after resampling.
 
         Type:
@@ -93,8 +89,7 @@ class ConsolidationConfig(Config):
         return 0
 
     @MyProperty
-    @staticmethod
-    def dtype() -> str | np.dtype | pd.Series | list[str | np.dtype]:
+    def dtype(self) -> str | np.dtype | pd.Series | list[str | np.dtype]:
         """Set output dtype.
 
         Type:

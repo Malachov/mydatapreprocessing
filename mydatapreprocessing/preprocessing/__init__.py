@@ -1,4 +1,4 @@
-"""Module for data preprocessing.
+"""Subpackage for data preprocessing.
 
 Preprocessing means for example standardization, data smoothing, outliers removal or binning.
 
@@ -7,6 +7,11 @@ call all the functions based on input params for you. For inverse preprocessing 
 
 Functions are available for pd.DataFrame as well as numpy array. Output is usually of the same type as
 an input. Functions can be use inplace or copy can be created.
+
+Note:
+    In many functions, there is main column necessary for correct functioning. It's supposed, that this column
+    is on index 0 as first column. If using consolidation, use `first_column` param. Or use
+    `move_on_first_column` manually.
 """
 from mydatapreprocessing.preprocessing.preprocessing_pipeline_internal import (
     preprocess_data,

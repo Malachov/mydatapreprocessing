@@ -15,8 +15,7 @@ class Datetime(Config):
     """Define whether to set datetime index."""
 
     @MyProperty
-    @staticmethod
-    def datetime_column() -> PandasIndex | None:
+    def datetime_column(self) -> PandasIndex | None:
         """Name or index of datetime column that will be set as index and converted to datetime.
 
         Type:
@@ -30,8 +29,7 @@ class Datetime(Config):
         return None
 
     @MyProperty
-    @staticmethod
-    def on_set_datetime_error() -> Literal["ignore", "raise"]:
+    def on_set_datetime_error(self) -> Literal["ignore", "raise"]:
         """Define what happens if converting to datetime fails.
 
         Type:
@@ -47,8 +45,7 @@ class Resample(Config):
     """Change the sampling frequency."""
 
     @MyProperty
-    @staticmethod
-    def resample() -> None | Literal["S", "min", "H", "M", "Y"] | str:
+    def resample(self) -> None | Literal["S", "min", "H", "M", "Y"] | str:
         """Frequency of resampled data.
 
         Type:
@@ -62,8 +59,7 @@ class Resample(Config):
         return None
 
     @MyProperty
-    @staticmethod
-    def resample_function() -> Literal["sum", "mean"]:
+    def resample_function(self) -> Literal["sum", "mean"]:
         """Define whether resampled values are sum of values or it's average.
 
         Type:
@@ -79,8 +75,7 @@ class RemoveMissingValues(Config):
     """Remove NaN values."""
 
     @MyProperty
-    @staticmethod
-    def remove_all_column_with_nans_threshold() -> None | Numeric:
+    def remove_all_column_with_nans_threshold(self) -> None | Numeric:
         """Delete all the column based on amount of NaN values.
 
         Type:
@@ -96,8 +91,7 @@ class RemoveMissingValues(Config):
         return 0.85
 
     @MyProperty
-    @staticmethod
-    def remove_nans_type() -> None | Literal["interpolate", "mean", "neighbor", "remove"] | Any:
+    def remove_nans_type(self) -> None | Literal["interpolate", "mean", "neighbor", "remove"] | Any:
         """Remove rows where NaN or replace rest nan values.
 
         Type:
@@ -115,8 +109,7 @@ class StringsToNumeric(Config):
     """Remove or replace string values with numeric."""
 
     @MyProperty
-    @staticmethod
-    def embedding() -> None | Literal["label", "one-hot"]:
+    def embedding(self) -> None | Literal["label", "one-hot"]:
         """Implement categorical encoding.
 
         Type:
@@ -132,8 +125,7 @@ class StringsToNumeric(Config):
         return "label"
 
     @MyProperty
-    @staticmethod
-    def cast_str_to_numeric() -> bool:
+    def cast_str_to_numeric(self) -> bool:
         """Try to convert strings to numeric.
 
         Type:
@@ -147,8 +139,7 @@ class StringsToNumeric(Config):
         return True
 
     @MyProperty
-    @staticmethod
-    def only_numeric() -> bool:
+    def only_numeric(self) -> bool:
         """Remove all non numeric values.
 
         Type:
@@ -163,8 +154,7 @@ class StringsToNumeric(Config):
         return True
 
     @MyProperty
-    @staticmethod
-    def unique_threshold() -> Numeric:
+    def unique_threshold(self) -> Numeric:
         """Remove string columns, that have to many categories.
 
         Type:

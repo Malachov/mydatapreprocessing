@@ -27,8 +27,7 @@ class PreprocessingConfig(Config):
         self.discretization: Discretization = Discretization()
 
     @MyProperty
-    @staticmethod
-    def remove_outliers() -> None | Numeric:
+    def remove_outliers(self) -> None | Numeric:
         """Remove unusual values far from average.
 
         Type:
@@ -40,8 +39,7 @@ class PreprocessingConfig(Config):
         return None
 
     @MyProperty
-    @staticmethod
-    def smooth() -> None | tuple[int, int]:
+    def smooth(self) -> None | tuple[int, int]:
         """Smooth the data with Savitzky-Golay filter.
 
         Type:
@@ -55,8 +53,7 @@ class PreprocessingConfig(Config):
         return None
 
     @MyProperty
-    @staticmethod
-    def difference_transform() -> bool:
+    def difference_transform(self) -> bool:
         """Transform the data.
 
         Type:
@@ -70,8 +67,7 @@ class PreprocessingConfig(Config):
         return False
 
     @MyProperty
-    @staticmethod
-    def standardize() -> None | Literal["standardize", "-11", "01", "robust"]:
+    def standardize(self) -> None | Literal["standardize", "-11", "01", "robust"]:
         """Standardize the data.
 
         Type:

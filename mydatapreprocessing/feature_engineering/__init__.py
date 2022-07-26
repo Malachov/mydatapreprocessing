@@ -3,7 +3,7 @@
 You can add new derived columns. This new generated data can help to machine learning models to better
 results.
 
-In `add_derived_columns` you add first and second derivations, multiplication of columns, rolling means and
+In `add_derived_columns` you can add first and second derivations, multiplication of columns, rolling means and
 rolling standard deviation.
 
 In `add_frequency_columns` you can add fast fourier transform results maximums on running window.

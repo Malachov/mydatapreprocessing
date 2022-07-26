@@ -33,10 +33,10 @@ def test_load_data(managenamespace):
 
 def test_consolidation(managenamespace):
     consolidation_config = mdp.consolidation.consolidation_config.default_consolidation_config.copy()
-    consolidation_config.datetime.datetime_column = 'Date'
-    consolidation_config.resample.resample = 'M'
+    consolidation_config.datetime.datetime_column = "Date"
+    consolidation_config.resample.resample = "M"
     consolidation_config.resample.resample_function = "mean"
-    consolidation_config.dtype = 'float32'
+    consolidation_config.dtype = "float32"
 
     consolidated = mdp.consolidation.consolidate_data(data, consolidation_config)
     print(consolidated.head())
@@ -49,9 +49,7 @@ def test_code_106():
     import mydatapreprocessing.feature_engineering as mdpf
     import mydatapreprocessing as mdp
 
-    data = pd.DataFrame(
-        [mdp.datasets.sin(n=30), mdp.datasets.ramp(n=30)]
-    ).T
+    data = pd.DataFrame([mdp.datasets.sin(n=30), mdp.datasets.ramp(n=30)]).T
 
     extended = mdpf.add_derived_columns(data, differences=True, rolling_means=10)
     print(extended.columns)
@@ -71,9 +69,7 @@ def test_preprocess_data(managenamespace):
     config.update({"remove_outliers": None, "difference_transform": True, "standardize": "standardize"})
     data_preprocessed, inverse_config = mdpp.preprocess_data(df.values, config)
     inverse_config.difference_transform = df.iloc[0, 0]
-    data_preprocessed_inverse = mdpp.preprocess_data_inverse(
-        data_preprocessed[:, 0], inverse_config
-    )
+    data_preprocessed_inverse = mdpp.preprocess_data_inverse(data_preprocessed[:, 0], inverse_config)
 
     # Caution- no assertions.
     managenamespace(operation="update", additions=locals())

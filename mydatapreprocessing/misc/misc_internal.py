@@ -10,7 +10,7 @@ from pandas.api.types import is_numeric_dtype
 import numpy as np
 import numpy.lib.stride_tricks
 
-from ..preprocessing.preprocessing_functions import remove_the_outliers
+from ..preprocessing.preprocessing_functions import remove_outliers
 from ..helpers import check_not_empty
 from ..types import Numeric
 
@@ -139,7 +139,7 @@ def add_none_to_gaps(df: pd.DataFrame) -> pd.DataFrame:
         1.3  NaN  NaN
         2.0  0.0  1.0
     """
-    sampling = remove_the_outliers(np.diff(df.index[:50]).reshape(-1, 1), threshold=1).mean()
+    sampling = remove_outliers(np.diff(df.index[:50]).reshape(-1, 1), threshold=1).mean()
     sampling_threshold = sampling * 3
     nons = []
     memory = None
