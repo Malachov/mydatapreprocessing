@@ -49,7 +49,7 @@ Readthedocs documentation - https://mydatapreprocessing.readthedocs.io
 Installation
 ============
 
-Python >=3.6 (Python 2 is not supported).
+Python >= 3.6 (Python 2 is not supported).
 
 Install just with::
 
