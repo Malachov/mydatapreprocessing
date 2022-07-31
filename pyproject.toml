@@ -1,3 +1,6 @@
+[build-system]
+requires = ["mypythontools_cicd[packages]"]
+
 [tool.pytest.ini_options]
 addopts = "--doctest-modules -x --nbmake"
 
@@ -19,5 +22,6 @@ usefixtures = "setup_tests"
 [tool.black]
 line-length = 110
 
-[build-system]
-requires = ["mypythontools_cicd[packages]"]
+
+[tool.coverage.run]
+omit = ["tests/*"]

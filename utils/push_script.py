@@ -9,7 +9,7 @@ if __name__ == "__main__":
     default_pipeline_config.test.sync_test_requirements_path = "requirements"
     default_pipeline_config.test.sync_test_requirements = "tests.txt"
 
-    # default_pipeline_config.do_only = ""
+    default_pipeline_config.do_only = "deploy"
 
     # All the parameters can be overwritten via CLI args
     cicd_pipeline(config=default_pipeline_config)
