@@ -9,6 +9,6 @@ jobs:
       - uses: codecov/codecov-action@v3
         with:
           token: dbf8103a-6920-4bdc-80cc-2917fafc68e7
-          directory: ./tests
-          files: ./coverage.xml
+          directory: .
+          files: ./tests/coverage.xml
           verbose: true
