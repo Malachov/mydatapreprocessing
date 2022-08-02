@@ -8,6 +8,8 @@ jobs:
       - uses: actions/checkout@master
       - uses: codecov/codecov-action@v3
         with:
+          fixes:
+            - "*mydatapreprocessing/::mydatapreprocessing/"
           token: dbf8103a-6920-4bdc-80cc-2917fafc68e7
           directory: ./tests
           files: ./tests/coverage.xml
