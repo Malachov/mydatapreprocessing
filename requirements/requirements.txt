@@ -1,5 +1,5 @@
-mylogging>=4.0.3
-mypythontools>=2.1.4
+mylogging~=4.0.3
+mypythontools~=3.0.0
 numpy
 pandas
 requests
