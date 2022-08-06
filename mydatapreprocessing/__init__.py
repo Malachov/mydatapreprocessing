@@ -103,7 +103,7 @@ Examples:
 
     >>> data = mdp.load_data.load_data(r"https://raw.githubusercontent.com/jbrownlee/Datasets/master/daily-min-temperatures.csv")
     ...
-    >>> consolidation_config = mdp.consolidation.consolidation_config.default_consolidation_config.copy()
+    >>> consolidation_config = mdp.consolidation.consolidation_config.default_consolidation_config.do.copy()
     >>> consolidation_config.datetime.datetime_column = 'Date'
     >>> consolidation_config.resample.resample = 'M'
     >>> consolidation_config.resample.resample_function = "mean"
@@ -166,8 +166,8 @@ Examples:
     >>> df = pd.DataFrame(np.array([range(5), range(20, 25), np.random.randn(5)]).astype("float32").T)
     >>> df.iloc[2, 0] = 500
     ...
-    >>> config = mdpp.preprocessing_config.default_preprocessing_config.copy()
-    >>> config.update({"remove_outliers": None, "difference_transform": True, "standardize": "standardize"})
+    >>> config = mdpp.preprocessing_config.default_preprocessing_config.do.copy()
+    >>> config.do.update({"remove_outliers": None, "difference_transform": True, "standardize": "standardize"})
     ...
     >>> data_preprocessed, inverse_config = mdpp.preprocess_data(df.values, config)
     >>> data_preprocessed
@@ -201,7 +201,7 @@ from . import (
     types,
 )
 
-__version__ = "3.0.1"
+__version__ = "3.0.3"
 __author__ = "Daniel Malachov"
 __license__ = "MIT"
 __email__ = "malachovd@seznam.cz"

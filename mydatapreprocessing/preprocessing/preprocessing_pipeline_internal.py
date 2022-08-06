@@ -50,8 +50,8 @@ def preprocess_data(
         ... )
         >>> df.iloc[2, 0] = 500
         ...
-        >>> config = mdpp.preprocessing_config.default_preprocessing_config.copy()
-        >>> config.update({"remove_outliers": 1, "difference_transform": True, "standardize": "standardize"})
+        >>> config = mdpp.preprocessing_config.default_preprocessing_config.do.copy()
+        >>> config.do.update({"remove_outliers": 1, "difference_transform": True, "standardize": "standardize"})
 
         Predicted column moved to index 0, but for test reason test, use different one
 

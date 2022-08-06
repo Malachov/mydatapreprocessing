@@ -19,16 +19,16 @@ def test_integration():
 
     # Transform various data into defined format - pandas DataFrame - convert to numeric if possible, keep
     # only numeric data and resample ifg configured. It return array, DataFrame
-    config = mdp.consolidation.consolidation_config.default_consolidation_config.copy()
-    config.update(
+    config = mdp.consolidation.consolidation_config.default_consolidation_config.do.copy()
+    config.do.update(
         {"first_column": 0, "remove_all_column_with_nans_threshold": 0.7, "remove_nans_type": "interpolate"}
     )
     data_consolidated = mdp.consolidation.consolidate_data(data_loaded, config)
 
     # Preprocess data. It return preprocessed data, but also last undifferenced value and scaler for inverse
     # transformation, so unpack it with _
-    config = mdp.preprocessing.preprocessing_config.default_preprocessing_config.copy()
-    config.update(
+    config = mdp.preprocessing.preprocessing_config.default_preprocessing_config.do.copy()
+    config.do.update(
         {
             "remove_outliers": 3,
             "smooth": (11, 2),

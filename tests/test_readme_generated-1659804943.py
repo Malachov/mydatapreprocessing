@@ -1,4 +1,4 @@
-"""pytest file built from d:/Github/mydatapreprocessing/README.md"""
+"""pytest file built from D:/Github/mydatapreprocessing/README.md"""
 import pytest
 
 from phmdoctest.fixture import managenamespace
@@ -32,7 +32,7 @@ def test_load_data(managenamespace):
 
 
 def test_consolidation(managenamespace):
-    consolidation_config = mdp.consolidation.consolidation_config.default_consolidation_config.copy()
+    consolidation_config = mdp.consolidation.consolidation_config.default_consolidation_config.do.copy()
     consolidation_config.datetime.datetime_column = "Date"
     consolidation_config.resample.resample = "M"
     consolidation_config.resample.resample_function = "mean"
@@ -65,8 +65,8 @@ def test_preprocess_data(managenamespace):
     df = pd.DataFrame(np.array([range(5), range(20, 25), np.random.randn(5)]).astype("float32").T)
     df.iloc[2, 0] = 500
 
-    config = mdpp.preprocessing_config.default_preprocessing_config.copy()
-    config.update({"remove_outliers": None, "difference_transform": True, "standardize": "standardize"})
+    config = mdpp.preprocessing_config.default_preprocessing_config.do.copy()
+    config.do.update({"remove_outliers": None, "difference_transform": True, "standardize": "standardize"})
     data_preprocessed, inverse_config = mdpp.preprocess_data(df.values, config)
     inverse_config.difference_transform = df.iloc[0, 0]
     data_preprocessed_inverse = mdpp.preprocess_data_inverse(data_preprocessed[:, 0], inverse_config)

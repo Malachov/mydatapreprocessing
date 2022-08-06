@@ -61,7 +61,7 @@ def consolidate_data(
         2     NaN   22.0 -2.136196
         3     3.0   23.0  1.640271
 
-        >>> config = mdpc.consolidation_config.default_consolidation_config.copy()
+        >>> config = mdpc.consolidation_config.default_consolidation_config.do.copy()
         >>> config.first_column = "First"
         >>> config.datetime.datetime_column = None
         >>> config.remove_missing_values.remove_all_column_with_nans_threshold = 0.6

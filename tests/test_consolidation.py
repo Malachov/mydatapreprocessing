@@ -24,7 +24,7 @@ def test_consolidation():
     )
 
     df.iloc[2, 2] = np.nan
-    config = mdpc.consolidation_config.default_consolidation_config.copy()
+    config = mdpc.consolidation_config.default_consolidation_config.do.copy()
 
     config.first_column = "First"
     config.datetime.datetime_column = None
