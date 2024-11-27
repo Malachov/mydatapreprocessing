@@ -201,7 +201,7 @@ from . import (
     types,
 )
 
-__version__ = "3.0.3"
+__version__ = "3.0.4"
 __author__ = "Daniel Malachov"
 __license__ = "MIT"
 __email__ = "malachovd@seznam.cz"

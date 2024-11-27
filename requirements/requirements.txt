@@ -4,5 +4,5 @@ numpy
 pandas
 requests
 scipy
-sklearn
+scikit-learn
 typing_extensions
